@@ -7,3 +7,6 @@
 [submodule "zlib"]
 	path = zlib
 	url = https://github.com/madler/zlib.git
+[submodule "BLAKE3"]
+	path = BLAKE3
+	url = https://github.com/BLAKE3-team/BLAKE3.git
