@@ -44,6 +44,7 @@
 #include "HDiffPatch/dirDiffPatch/dir_diff/dir_diff.h"
 #include "HDiffPatch/libhsync/sync_make/dir_sync_make.h"
 #endif
+#include "hsync_import_patch.h"
 
 #ifndef _IS_NEED_MAIN
 #   define  _IS_NEED_MAIN 1
@@ -67,22 +68,23 @@
 #if (_IS_NEED_DEFAULT_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
 //todo: #   define _ChecksumPlugin_md5
+//#   define _ChecksumPlugin_blake3
 #   define _ChecksumPlugin_crc32
 #endif
 
-#include "../HDiffPatch/checksum_plugin_demo.h"
+#include "HDiffPatch/checksum_plugin_demo.h"
 
 static void printVersion(){
-    printf("HDiffPatch::hsync_make v" HDIFFPATCH_VERSION_STRING "\n\n");
+    printf("hsync::hsync_make v" HSYNC_VERSION_STRING "\n\n");
 }
 
 static void printUsage(){
     printVersion();
     printf("hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]\n"
 #if (_IS_NEED_DIR_DIFF_PATCH)
-           " ( newDataPath can be file or directory(folder); )\n"
+           "  newDataPath can be file or directory(folder),\n"
 #endif
-           " ( if newDataPath is a file & no -c-... option, out_hsynz_file can empty; )\n"
+           "  if newDataPath is a file & no -c-... option, out_hsynz_file can empty. \n"
            "options:\n"
            "  -s-matchBlockSize\n"
            "      matchBlockSize can like 4096 or 4k or 128k or 1m etc..., DEFAULT 2048\n"
@@ -98,9 +100,9 @@ static void printUsage(){
            "  -c-compressType[-compressLevel]\n"
            "      set out_hsynz_file Compress type & level, DEFAULT uncompress;\n"
            "      support compress type & level:\n"
-           "       (re. https://github.com/sisong/lzbench/blob/master/lzbench171_sorted.md )\n"
-#ifdef _CompressPlugin_zlibs
-           "        -c-zlibs[-{1..9}]               DEFAULT level 9\n"
+#ifdef _CompressPlugin_zlib
+           "        -c-zlib[-{1..9}[-dictBits]]     DEFAULT level 9\n"
+           "            dictBits can 9--15, DEFAULT 15.\n"
 #endif
            "  -C-checksumType\n"
            "      set strong Checksum type for block data, DEFAULT "
@@ -137,6 +139,8 @@ static void printUsage(){
            "      if used -f and write path is exist directory, will always return error.\n"
            "  -h or -?\n"
            "      output Help info (this usage).\n"
+           "  --patch\n"
+           "      swap to hsync_demo mode.\n"
            "  -v  output Version info.\n\n"
            );
 }
@@ -144,7 +148,7 @@ static void printUsage(){
 typedef enum TSyncMakeResult {
     SYNC_MAKE_SUCCESS=0,
     SYNC_MAKE_OPTIONS_ERROR,
-    SYNC_MAKE_BLOCKSIZE_ERROR,
+    SYNC_MAKE_BLOCKSIZE_OR_SAFE_BITS_ERROR,
     SYNC_MAKE_NEWPATH_ERROR,
     SYNC_MAKE_OUTFILE_ERROR,
     SYNC_MAKE_CANNOT_OVERWRITE_ERROR, // 5
@@ -167,6 +171,12 @@ int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
                               uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum);
 #endif
 
+#define _checkPatchMode(_argc,_argv)            \
+    if (isSwapToPatchMode(_argc,_argv)){        \
+        printf("hsync_make swap to hsync_demo mode.\n\n"); \
+        return sync_client_cmd_line(_argc,_argv);    \
+    }
+
 #if (_IS_NEED_MAIN)
 #   if (_IS_USED_WIN32_UTF8_WAPI)
 int wmain(int argc,wchar_t* argv_w[]){
@@ -175,10 +185,12 @@ int wmain(int argc,wchar_t* argv_w[]){
     if (!_wFileNames_to_utf8((const wchar_t**)argv_w,argc,argv_utf8,_mem.size()))
         return SYNC_MAKE_OPTIONS_ERROR;
     SetDefaultStringLocale();
+    _checkPatchMode(argc,(const char**)argv_utf8);
     return sync_make_cmd_line(argc,(const char**)argv_utf8);
 }
 #   else
 int main(int argc,char* argv[]){
+    _checkPatchMode(argc,(const char**)argv);
     return  sync_make_cmd_line(argc,(const char**)argv);
 }
 #   endif
@@ -189,7 +201,7 @@ static bool _tryGetCompressSet(const char** isMatchedType,const char* ptype,cons
                                const char* cmpType,const char* cmpType2=0,
                                size_t* compressLevel=0,size_t levelMin=0,size_t levelMax=0,size_t levelDefault=0,
                                size_t* dictSize=0,size_t dictSizeMin=0,size_t dictSizeMax=0,size_t dictSizeDefault=0){
-    if (*isMatchedType) return true; //ok
+    assert (0==(*isMatchedType));
     const size_t ctypeLen=strlen(cmpType);
     const size_t ctype2Len=(cmpType2!=0)?strlen(cmpType2):0;
     if ( ((ctypeLen==(size_t)(ptypeEnd-ptype))&&(0==strncmp(ptype,cmpType,ctypeLen)))
@@ -201,7 +213,7 @@ static bool _tryGetCompressSet(const char** isMatchedType,const char* ptype,cons
     if ((compressLevel)&&(ptypeEnd[0]=='-')){
         const char* plevel=ptypeEnd+1;
         const char* plevelEnd=findUntilEnd(plevel,'-');
-        if (!a_to_size(plevel,plevelEnd-plevel,compressLevel)) return false; //error
+        if (!kmg_to_size(plevel,plevelEnd-plevel,compressLevel)) return false; //error
         if (*compressLevel<levelMin) *compressLevel=levelMin;
         else if (*compressLevel>levelMax) *compressLevel=levelMax;
         if ((dictSize)&&(plevelEnd[0]=='-')){
@@ -212,7 +224,7 @@ static bool _tryGetCompressSet(const char** isMatchedType,const char* ptype,cons
             else if (*dictSize>dictSizeMax) *dictSize=dictSizeMax;
         }else{
             if (plevelEnd[0]!='\0') return false; //error
-            if (dictSize) *dictSize=dictSizeDefault;
+            if (dictSize) *dictSize=(dictSizeDefault<dictSizeMax)?dictSizeDefault:dictSizeMax;
         }
     }else{
         if (ptypeEnd[0]!='\0') return false; //error
@@ -222,31 +234,52 @@ static bool _tryGetCompressSet(const char** isMatchedType,const char* ptype,cons
     return true;
 }
 
+
 #define _options_check(value,errorInfo) do{ \
-    if (!(value)) { fprintf(stderr,"options " errorInfo " ERROR!\n\n"); \
+    if (!(value)) { LOG_ERR("options " errorInfo " ERROR!\n\n"); \
                     printUsage(); return SYNC_MAKE_OPTIONS_ERROR; } }while(0)
 
 #define _return_check(value,exitCode,fmt,errorInfo) do{ \
-    if (!(value)) { fprintf(stderr,fmt " ERROR!\n",errorInfo); return exitCode; } }while(0)
+    if (!(value)) { LOG_ERR(fmt " ERROR!\n",errorInfo); return exitCode; } }while(0)
+
+#define _return_check2(value,exitCode,fmt,errorInfo0,errorInfo1) do{ \
+    if (!(value)) { LOG_ERR(fmt " ERROR!\n",errorInfo0,errorInfo1); return exitCode; } }while(0)
+
+
+
+#define __getCompressSet(_tryGet_code,_errTag)  \
+    if (isMatchedType==0){                      \
+        _options_check(_tryGet_code,_errTag);   \
+        if (isMatchedType)
 
 static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
                              const char* ptype,const char* ptypeEnd){
     const char* isMatchedType=0;
     size_t      compressLevel=0;
-#ifdef _CompressPlugin_zlib
-    _options_check(_tryGetCompressSet(&isMatchedType,
-                                      ptype,ptypeEnd,"zlib",0,&compressLevel,1,9,9),"-c-zlib-?");
-    if ((isMatchedType)&&(0==strcmp(isMatchedType,"zlib"))){
-        static TDictCompressPlugin_zlib _zlibDictCompressPlugin=zlibDictCompressPlugin;
-        _zlibDictCompressPlugin.compress_level=(int)compressLevel;
-        *out_compressPlugin=&_zlibDictCompressPlugin.base; }
-    _options_check(_tryGetCompressSet(&isMatchedType,
-                                      ptype,ptypeEnd,"zlibs",0,&compressLevel,1,9,9),"-c-zlibs-?");
-    if ((isMatchedType)&&(0==strcmp(isMatchedType,"zlibs"))){
-        static TDictCompressPlugin_zlib _zlibsDictCompressPlugin=zlibsDictCompressPlugin;
-        _zlibsDictCompressPlugin.compress_level=(int)compressLevel;
-        *out_compressPlugin=&_zlibsDictCompressPlugin.base; }
+#if (defined _CompressPlugin_zlib)||(defined _CompressPlugin_zstd)
+    size_t       dictBits=0;
+    const size_t defaultDictBits=20+0; //1m
+    const size_t defaultDictBits_zlib=15; //32k
 #endif
+#ifdef _CompressPlugin_zlib
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zlib",0,
+                                        &compressLevel,1,9,9, &dictBits,9,15,defaultDictBits_zlib),"-c-zlib-?"){
+        static TDictCompressPlugin_zlib _zlibCompressPlugin=zlibDictCompressPlugin;
+        _zlibCompressPlugin.compress_level=(int)compressLevel;
+        _zlibCompressPlugin.windowBits=(signed char)(-(int)dictBits);
+        *out_compressPlugin=&_zlibCompressPlugin.base; }}
+#endif
+#ifdef _CompressPlugin_zstd
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zstd",0,
+                                        &compressLevel,0,22,20, &dictBits,10,
+                                        _ZSTD_WINDOWLOG_MAX,defaultDictBits),"-c-zstd-?"){
+        static TDictCompressPlugin_zstd _zstdCompressPlugin=zstdDictCompressPlugin;
+        _zstdCompressPlugin.compress_level=(int)compressLevel;
+        _zstdCompressPlugin.dict_bits = (int)dictBits;
+        *out_compressPlugin=&_zstdCompressPlugin.base; }}
+#endif
+
+    _options_check((*out_compressPlugin!=0),"-c-?");
     return SYNC_MAKE_SUCCESS;
 }
 
@@ -555,8 +588,9 @@ int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_fil
                   SYNC_MAKE_NEWPATH_ERROR,"run printFileInfo(%s,)",newDataFile);
     bool isSafeHashClash=getStrongForHashClash(kSafeHashClashBit,newDataSize,kMatchBlockSize,
                                                strongChecksumPlugin->checksumByteSize());
-    _return_check(isSafeHashClash,SYNC_MAKE_BLOCKSIZE_ERROR,
-                  "hash clash warning! must increase matchBlockSize(%d) or decrease safeHashClashBit",kMatchBlockSize);
+    _return_check2(isSafeHashClash,SYNC_MAKE_BLOCKSIZE_OR_SAFE_BITS_ERROR,
+                   "hash clash error! matchBlockSize(%d) too small or safeHashClashBit(%d) too large",
+                   kMatchBlockSize,(uint32_t)kSafeHashClashBit);
     printCreateSyncInfo(kSafeHashClashBit,newDataSize,kMatchBlockSize,(compressPlugin!=0));
     
     try {
@@ -628,8 +662,9 @@ int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
                              kMatchBlockSize,kSafeHashClashBit,threadNum);
     } catch (const std::exception& e){
         if (!listener._isSafeHashClash){
-            _return_check(false,SYNC_MAKE_BLOCKSIZE_ERROR,
-                          "hash clash warning! must increase matchBlockSize(%d) or decrease safeHashClashBit",kMatchBlockSize);
+            _return_check2(false,SYNC_MAKE_BLOCKSIZE_OR_SAFE_BITS_ERROR,
+                           "hash clash error! matchBlockSize(%d) too small or safeHashClashBit(%d) too large",
+                           kMatchBlockSize,(uint32_t)kSafeHashClashBit);
         }else{
             _return_check(false,SYNC_MAKE_CREATE_DIR_SYNC_DATA_ERROR,
                           "run create_dir_sync_data with \"%s\"",e.what());
