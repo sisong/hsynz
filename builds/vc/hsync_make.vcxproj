@@ -160,6 +160,7 @@
     <ClCompile Include="..\..\hsync_make.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\dict_compress_plugin_demo.h" />
     <ClInclude Include="..\..\HDiffPatch\libhsync\sync_make\dict_compress_plugin.h" />
     <ClInclude Include="..\..\HDiffPatch\libhsync\sync_make\dir_sync_make.h" />
     <ClInclude Include="..\..\HDiffPatch\libhsync\sync_make\match_in_new.h" />

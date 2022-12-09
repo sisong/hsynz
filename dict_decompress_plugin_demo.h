@@ -81,13 +81,16 @@ extern "C" {
     }
     static hpatch_BOOL _zlib_dictDecompress(hsync_dictDecompressHandle dictHandle,
                                             const unsigned char* in_code,const unsigned char* in_codeEnd,
-                                            const unsigned char* in_dict,unsigned char* in_dictEnd_and_out_dataBegin,unsigned char* out_dataEnd){
+                                            const unsigned char* in_dict,unsigned char* in_dictEnd_and_out_dataBegin,
+                                            unsigned char* out_dataEnd,hpatch_BOOL dict_isReset,hpatch_BOOL out_isEnd){
         _TDictDecompressPlugin_zlib_data* self=(_TDictDecompressPlugin_zlib_data*)dictHandle;
         int z_ret;
         size_t result;
         size_t dictSize=in_dictEnd_and_out_dataBegin-in_dict;
         const size_t dataSize=(size_t)(out_dataEnd-in_dictEnd_and_out_dataBegin);
-        if (dictSize>0){ //set dict
+        if ((dictSize>0)&&dict_isReset){ //reset dict
+            if (inflateReset(&self->stream)!=Z_OK)
+                return hpatch_FALSE;
             assert(dictSize==(uInt)dictSize);
             z_ret=inflateSetDictionary(&self->stream,in_dict,(uInt)dictSize);
             if (z_ret!=Z_OK)
@@ -99,11 +102,18 @@ extern "C" {
         self->stream.next_out =in_dictEnd_and_out_dataBegin;
         self->stream.avail_out=(uInt)dataSize;
         assert(self->stream.avail_out==dataSize);
-        if (inflate(&self->stream,Z_FINISH)!=Z_STREAM_END) //Z_PARTIAL_FLUSH Z_SYNC_FLUSH Z_FULL_FLUSH  Z_FINISH
-            return hpatch_FALSE;//error
+        z_ret=inflate(&self->stream,out_isEnd?Z_FINISH:Z_PARTIAL_FLUSH);
+        if (out_isEnd){
+            if (z_ret!=Z_STREAM_END) 
+                return hpatch_FALSE;//error
+        }else{
+            if (z_ret!=Z_OK)
+                return hpatch_FALSE;//error
+        }
         result=self->stream.total_out;
-        if (inflateReset(&self->stream)!=Z_OK)
-            return hpatch_FALSE;
+        self->stream.total_out=0;
+        assert(self->stream.avail_in==0);
+        assert(result==dataSize);
         return (result==dataSize);
     }
     

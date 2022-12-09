@@ -99,12 +99,15 @@ hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
     }
     static size_t _zlib_dictCompress(hsync_dictCompressHandle dictHandle,
                                      unsigned char* out_code,unsigned char* out_codeEnd,
-                                     const hpatch_byte* in_dict,const hpatch_byte* in_dictEnd_and_dataBegin,const unsigned char* in_dataEnd){
+                                     const hpatch_byte* in_dict,const hpatch_byte* in_dictEnd_and_dataBegin,
+                                     const unsigned char* in_dataEnd,hpatch_BOOL dict_isReset,hpatch_BOOL in_isEnd){
         _TDictCompressPlugin_zlib_data* self=(_TDictCompressPlugin_zlib_data*)dictHandle;
         int z_ret;
         size_t result;
         size_t dictSize=in_dictEnd_and_dataBegin-in_dict;
-        if (dictSize>0){ //set dict
+        if ((dictSize>0)&&dict_isReset){ //reset dict
+            if (deflateReset(&self->stream)!=Z_OK)
+                return 0;
             assert(dictSize==(uInt)dictSize);
             z_ret=deflateSetDictionary(&self->stream,in_dict,(uInt)dictSize);
             if (z_ret!=Z_OK)
@@ -116,11 +119,40 @@ hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
         self->stream.next_out =out_code;
         self->stream.avail_out=(uInt)(out_codeEnd-out_code);
         assert(self->stream.avail_out==(size_t)(out_codeEnd-out_code));
-        if (deflate(&self->stream,Z_FINISH)!=Z_STREAM_END) //Z_PARTIAL_FLUSH Z_SYNC_FLUSH Z_FULL_FLUSH  Z_FINISH
-            return 0;//error
+        if (!in_isEnd){
+            int bits; 
+            z_ret=deflate(&self->stream,Z_BLOCK);
+            if (z_ret!=Z_OK)
+                return 0; //error
+            // add enough empty blocks to get to a byte boundary
+            z_ret=deflatePending(&self->stream,Z_NULL,&bits);
+            if (z_ret!=Z_OK)
+                return 0; //error
+            if (bits & 1){
+                z_ret=deflate(&self->stream,Z_SYNC_FLUSH);
+                if (z_ret!=Z_OK)
+                    return 0; //error
+            } else if (bits & 7) {
+                do { // add static empty blocks
+                    z_ret=deflatePrime(&self->stream, 10, 2);
+                    if (z_ret!=Z_OK)
+                        return 0; //error
+                    z_ret=deflatePending(&self->stream,Z_NULL,&bits);
+                    if (z_ret!=Z_OK)
+                        return 0; //error
+                } while (bits & 7);
+                z_ret=deflate(&self->stream,Z_BLOCK);
+                if (z_ret!=Z_OK)
+                    return 0; //error
+            }
+        }else{
+            z_ret=deflate(&self->stream,Z_FINISH);
+            if (z_ret!=Z_STREAM_END)
+                return 0; //error
+        }
         result=self->stream.total_out;
-        if (deflateReset(&self->stream)!=Z_OK)
-            return 0;
+        self->stream.total_out=0;
+        assert(self->stream.avail_in==0);
         return result;
     }
     
