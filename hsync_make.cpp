@@ -55,11 +55,10 @@
 #endif
 #if (_IS_NEED_DEFAULT_CompressPlugin)
 //===== select needs decompress plugins or change to your plugin=====
-//todo: #   define _CompressPlugin_zlib
+#   define _CompressPlugin_zlib
 #endif
 
-#define  IS_NOTICE_compress_canceled 0
-//todo: #include "dict_compress_plugin_demo.h"
+#include "dict_compress_plugin_demo.h"
 
 
 #ifndef _IS_NEED_DEFAULT_ChecksumPlugin
@@ -160,13 +159,13 @@ typedef enum TSyncMakeResult {
 int sync_make_cmd_line(int argc, const char * argv[]);
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
-                               const char* out_hsynz_file,const hsync_TDictCompress* compressPlugin,
-                               hpatch_TChecksum* strongChecksumPlugin,uint32_t kMatchBlockSize,
+                               const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
+                               const hsync_TDictCompress* compressPlugin,uint32_t kMatchBlockSize,
                                size_t kSafeHashClashBit,size_t threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
-                              const char* out_hsynz_file,const hsync_TDictCompress* compressPlugin,
-                              hpatch_TChecksum* strongChecksumPlugin,size_t kMaxOpenFileNumber,
+                              const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
+                              const hsync_TDictCompress* compressPlugin,size_t kMaxOpenFileNumber,
                               const std::vector<std::string>& ignoreNewPathList,
                               uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum);
 #endif
@@ -528,13 +527,13 @@ int sync_make_cmd_line(int argc, const char * argv[]){
     int result;
 #if (_IS_NEED_DIR_DIFF_PATCH)
         if (isUseDirSyncUpdate)
-            result=create_sync_files_for_dir(newDataPath,out_hsyni_file,out_hsynz_file,compressPlugin,
-                                             strongChecksumPlugin,kMaxOpenFileNumber,ignoreNewPathList,
+            result=create_sync_files_for_dir(newDataPath,out_hsyni_file,out_hsynz_file,strongChecksumPlugin,
+                                             compressPlugin,kMaxOpenFileNumber,ignoreNewPathList,
                                              (uint32_t)kMatchBlockSize,kSafeHashClashBit,threadNum);
         else
 #endif
-            result=create_sync_files_for_file(newDataPath,out_hsyni_file,out_hsynz_file,compressPlugin,
-                                              strongChecksumPlugin,(uint32_t)kMatchBlockSize,kSafeHashClashBit,threadNum);
+            result=create_sync_files_for_file(newDataPath,out_hsyni_file,out_hsynz_file,strongChecksumPlugin,
+                                              compressPlugin,(uint32_t)kMatchBlockSize,kSafeHashClashBit,threadNum);
     double time1=clock_s();
     if (result==SYNC_MAKE_SUCCESS){
         _return_check(printFileInfo(out_hsyni_file,"out .hsyni"),
@@ -580,8 +579,8 @@ void create_sync_data_by_file(const char* newDataFile,
 
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
-                               const char* out_hsynz_file,const hsync_TDictCompress* compressPlugin,
-                               hpatch_TChecksum* strongChecksumPlugin,uint32_t kMatchBlockSize,
+                               const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
+                               const hsync_TDictCompress* compressPlugin,uint32_t kMatchBlockSize,
                                size_t kSafeHashClashBit,size_t threadNum){
     hpatch_StreamPos_t newDataSize=0;
     _return_check(printFileInfo(newDataFile,"\nin new file",&newDataSize),
@@ -640,8 +639,8 @@ struct DirSyncListener:public IDirSyncListener{
 };
 
 int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
-                              const char* out_hsynz_file,const hsync_TDictCompress* compressPlugin,
-                              hpatch_TChecksum* strongChecksumPlugin,size_t kMaxOpenFileNumber,
+                              const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
+                              const hsync_TDictCompress* compressPlugin,size_t kMaxOpenFileNumber,
                               const std::vector<std::string>& ignoreNewPathList,
                               uint32_t kMatchBlockSize,size_t kSafeHashClashBit,size_t threadNum){
     std::string newDir(newDataDir);

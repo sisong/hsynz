@@ -69,10 +69,10 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #endif
 #if (_IS_NEED_DEFAULT_CompressPlugin)
 //===== select needs decompress plugins or change to your plugin=====
-//todo: #   define _CompressPlugin_zlib
+#   define _CompressPlugin_zlib
 #endif
 
-#include "HDiffPatch/decompress_plugin_demo.h"
+#include "dict_decompress_plugin_demo.h"
 
 #ifndef _IS_NEED_DEFAULT_ChecksumPlugin
 #   define _IS_NEED_DEFAULT_ChecksumPlugin 1
@@ -191,14 +191,25 @@ int main(int argc,char* argv[]){
 #   endif
 #endif
 
+static int _dictSizeToDictBits(size_t dictSize){
+    int bits=1;
+    while ((((size_t)1)<<bits)<dictSize){
+        ++bits;
+        if (bits==sizeof(size_t)*8) break;
+    }
+    return bits;
+}
 
 //ISyncInfoListener::findDecompressPlugin
-static hpatch_TDecompress* _findDecompressPlugin(ISyncInfoListener* listener,const char* compressType){
+static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,const char* compressType,size_t dictSize){
     if (compressType==0) return 0; //ok
-    hpatch_TDecompress* decompressPlugin=0;
+    hsync_TDictDecompress* decompressPlugin=0;
 #ifdef  _CompressPlugin_zlib
-    if ((!decompressPlugin)&&zlibDecompressPlugin.is_can_open(compressType))
-        decompressPlugin=&zlibDecompressPlugin;
+    if ((!decompressPlugin)&&zlibDictDecompressPlugin.base.is_can_open(compressType)){
+        static TDictDecompressPlugin_zlib _zlibDictDecompressPlugin=zlibDictDecompressPlugin;
+        _zlibDictDecompressPlugin.windowBits=-_dictSizeToDictBits(dictSize);
+        decompressPlugin=&_zlibDictDecompressPlugin.base;
+    }
 #endif
     if (decompressPlugin==0){
         printf("  sync_patch can't decompress type: \"%s\"\n",compressType);
