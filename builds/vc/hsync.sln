@@ -14,6 +14,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hsync_demo", "hsync_demo.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhsyncclient", "libhsyncclient.vcxproj", "{EF87AAC9-545B-4AF6-A695-D7FC9D1670C2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zstd", "..\..\HDiffPatch\builds\vc2019\zstd.vcxproj", "{16415855-B9F4-4A5D-A096-C3380CFC6008}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM

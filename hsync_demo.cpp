@@ -70,6 +70,7 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #if (_IS_NEED_DEFAULT_CompressPlugin)
 //===== select needs decompress plugins or change to your plugin=====
 #   define _CompressPlugin_zlib
+#   define _CompressPlugin_zstd
 #endif
 
 #include "dict_decompress_plugin_demo.h"
@@ -209,6 +210,13 @@ static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,
         static TDictDecompressPlugin_zlib _zlibDictDecompressPlugin=zlibDictDecompressPlugin;
         _zlibDictDecompressPlugin.windowBits=-_dictSizeToDictBits(dictSize);
         decompressPlugin=&_zlibDictDecompressPlugin.base;
+    }
+#endif
+#ifdef  _CompressPlugin_zstd
+    if ((!decompressPlugin)&&zstdDictDecompressPlugin.base.is_can_open(compressType)){
+        static TDictDecompressPlugin_zstd _zstdDictDecompressPlugin=zstdDictDecompressPlugin;
+        _zstdDictDecompressPlugin.dictBits=_dictSizeToDictBits(dictSize);
+        decompressPlugin=&_zstdDictDecompressPlugin.base;
     }
 #endif
     if (decompressPlugin==0){

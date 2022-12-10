@@ -56,6 +56,7 @@
 #if (_IS_NEED_DEFAULT_CompressPlugin)
 //===== select needs decompress plugins or change to your plugin=====
 #   define _CompressPlugin_zlib
+#   define _CompressPlugin_zstd
 #endif
 
 #include "dict_compress_plugin_demo.h"
@@ -102,6 +103,10 @@ static void printUsage(){
 #ifdef _CompressPlugin_zlib
            "        -c-zlib[-{1..9}[-dictBits]]     DEFAULT level 9\n"
            "            dictBits can 9--15, DEFAULT 15.\n"
+#endif
+#ifdef _CompressPlugin_zstd
+           "        -c-zstd[-{0..22}[-dictBits]]    DEFAULT level 20\n"
+           "            dictBits can 10--27, DEFAULT 20.\n"
 #endif
            "  -C-checksumType\n"
            "      set strong Checksum type for block data, DEFAULT "
@@ -160,12 +165,12 @@ int sync_make_cmd_line(int argc, const char * argv[]);
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
                                const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
-                               const hsync_TDictCompress* compressPlugin,uint32_t kSyncBlockSize,
+                               hsync_TDictCompress* compressPlugin,uint32_t kSyncBlockSize,
                                size_t kSafeHashClashBit,size_t threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
                               const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
-                              const hsync_TDictCompress* compressPlugin,size_t kMaxOpenFileNumber,
+                              hsync_TDictCompress* compressPlugin,size_t kMaxOpenFileNumber,
                               const std::vector<std::string>& ignoreNewPathList,
                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum);
 #endif
@@ -261,20 +266,20 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
     const size_t defaultDictBits_zlib=15; //32k
 #endif
 #ifdef _CompressPlugin_zlib
-    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zlib",0,
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zlib","zlibD",
                                         &compressLevel,1,9,9, &dictBits,9,15,defaultDictBits_zlib),"-c-zlib-?"){
         static TDictCompressPlugin_zlib _zlibCompressPlugin=zlibDictCompressPlugin;
-        _zlibCompressPlugin.compress_level=(int)compressLevel;
-        _zlibCompressPlugin.windowBits=(signed char)(-(int)dictBits);
+        _zlibCompressPlugin.compress_level=(hpatch_byte)compressLevel;
+        _zlibCompressPlugin.dict_bits=(hpatch_byte)dictBits;
         *out_compressPlugin=&_zlibCompressPlugin.base; }}
 #endif
 #ifdef _CompressPlugin_zstd
-    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zstd",0,
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zstd","zstdD",
                                         &compressLevel,0,22,20, &dictBits,10,
-                                        _ZSTD_WINDOWLOG_MAX,defaultDictBits),"-c-zstd-?"){
+                                        30,defaultDictBits),"-c-zstd-?"){
         static TDictCompressPlugin_zstd _zstdCompressPlugin=zstdDictCompressPlugin;
-        _zstdCompressPlugin.compress_level=(int)compressLevel;
-        _zstdCompressPlugin.dict_bits = (int)dictBits;
+        _zstdCompressPlugin.compress_level=(hpatch_byte)compressLevel;
+        _zstdCompressPlugin.dict_bits=(hpatch_byte)dictBits;
         *out_compressPlugin=&_zstdCompressPlugin.base; }}
 #endif
 
@@ -553,7 +558,7 @@ void create_sync_data_by_file(const char* newDataFile,
                               const char* out_hsyni_file,
                               const char* out_hsynz_file,
                               hpatch_TChecksum*      strongChecksumPlugin,
-                              const hsync_TDictCompress* compressPlugin,
+                              hsync_TDictCompress* compressPlugin,
                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum){
     hdiff_private::CFileStreamInput  newData(newDataFile);
     hdiff_private::CFileStreamOutput out_newSyncInfo(out_hsyni_file,~(hpatch_StreamPos_t)0);
@@ -572,7 +577,7 @@ void create_sync_data_by_file(const char* newDataFile,
 void create_sync_data_by_file(const char* newDataFile,
                               const char* out_hsyni_file,
                               hpatch_TChecksum*      strongChecksumPlugin,
-                              const hsync_TDictCompress* compressPlugin,
+                              hsync_TDictCompress* compressPlugin,
                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum){
     create_sync_data_by_file(newDataFile,out_hsyni_file,0,strongChecksumPlugin,compressPlugin,
                              kSyncBlockSize,kSafeHashClashBit,threadNum);
@@ -581,7 +586,7 @@ void create_sync_data_by_file(const char* newDataFile,
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
                                const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
-                               const hsync_TDictCompress* compressPlugin,uint32_t kSyncBlockSize,
+                               hsync_TDictCompress* compressPlugin,uint32_t kSyncBlockSize,
                                size_t kSafeHashClashBit,size_t threadNum){
     hpatch_StreamPos_t newDataSize=0;
     _return_check(printFileInfo(newDataFile,"\nin new file",&newDataSize),
@@ -641,7 +646,7 @@ struct DirSyncListener:public IDirSyncListener{
 
 int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
                               const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
-                              const hsync_TDictCompress* compressPlugin,size_t kMaxOpenFileNumber,
+                              hsync_TDictCompress* compressPlugin,size_t kMaxOpenFileNumber,
                               const std::vector<std::string>& ignoreNewPathList,
                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum){
     std::string newDir(newDataDir);
