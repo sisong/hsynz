@@ -208,14 +208,14 @@ static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,
 #ifdef  _CompressPlugin_zlib
     if ((!decompressPlugin)&&zlibDictDecompressPlugin.base.is_can_open(compressType)){
         static TDictDecompressPlugin_zlib _zlibDictDecompressPlugin=zlibDictDecompressPlugin;
-        _zlibDictDecompressPlugin.windowBits=-_dictSizeToDictBits(dictSize);
+        _zlibDictDecompressPlugin.dict_bits=(hpatch_byte)_dictSizeToDictBits(dictSize);
         decompressPlugin=&_zlibDictDecompressPlugin.base;
     }
 #endif
 #ifdef  _CompressPlugin_zstd
     if ((!decompressPlugin)&&zstdDictDecompressPlugin.base.is_can_open(compressType)){
         static TDictDecompressPlugin_zstd _zstdDictDecompressPlugin=zstdDictDecompressPlugin;
-        _zstdDictDecompressPlugin.dictBits=_dictSizeToDictBits(dictSize);
+        _zstdDictDecompressPlugin.dict_bits=(hpatch_byte)_dictSizeToDictBits(dictSize);
         decompressPlugin=&_zstdDictDecompressPlugin.base;
     }
 #endif

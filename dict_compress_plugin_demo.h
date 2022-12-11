@@ -169,7 +169,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
     static const TDictCompressPlugin_zlib zlibDictCompressPlugin={
         {_zlib_dictCompressType,_default_maxCompressedSize,_zlib_getDictSizeByData,
             _zlib_dictCompressOpen,_zlib_dictCompressClose,_zlib_dictCompress},
-        9,8,-MAX_WBITS};
+        9,8,MAX_WBITS};
     
 #endif//_CompressPlugin_zlib
 

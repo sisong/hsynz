@@ -47,7 +47,7 @@ extern "C" {
     //zlibDictDecompressPlugin
     typedef struct{
         hsync_TDictDecompress base;
-        int                   windowBits;
+        hpatch_byte           dict_bits;
     } TDictDecompressPlugin_zlib;
     typedef struct{
         z_stream              stream;
@@ -61,7 +61,7 @@ extern "C" {
         _TDictDecompressPlugin_zlib_data* self=(_TDictDecompressPlugin_zlib_data*)malloc(sizeof(_TDictDecompressPlugin_zlib_data));
         if (self==0) return 0;
         memset(self,0,sizeof(*self));
-        if (inflateInit2(&self->stream,plugin->windowBits)!=Z_OK){
+        if (inflateInit2(&self->stream,-plugin->dict_bits)!=Z_OK){
             free(self);
             return 0;// error
         }
@@ -115,7 +115,7 @@ extern "C" {
     static const TDictDecompressPlugin_zlib zlibDictDecompressPlugin={
         { _zlib_dict_is_can_open, _zlib_dictDecompressOpen,
           _zlib_dictDecompressClose, _zlib_dictDecompress },
-        -MAX_WBITS };
+        MAX_WBITS };
     
 #endif//_CompressPlugin_zlib
 
@@ -127,11 +127,10 @@ extern "C" {
     //zstdDictDecompressPlugin
     typedef struct{
         hsync_TDictDecompress base;
-        int                   dictBits;
+        hpatch_byte           dict_bits;
     } TDictDecompressPlugin_zstd;
     typedef struct{
         ZSTD_DCtx*          s;
-        hpatch_byte*        dict; //dict[1<<dict_bits]
     } _TDictDecompressPlugin_zstd_data;
 
     static hpatch_BOOL _zstd_dict_is_can_open(const char* compressType){
@@ -150,11 +149,9 @@ extern "C" {
     }
     static hsync_dictDecompressHandle _zstd_dictDecompressOpen(struct hsync_TDictDecompress* dictDecompressPlugin){
         const TDictDecompressPlugin_zstd*  plugin=(const TDictDecompressPlugin_zstd*)dictDecompressPlugin;
-        _TDictDecompressPlugin_zstd_data* self=(_TDictDecompressPlugin_zstd_data*)malloc(
-                                            sizeof(_TDictDecompressPlugin_zstd_data)+(((size_t)1)<<plugin->dictBits));
+        _TDictDecompressPlugin_zstd_data* self=(_TDictDecompressPlugin_zstd_data*)malloc(sizeof(_TDictDecompressPlugin_zstd_data));
         if (self==0) return 0;
         memset(self,0,sizeof(*self));
-        self->dict=((hpatch_byte*)self)+sizeof(_TDictDecompressPlugin_zstd_data);
         self->s=ZSTD_createDCtx();
         if (self->s==0) goto _on_error;
         return self;
@@ -177,8 +174,7 @@ extern "C" {
             ret=ZSTD_DCtx_reset(s,ZSTD_reset_session_only);
             if (ZSTD_isError(ret))
                 return 0; //error
-            memcpy(self->dict,in_dict,dictSize);
-            ret=ZSTD_DCtx_refPrefix(s,self->dict,dictSize);
+            ret=ZSTD_DCtx_refPrefix(s,in_dict,dictSize);
             if (ZSTD_isError(ret))
                 return 0; //error
         }
