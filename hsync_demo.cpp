@@ -813,7 +813,6 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     listener.isPatchToNewTempDir=isSamePath;
     listener.newDirRoot=outNewDir?&_outNewDir:0;
     listener.oldManifest=&oldManifest;
-    listener.patchBegin=0;
     listener.patchFinish=_dirSyncPatchFinish;
     
     if (hsynz_file_url)
