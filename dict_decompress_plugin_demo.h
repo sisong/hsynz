@@ -121,6 +121,7 @@ extern "C" {
 
 
 #ifdef  _CompressPlugin_zstd
+#define ZSTD_STATIC_LINKING_ONLY
 #if (_IsNeedIncludeDefaultCompressHead)
 #   include "zstd.h" // "zstd/lib/zstd.h" https://github.com/facebook/zstd
 #endif
@@ -150,10 +151,15 @@ extern "C" {
     static hsync_dictDecompressHandle _zstd_dictDecompressOpen(struct hsync_TDictDecompress* dictDecompressPlugin){
         const TDictDecompressPlugin_zstd*  plugin=(const TDictDecompressPlugin_zstd*)dictDecompressPlugin;
         _TDictDecompressPlugin_zstd_data* self=(_TDictDecompressPlugin_zstd_data*)malloc(sizeof(_TDictDecompressPlugin_zstd_data));
+        size_t ret;
         if (self==0) return 0;
         memset(self,0,sizeof(*self));
         self->s=ZSTD_createDCtx();
         if (self->s==0) goto _on_error;
+        ret=ZSTD_DCtx_setParameter(self->s,ZSTD_d_format,ZSTD_f_zstd1_magicless);
+        if (ZSTD_isError(ret)) goto _on_error;
+        ret=ZSTD_DCtx_setParameter(self->s,ZSTD_d_forceIgnoreChecksum,ZSTD_d_ignoreChecksum);
+        if (ZSTD_isError(ret)) goto _on_error;
         return self;
     _on_error:
         _zstd_dictDecompressClose(dictDecompressPlugin,self);

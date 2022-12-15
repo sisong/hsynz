@@ -176,6 +176,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
 
 #ifdef  _CompressPlugin_zstd
 #if (_IsNeedIncludeDefaultCompressHead)
+#define ZSTD_STATIC_LINKING_ONLY
 #   include "zstd.h" // "zstd/lib/zstd.h" https://github.com/facebook/zstd
 #endif
     struct TDictCompressPlugin_zstd{
@@ -207,6 +208,8 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         ret=ZSTD_CCtx_setParameter(s,ZSTD_c_compressionLevel,plugin->compress_level);
         if (ZSTD_isError(ret)) goto _on_error;
         ret=ZSTD_CCtx_setParameter(s,ZSTD_c_windowLog,plugin->dict_bits);
+        if (ZSTD_isError(ret)) goto _on_error;
+        ret=ZSTD_CCtx_setParameter(s,ZSTD_c_format,ZSTD_f_zstd1_magicless);
         if (ZSTD_isError(ret)) goto _on_error;
         return s;
     _on_error:

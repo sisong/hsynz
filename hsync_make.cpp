@@ -93,9 +93,8 @@ static void printUsage(){
            "      safeBit>=20, DEFAULT -b-32, recommended 24,40,48...\n"
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
-           "    DEFAULT -p-1;\n"
+           "    DEFAULT -p-4;\n"
            "    if parallelThreadNumber>1 then open multi-thread Parallel mode;\n"
-           "    used when compress slow or strong checksum slow;\n"
 #endif
            "  -c-compressType[-compressLevel]\n"
            "      set out_hsynz_file Compress type & level, DEFAULT uncompress;\n"
@@ -107,6 +106,7 @@ static void printUsage(){
 #ifdef _CompressPlugin_zstd
            "        -c-zstd[-{0..22}[-dictBits]]    DEFAULT level 22\n"
            "            dictBits can 10--27, DEFAULT 17.\n"
+           "            WARNING: now only for test, compress very slow with big dictBits.\n"
 #endif
            "  -C-checksumType\n"
            "      set strong Checksum type for block data, DEFAULT "
@@ -165,13 +165,13 @@ int sync_make_cmd_line(int argc, const char * argv[]);
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
                                const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
-                               hsync_TDictCompress* compressPlugin,uint32_t kSyncBlockSize,
-                               size_t kSafeHashClashBit,size_t threadNum);
+                               hsync_TDictCompress* compressPlugin,hsync_THsynz* hsynzPlugin,
+                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
-                              const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
-                              hsync_TDictCompress* compressPlugin,size_t kMaxOpenFileNumber,
-                              const std::vector<std::string>& ignoreNewPathList,
+                              const char* out_hsynz_file,size_t kMaxOpenFileNumber,
+                              hpatch_TChecksum* strongChecksumPlugin,hsync_TDictCompress* compressPlugin,
+                              hsync_THsynz* hsynzPlugin,const std::vector<std::string>& ignoreNewPathList,
                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum);
 #endif
 
@@ -349,7 +349,7 @@ static void printCreateSyncInfo(size_t kSafeHashClashBit,hpatch_StreamPos_t newD
 
 #define _THREAD_NUMBER_NULL     0
 #define _THREAD_NUMBER_MIN      1
-#define _THREAD_NUMBER_DEFUALT  1
+#define _THREAD_NUMBER_DEFUALT  4
 #define _THREAD_NUMBER_MAX      (1<<8)
 
 int sync_make_cmd_line(int argc, const char * argv[]){
@@ -533,13 +533,13 @@ int sync_make_cmd_line(int argc, const char * argv[]){
     int result;
 #if (_IS_NEED_DIR_DIFF_PATCH)
         if (isUseDirSyncUpdate)
-            result=create_sync_files_for_dir(newDataPath,out_hsyni_file,out_hsynz_file,strongChecksumPlugin,
-                                             compressPlugin,kMaxOpenFileNumber,ignoreNewPathList,
+            result=create_sync_files_for_dir(newDataPath,out_hsyni_file,out_hsynz_file,kMaxOpenFileNumber,
+                                             strongChecksumPlugin,compressPlugin,0,ignoreNewPathList,
                                              (uint32_t)kSyncBlockSize,kSafeHashClashBit,threadNum);
         else
 #endif
             result=create_sync_files_for_file(newDataPath,out_hsyni_file,out_hsynz_file,strongChecksumPlugin,
-                                              compressPlugin,(uint32_t)kSyncBlockSize,kSafeHashClashBit,threadNum);
+                                              compressPlugin,0,(uint32_t)kSyncBlockSize,kSafeHashClashBit,threadNum);
     double time1=clock_s();
     if (result==SYNC_MAKE_SUCCESS){
         _return_check(printFileInfo(out_hsyni_file,"out .hsyni"),
@@ -557,8 +557,8 @@ int sync_make_cmd_line(int argc, const char * argv[]){
 void create_sync_data_by_file(const char* newDataFile,
                               const char* out_hsyni_file,
                               const char* out_hsynz_file,
-                              hpatch_TChecksum*      strongChecksumPlugin,
-                              hsync_TDictCompress* compressPlugin,
+                              hpatch_TChecksum*    strongChecksumPlugin,
+                              hsync_TDictCompress* compressPlugin,hsync_THsynz* hsynzPlugin,
                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum){
     hdiff_private::CFileStreamInput  newData(newDataFile);
     hdiff_private::CFileStreamOutput out_newSyncInfo(out_hsyni_file,~(hpatch_StreamPos_t)0);
@@ -570,7 +570,7 @@ void create_sync_data_by_file(const char* newDataFile,
     }
     
     create_sync_data(&newData.base,&out_newSyncInfo.base,newDataStream,
-                     strongChecksumPlugin,compressPlugin,
+                     strongChecksumPlugin,compressPlugin,hsynzPlugin,
                      kSyncBlockSize,kSafeHashClashBit,threadNum);
 }
 
@@ -579,15 +579,15 @@ void create_sync_data_by_file(const char* newDataFile,
                               hpatch_TChecksum*      strongChecksumPlugin,
                               hsync_TDictCompress* compressPlugin,
                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum){
-    create_sync_data_by_file(newDataFile,out_hsyni_file,0,strongChecksumPlugin,compressPlugin,
+    create_sync_data_by_file(newDataFile,out_hsyni_file,0,strongChecksumPlugin,compressPlugin,0,
                              kSyncBlockSize,kSafeHashClashBit,threadNum);
 }
 
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
                                const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
-                               hsync_TDictCompress* compressPlugin,uint32_t kSyncBlockSize,
-                               size_t kSafeHashClashBit,size_t threadNum){
+                               hsync_TDictCompress* compressPlugin,hsync_THsynz* hsynzPlugin,
+                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum){
     hpatch_StreamPos_t newDataSize=0;
     _return_check(printFileInfo(newDataFile,"\nin new file",&newDataSize),
                   SYNC_MAKE_NEWPATH_ERROR,"run printFileInfo(%s,)",newDataFile);
@@ -600,7 +600,7 @@ int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_fil
     
     try {
         create_sync_data_by_file(newDataFile,out_hsyni_file,out_hsynz_file,
-                                 strongChecksumPlugin,compressPlugin,
+                                 strongChecksumPlugin,compressPlugin,hsynzPlugin,
                                  kSyncBlockSize,kSafeHashClashBit,threadNum);
     } catch (const std::exception& e){
         _return_check(false,SYNC_MAKE_CREATE_SYNC_DATA_ERROR,
@@ -645,9 +645,9 @@ struct DirSyncListener:public IDirSyncListener{
 };
 
 int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
-                              const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
-                              hsync_TDictCompress* compressPlugin,size_t kMaxOpenFileNumber,
-                              const std::vector<std::string>& ignoreNewPathList,
+                              const char* out_hsynz_file,size_t kMaxOpenFileNumber,
+                              hpatch_TChecksum* strongChecksumPlugin,hsync_TDictCompress* compressPlugin,
+                              hsync_THsynz* hsynzPlugin,const std::vector<std::string>& ignoreNewPathList,
                               uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum){
     std::string newDir(newDataDir);
     assignDirTag(newDir);
@@ -663,7 +663,7 @@ int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
     }
     try {
         create_dir_sync_data(&listener,newManifest,out_hsyni_file,out_hsynz_file,
-                             strongChecksumPlugin,compressPlugin,kMaxOpenFileNumber,
+                             kMaxOpenFileNumber,strongChecksumPlugin,compressPlugin,hsynzPlugin,
                              kSyncBlockSize,kSafeHashClashBit,threadNum);
     } catch (const std::exception& e){
         if (!listener._isSafeHashClash){
