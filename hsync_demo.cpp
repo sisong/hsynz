@@ -130,7 +130,7 @@ static void printUsage(){
 #endif
            "  -f  Force overwrite, ignore write path already exists;\n"
            "      DEFAULT (no -f) not overwrite and then return error;\n"
-           "      support oldPath outNewPath same path!(patch to tempPath and overwrite old)\n"
+           "      not support oldPath outNewPath same path!\n"
            "      if used -f and outNewPath is exist file:\n"
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "        if patch output file, will overwrite;\n"
@@ -158,13 +158,13 @@ static void printUsage(){
 
 int sync_client_cmd_line(int argc, const char * argv[]);
 
-int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,bool oldIsDir,
+int sync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynz_file_url,const char* localDiffFile,
                      hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
                      size_t kMaxOpenFileNumber);
 #if (_IS_NEED_DIR_DIFF_PATCH)
-int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
+int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynz_file_url,const char* localDiffFile,
                      hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
@@ -498,7 +498,12 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     }
     double time0=clock_s();
     
-    const bool isSamePath=(outNewPath!=0)&&(hpatch_getIsSamePath(oldPath,outNewPath)!=0);
+    {
+        const bool isSamePath=(outNewPath!=0)&&(hpatch_getIsSamePath(oldPath,outNewPath)!=0);
+        _check3(!isSamePath,kSyncClient_overwritePathError,
+               "not support oldPath outNewPath same path \"",outNewPath,"\"");
+    }
+
     hpatch_TPathType   outNewPathType=kPathType_notExist;
     if (outNewPath)
         _check3(hpatch_getPathStat(outNewPath,&outNewPathType,0),
@@ -506,9 +511,6 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     if (!isForceOverwrite)
         _check3(outNewPathType==kPathType_notExist,kSyncClient_overwritePathError,
                 "outNewPath \"",outNewPath,"\" already exists, overwrite");
-    if (isSamePath)
-        _check3(isForceOverwrite,kSyncClient_overwritePathError,
-               "oldPath outNewPath same path \"",outNewPath,"\", overwrite");
     
     hpatch_TPathType oldPathType;
     if (0!=strcmp(oldPath,"")){ // isOldPathInputEmpty
@@ -542,27 +544,16 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     if (outNewPath&&(!newIsDir))
         _check3(!hpatch_getIsDirName(outNewPath),kSyncClient_pathTypeError,
                 "outNewPath \"",outNewPath,"\" must file, type");
-    
-    char _newTempName[hpatch_kPathMaxSize];
-    if (isSamePath){
-        if (oldIsDir) _check(newIsDir,kSyncClient_overwritePathError,
-                             "can not use file overwrite oldDirectory");
-        if (!oldIsDir) _check(!newIsDir,kSyncClient_overwritePathError,
-                              "can not use directory overwrite oldFile");
-        _check3(hpatch_getTempPathName(outNewPath,_newTempName,_newTempName+sizeof(_newTempName)),
-                kSyncClient_tempFileError,"getTempPathName(\"",outNewPath,"\")");
-        printf("NOTE: temp outNewPath will be move to oldPath after sync_patch!\n");
-        outNewPath=_newTempName;
-    }
+
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (newIsDir)
-        result=sync_patch_2dir(outNewPath,oldPath,isSamePath,oldIsDir,ignoreOldPathList,
+        result=sync_patch_2dir(outNewPath,oldPath,oldIsDir,ignoreOldPathList,
                                hsyni_file,hsynz_file_url,localDiffFile,
                                isUsedDownloadContinue,&downloadPlugin,
                                kMaxOpenFileNumber);
     else
 #endif
-        result=sync_patch_2file(outNewPath,oldPath,isSamePath,oldIsDir,ignoreOldPathList,
+        result=sync_patch_2file(outNewPath,oldPath,oldIsDir,ignoreOldPathList,
                                 hsyni_file,hsynz_file_url,localDiffFile,
                                 isUsedDownloadContinue,&downloadPlugin,
                                 kMaxOpenFileNumber);
@@ -617,7 +608,7 @@ static bool printFileInfo(const char *path_utf8,const char *tag,bool isOutSize=t
     return true;
 }
 
-int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,bool oldIsDir,
+int sync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynz_file_url,const char* localDiffFile,
                      hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
@@ -675,29 +666,12 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
             result=sync_local_patch_file2file(&listener,localDiffFile,oldPath,hsyni_file,
                                               outNewFile,isUsedDownloadContinue);
     }
-    if (isSamePath){
-        // 1. patch to newTempName
-        // 2. if patch ok    then  { delelte oldPath; rename newTempName to oldPath; }
-        //    if patch error then  { delelte newTempName; }
-        if (result==kSyncClient_ok){
-            _check3(hpatch_removeFile(oldPath),kSyncClient_deleteFileError,
-                    "remove oldFile \"",oldPath,"\"");
-            _check3(hpatch_renamePath(outNewFile,oldPath),kSyncClient_renameFileError,
-                    "rename \"",outNewFile,"\" to oldFile");
-            printf("outNewPath temp file renamed to oldPath name!\n");
-        }else{ //fail
-            if (!hpatch_removeFile(outNewFile)){
-                printf("WARNING: can't remove temp file \"");
-                hpatch_printPath_utf8(outNewFile); printf("\"\n");
-            }
-        }
-    }
     if (hsynz_file_url)
         _check3(downloadPlugin->download_part_close(&syncDataListener),
                 (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,
                 "close hsynz_file \"",hsynz_file_url,"\"");
     if ((result==kSyncClient_ok)&&localDiffFile&&(outNewFile==0)) printFileInfo(localDiffFile,"\nout  diff   ");
-    if ((result==kSyncClient_ok)&&outNewFile) printFileInfo(isSamePath?oldPath:outNewFile,    "\nout new file");
+    if ((result==kSyncClient_ok)&&outNewFile) printFileInfo(outNewFile,    "\nout new file");
     if (result!=kSyncClient_ok) {  LOG_ERR(" run throw errorCode: %d\n",result); }
     return result;
 }
@@ -705,7 +679,6 @@ int sync_patch_2file(const char* outNewFile,const char* oldPath,bool isSamePath,
 #if (_IS_NEED_DIR_DIFF_PATCH)
         
 struct TDirSyncPatchListener:public IDirSyncPatchListener{
-    bool                isPatchToNewTempDir;
     const TManifest*    oldManifest;
     const std::string*  newDirRoot;
     std::string         oldPathTemp;
@@ -727,59 +700,11 @@ static const char* TDirSyncPatchListener_getOldPathByIndex(TDirSyncPatchListener
 static hpatch_BOOL _dirSyncPatchFinish(IDirSyncPatchListener* listener,hpatch_BOOL isPatchSuccess,
                                        const TNewDataSyncInfo* newSyncInfo,TNewDirOutput* newDirOutput){
     TDirSyncPatchListener* self=(TDirSyncPatchListener*)listener->patchImport;
-    if (!self->isPatchToNewTempDir) return hpatch_TRUE;
-    
-    hpatch_BOOL result=hpatch_TRUE;
-    assert(self->isPatchToNewTempDir);
-    // 1. patch all new to newTempDir
-    // 2. if patch ok then  {
-    //        set execute tags in newTempDir;
-    //        delete file in oldManifest; //WARNING
-    //        delete dir in oldManifest;  //not check
-    //        move all files and dir in newTempDir to oldDir;
-    //        delete newTempDir; }
-    //    if patch error then  {
-    //        delelte all in newTempDir;//not check
-    //        delete newTempDir; }
-    if (isPatchSuccess){
-        {//set execute tags in newTempDir
-            IDirPathList executeList;
-            TNewDirOutput_getExecuteList(newDirOutput,&executeList);
-            if (!_dirPatch_setIsExecuteFile(&executeList))
-                result=hpatch_FALSE;
-        }
-        {//move new to old:
-            IDirPathMove dirPathMove;
-            dirPathMove.importMove=self;
-            dirPathMove.getDstPathBySrcPath=
-                    (IDirPathMove_getDstPathBySrcPath)TDirSyncPatchListener_getOldPathByNewPath;
-            TNewDirOutput_getNewDirPathList(newDirOutput,&dirPathMove.srcPathList);
-            dirPathMove.dstPathList.import=self;
-            dirPathMove.dstPathList.pathCount=self->oldManifest->pathList.size();
-            dirPathMove.dstPathList.getPathNameByIndex=
-                    (IDirPathList_getPathNameByIndex)TDirSyncPatchListener_getOldPathByIndex;
-            if (!_moveNewToOld(&dirPathMove))
-                result=hpatch_FALSE;
-        }
-    }
-    
-    { //remove all temp file and dir
-        IDirPathList newPathList;
-        TNewDirOutput_getNewDirPathList(newDirOutput,&newPathList);
-        deleteAllInPathList(&newPathList);
-    }
-    {//check remove newTempDir result
-        const char* newTempDir=TNewDirOutput_getNewPathRoot(newDirOutput);
-        if (!hpatch_isPathNotExist(newTempDir)){
-            result=hpatch_FALSE;
-            LOG_ERR("can't delete newTempDir \"");
-            hpatch_printStdErrPath_utf8(newTempDir); LOG_ERR("\"  ERROR!\n");
-        }
-    }
-    return result;
+    //can do your works
+    return hpatch_TRUE;
 }
 
-int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,bool oldIsDir,
+int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const char* hsynz_file_url,const char* localDiffFile,
                      hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
@@ -810,7 +735,6 @@ int  sync_patch_2dir(const char* outNewDir,const char* oldPath,bool isSamePath,b
     listener.needSyncInfo=_needSyncInfo;
     
     listener.patchImport=&listener;
-    listener.isPatchToNewTempDir=isSamePath;
     listener.newDirRoot=outNewDir?&_outNewDir:0;
     listener.oldManifest=&oldManifest;
     listener.patchFinish=_dirSyncPatchFinish;
