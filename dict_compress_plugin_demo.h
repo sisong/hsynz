@@ -60,6 +60,8 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
     return bits;
 }
 
+#define _checkCompress(v)  do { if (!(v)) return kDictCompressError; } while(0)
+
 #ifdef  _CompressPlugin_zlib
 #if (_IsNeedIncludeDefaultCompressHead)
 #   include "zlib.h" // http://zlib.net/  https://github.com/madler/zlib
@@ -70,9 +72,11 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         hpatch_byte         compress_level; // 0..9
         hpatch_byte         mem_level;   // 8..9
         hpatch_byte         dict_bits;   // 9..15
+        hpatch_BOOL         is_gzip;
     } TDictCompressPlugin_zlib;
     typedef struct{
         z_stream            stream;
+        hpatch_BOOL         is_gzip;
     } _TDictCompressPlugin_zlib_data;
 
     static size_t _zlib_getDictSizeByData(struct hsync_TDictCompress* dictCompressPlugin,hpatch_StreamPos_t dataSize){
@@ -92,6 +96,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
             free(self);
             return 0;// error
         }
+        self->is_gzip=plugin->is_gzip;
         return self;
     }
     static void _zlib_dictCompressClose(const struct hsync_TDictCompress* dictCompressPlugin,
@@ -106,21 +111,40 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
             free(self);
         }
     }
+
+    static size_t _zlib_writeUncompressedBlock(unsigned char* out_code,unsigned char* out_codeEnd,const hpatch_byte* in_data,
+                                               const unsigned char* in_dataEnd,hpatch_BOOL in_isEnd){
+        size_t result=0;
+        do{
+            const size_t kMaxULen=(((size_t)1)<<16)-1;
+            size_t ulen=in_dataEnd-in_data;
+            _checkCompress(ulen+5<=(size_t)(out_codeEnd-out_code));
+            ulen=(ulen<=kMaxULen)?ulen:kMaxULen;
+            *out_code++=((in_isEnd?1:0)|((0)<<1))<<5; // blockType
+            *out_code++=(hpatch_byte)ulen;
+            *out_code++=(hpatch_byte)(ulen>>8);
+            *out_code++=(hpatch_byte)(ulen^0xFF);
+            *out_code++=(hpatch_byte)((ulen>>8)^0xFF);
+            memcpy(out_code,in_data,ulen);
+            result+=ulen+5;
+            out_code+=ulen;
+            in_data+=ulen;
+        }while (in_data<in_dataEnd);
+        return result;
+    }
+ 
+
     static size_t _zlib_dictCompress(hsync_dictCompressHandle dictHandle,
                                      unsigned char* out_code,unsigned char* out_codeEnd,
                                      const hpatch_byte* in_dict,const hpatch_byte* in_dictEnd_and_dataBegin,
                                      const unsigned char* in_dataEnd,hpatch_BOOL dict_isReset,hpatch_BOOL in_isEnd){
         _TDictCompressPlugin_zlib_data* self=(_TDictCompressPlugin_zlib_data*)dictHandle;
-        int z_ret;
         size_t result;
         size_t dictSize=in_dictEnd_and_dataBegin-in_dict;
         if ((dictSize>0)&&dict_isReset){ //reset dict
-            if (deflateReset(&self->stream)!=Z_OK)
-                return 0;
+            _checkCompress(deflateReset(&self->stream)==Z_OK);
             assert(dictSize==(uInt)dictSize);
-            z_ret=deflateSetDictionary(&self->stream,in_dict,(uInt)dictSize);
-            if (z_ret!=Z_OK)
-                return 0; //error
+            _checkCompress(deflateSetDictionary(&self->stream,in_dict,(uInt)dictSize)==Z_OK);
         }
         self->stream.next_in =(Bytef*)in_dictEnd_and_dataBegin;
         self->stream.avail_in=(uInt)(in_dataEnd-in_dictEnd_and_dataBegin);
@@ -130,47 +154,46 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         assert(self->stream.avail_out==(size_t)(out_codeEnd-out_code));
         if (!in_isEnd){
             int bits; 
-            z_ret=deflate(&self->stream,Z_BLOCK);
-            if (z_ret!=Z_OK)
-                return 0; //error
+            _checkCompress(deflate(&self->stream,Z_BLOCK)==Z_OK);
             // add enough empty blocks to get to a byte boundary
-            z_ret=deflatePending(&self->stream,Z_NULL,&bits);
-            if (z_ret!=Z_OK)
-                return 0; //error
+            _checkCompress(deflatePending(&self->stream,Z_NULL,&bits)==Z_OK);
             if (bits & 1){
-                z_ret=deflate(&self->stream,Z_SYNC_FLUSH);
-                if (z_ret!=Z_OK)
-                    return 0; //error
+                _checkCompress(deflate(&self->stream,Z_SYNC_FLUSH)==Z_OK);
             } else if (bits & 7) {
                 do { // add static empty blocks
-                    z_ret=deflatePrime(&self->stream, 10, 2);
-                    if (z_ret!=Z_OK)
-                        return 0; //error
-                    z_ret=deflatePending(&self->stream,Z_NULL,&bits);
-                    if (z_ret!=Z_OK)
-                        return 0; //error
+                    _checkCompress(deflatePrime(&self->stream,10,2)==Z_OK);
+                    _checkCompress(deflatePending(&self->stream,Z_NULL,&bits)==Z_OK);
                 } while (bits & 7);
-                z_ret=deflate(&self->stream,Z_BLOCK);
-                if (z_ret!=Z_OK)
-                    return 0; //error
+                _checkCompress(deflate(&self->stream,Z_BLOCK)==Z_OK);
             }
         }else{
-            z_ret=deflate(&self->stream,Z_FINISH);
-            if (z_ret!=Z_STREAM_END)
-                return 0; //error
+            _checkCompress(deflate(&self->stream,Z_FINISH)==Z_STREAM_END);
         }
         result=self->stream.total_out;
         self->stream.total_out=0;
         assert(self->stream.avail_in==0);
-        return result;
+        if (result<(size_t)(in_dataEnd-in_dictEnd_and_dataBegin))
+            return result;
+        else if (!self->is_gzip)
+            return kDictCompressCancel;// cancel compress
+        else
+            return _zlib_writeUncompressedBlock(out_code,out_codeEnd,
+                                                in_dictEnd_and_dataBegin,in_dataEnd,in_isEnd);
     }
     
     _def_fun_compressType(_zlib_dictCompressType,"zlibD");
     static const TDictCompressPlugin_zlib zlibDictCompressPlugin={
         {_zlib_dictCompressType,_default_maxCompressedSize,_zlib_getDictSizeByData,
             _zlib_dictCompressOpen,_zlib_dictCompressClose,_zlib_dictCompress},
-        9,8,MAX_WBITS};
-    
+        9,8,MAX_WBITS,hpatch_FALSE};
+    static const char* k_gzip_dictCompressType="gzipD";
+    _def_fun_compressType(_gzip_dictCompressType,k_gzip_dictCompressType);
+    typedef TDictCompressPlugin_zlib TDictCompressPlugin_gzip;
+    static const TDictCompressPlugin_gzip gzipDictCompressPlugin={
+        {_gzip_dictCompressType,_default_maxCompressedSize,_zlib_getDictSizeByData,
+            _zlib_dictCompressOpen,_zlib_dictCompressClose,_zlib_dictCompress},
+        9,8,MAX_WBITS,hpatch_TRUE};
+
 #endif//_CompressPlugin_zlib
 
 
@@ -216,6 +239,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         _zstd_dictCompressClose(dictCompressPlugin,s);
         return 0; //error
     }
+    #define _zstd_checkComp(v) _checkCompress(!ZSTD_isError(v))
     static size_t _zstd_dictCompress(hsync_dictCompressHandle dictHandle,
                                      unsigned char* out_code,unsigned char* out_codeEnd,
                                      const hpatch_byte* in_dict,const hpatch_byte* in_dictEnd_and_dataBegin,
@@ -223,15 +247,10 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         ZSTD_CCtx* s=(ZSTD_CCtx*)dictHandle;
         ZSTD_inBuffer       s_input;
         ZSTD_outBuffer      s_output;
-        size_t ret;
         size_t dictSize=in_dictEnd_and_dataBegin-in_dict;
         if ((dictSize>0)){//&&dict_isReset){ //reset dict
-            ret=ZSTD_CCtx_reset(s,ZSTD_reset_session_only);
-            if (ZSTD_isError(ret))
-                return 0; //error
-            ret=ZSTD_CCtx_refPrefix(s,in_dict,dictSize);
-            if (ZSTD_isError(ret))
-                return 0; //error
+            _zstd_checkComp(ZSTD_CCtx_reset(s,ZSTD_reset_session_only));
+            _zstd_checkComp(ZSTD_CCtx_refPrefix(s,in_dict,dictSize));
         }
 
         s_input.src=in_dictEnd_and_dataBegin;
@@ -240,18 +259,19 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         s_output.dst=out_code;
         s_output.size=out_codeEnd-out_code;
         s_output.pos=0;
-        ret=ZSTD_compressStream2(s,&s_output,&s_input,in_isEnd?ZSTD_e_end:ZSTD_e_flush);
-        if (ZSTD_isError(ret))
-            return 0; //error
+        _zstd_checkComp(ZSTD_compressStream2(s,&s_output,&s_input,in_isEnd?ZSTD_e_end:ZSTD_e_flush));
         assert(s_input.pos==s_input.size);
-        return s_output.pos;
+        if (s_output.pos<s_input.size)
+            return s_output.pos;
+        else
+            return kDictCompressCancel; // cancel compress
     }
     
     _def_fun_compressType(_zstd_dictCompressType,"zstdD");
     static const TDictCompressPlugin_zstd zstdDictCompressPlugin={
         {_zstd_dictCompressType,_default_maxCompressedSize,_zstd_getDictSizeByData,
             _zstd_dictCompressOpen,_zstd_dictCompressClose,_zstd_dictCompress},
-        20,20};
+        22,17};
 #endif//_CompressPlugin_zstd
 
 

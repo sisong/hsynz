@@ -167,6 +167,7 @@
     <ClInclude Include="..\..\HDiffPatch\libhsync\sync_make\sync_info_make.h" />
     <ClInclude Include="..\..\HDiffPatch\libhsync\sync_make\sync_make.h" />
     <ClInclude Include="..\..\HDiffPatch\libhsync\sync_make\sync_make_hash_clash.h" />
+    <ClInclude Include="..\..\hsynz_plugin_gzip.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="libhsyncclient.vcxproj">

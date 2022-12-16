@@ -60,6 +60,7 @@
 #endif
 
 #include "dict_compress_plugin_demo.h"
+#include "hsynz_plugin_gzip.h"
 
 
 #ifndef _IS_NEED_DEFAULT_ChecksumPlugin
@@ -73,6 +74,7 @@
 #endif
 
 #include "HDiffPatch/checksum_plugin_demo.h"
+
 
 static void printVersion(){
     printf("hsync::hsync_make v" HSYNC_VERSION_STRING "\n\n");
@@ -102,6 +104,9 @@ static void printUsage(){
 #ifdef _CompressPlugin_zlib
            "        -c-zlib[-{1..9}[-dictBits]]     DEFAULT level 9\n"
            "            dictBits can 9--15, DEFAULT 15.\n"
+           "        -c-gzip[-{1..9}[-dictBits]]     DEFAULT level 9\n"
+           "            dictBits can 9--15, DEFAULT 15.\n"
+           "            compress by zlib, but out_hsynz_file is .gz file format.\n"
 #endif
 #ifdef _CompressPlugin_zstd
            "        -c-zstd[-{0..22}[-dictBits]]    DEFAULT level 22\n"
@@ -272,6 +277,12 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
         _zlibCompressPlugin.compress_level=(hpatch_byte)compressLevel;
         _zlibCompressPlugin.dict_bits=(hpatch_byte)dictBits;
         *out_compressPlugin=&_zlibCompressPlugin.base; }}
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"gzip","gzipD",
+                                        &compressLevel,1,9,9, &dictBits,9,15,defaultDictBits_zlib),"-c-gzip-?"){
+        static TDictCompressPlugin_gzip _gzipCompressPlugin=gzipDictCompressPlugin;
+        _gzipCompressPlugin.compress_level=(hpatch_byte)compressLevel;
+        _gzipCompressPlugin.dict_bits=(hpatch_byte)dictBits;
+        *out_compressPlugin=&_gzipCompressPlugin.base; }}
 #endif
 #ifdef _CompressPlugin_zstd
     __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zstd","zstdD",
@@ -360,6 +371,7 @@ int sync_make_cmd_line(int argc, const char * argv[]){
     size_t      kSafeHashClashBit=_kNULL_SIZE;
     hsync_TDictCompress*    compressPlugin=0;
     hpatch_TChecksum* strongChecksumPlugin=0;
+    hsync_THsynz* hsynzPlugin=0;
     size_t      threadNum = _THREAD_NUMBER_NULL;
     std::vector<const char *> arg_values;
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -517,6 +529,16 @@ int sync_make_cmd_line(int argc, const char * argv[]){
     _return_check(kPathType_dir!=newType,
                   SYNC_MAKE_NEWPATH_ERROR,"%s must file","newDataPath");
 #endif
+
+#ifdef _CompressPlugin_zlib
+    hsync_THsynz_gzip _hsynzPlugin_gzip;
+    if (compressPlugin&&(0==strcmp(compressPlugin->compressType(),k_gzip_dictCompressType))){
+        _options_check(!isUseDirSyncUpdate,"gzip compress plugin not support DirSyncUpdate");
+        hsynzPlugin=&_hsynzPlugin_gzip;
+        printf("out_hsynz_file is .gz file format.\n");
+    }
+#endif
+
     if ((compressPlugin==0)&&(kPathType_file==newType))
         printf("NOTE: out_hsynz_file's data is same as newDataPath file!\n\n");
     
@@ -534,12 +556,12 @@ int sync_make_cmd_line(int argc, const char * argv[]){
 #if (_IS_NEED_DIR_DIFF_PATCH)
         if (isUseDirSyncUpdate)
             result=create_sync_files_for_dir(newDataPath,out_hsyni_file,out_hsynz_file,kMaxOpenFileNumber,
-                                             strongChecksumPlugin,compressPlugin,0,ignoreNewPathList,
+                                             strongChecksumPlugin,compressPlugin,hsynzPlugin,ignoreNewPathList,
                                              (uint32_t)kSyncBlockSize,kSafeHashClashBit,threadNum);
         else
 #endif
             result=create_sync_files_for_file(newDataPath,out_hsyni_file,out_hsynz_file,strongChecksumPlugin,
-                                              compressPlugin,0,(uint32_t)kSyncBlockSize,kSafeHashClashBit,threadNum);
+                                              compressPlugin,hsynzPlugin,(uint32_t)kSyncBlockSize,kSafeHashClashBit,threadNum);
     double time1=clock_s();
     if (result==SYNC_MAKE_SUCCESS){
         _return_check(printFileInfo(out_hsyni_file,"out .hsyni"),

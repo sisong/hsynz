@@ -54,7 +54,7 @@ extern "C" {
     } _TDictDecompressPlugin_zlib_data;
     
     static hpatch_BOOL _zlib_dict_is_can_open(const char* compressType){
-        return (0==strcmp(compressType,"zlibD"));
+        return (0==strcmp(compressType,"zlibD"))||(0==strcmp(compressType,"gzipD"));
     }
     static hsync_dictDecompressHandle _zlib_dictDecompressOpen(struct hsync_TDictDecompress* dictDecompressPlugin){
         const TDictDecompressPlugin_zlib*  plugin=(const TDictDecompressPlugin_zlib*)dictDecompressPlugin;
