@@ -92,7 +92,7 @@ static void printUsage(){
            "      matchBlockSize>=128, DEFAULT -s-2048, recommended 4096,8k,16k...\n"
            "  -b-safeBit\n"
            "      set allow patch fail hash clash probability: 1/2^safeBit;\n"
-           "      safeBit>=20, DEFAULT -b-32, recommended 24,40,48...\n"
+           "      safeBit>=20, DEFAULT -b-24, recommended 28,32,40...\n"
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
            "    DEFAULT -p-4;\n"
@@ -614,7 +614,7 @@ int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_fil
     _return_check(printFileInfo(newDataFile,"\nin new file",&newDataSize),
                   SYNC_MAKE_NEWPATH_ERROR,"run printFileInfo(%s,)",newDataFile);
     bool isSafeHashClash=getStrongForHashClash(kSafeHashClashBit,newDataSize,kSyncBlockSize,
-                                               strongChecksumPlugin->checksumByteSize());
+                                               strongChecksumPlugin->checksumByteSize()*8);
     _return_check2(isSafeHashClash,SYNC_MAKE_BLOCKSIZE_OR_SAFE_BITS_ERROR,
                    "hash clash error! matchBlockSize(%d) too small or safeHashClashBit(%d) too large",
                    kSyncBlockSize,(uint32_t)kSafeHashClashBit);
