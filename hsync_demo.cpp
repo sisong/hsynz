@@ -80,6 +80,7 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #endif
 #if (_IS_NEED_DEFAULT_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
+#   define _ChecksumPlugin_blake3
 //todo: #   define _ChecksumPlugin_md5
 #   define _ChecksumPlugin_crc32
 #endif
@@ -231,6 +232,10 @@ static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,
 static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const char* strongChecksumType){
     assert((strongChecksumType!=0)&&(strlen(strongChecksumType)>0));
     hpatch_TChecksum* strongChecksumPlugin=0;
+#ifdef  _ChecksumPlugin_blake3
+    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,blake3ChecksumPlugin.checksumType())))
+        strongChecksumPlugin=&blake3ChecksumPlugin;
+#endif
 #ifdef  _ChecksumPlugin_md5
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,md5ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&md5ChecksumPlugin;

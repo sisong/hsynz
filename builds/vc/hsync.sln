@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libhsyncclient", "libhsyncc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "zstd", "..\..\HDiffPatch\builds\vc2019\zstd.vcxproj", "{16415855-B9F4-4A5D-A096-C3380CFC6008}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "blake3", "blake3.vcxproj", "{B377374D-09E5-467F-8061-EFA88873C1D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM = Debug|ARM

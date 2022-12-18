@@ -68,8 +68,8 @@
 #endif
 #if (_IS_NEED_DEFAULT_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
+#   define _ChecksumPlugin_blake3
 //todo: #   define _ChecksumPlugin_md5
-//#   define _ChecksumPlugin_blake3
 #   define _ChecksumPlugin_crc32
 #endif
 
@@ -115,16 +115,19 @@ static void printUsage(){
 #endif
            "  -C-checksumType\n"
            "      set strong Checksum type for block data, DEFAULT "
-#ifdef _ChecksumPlugin_md5
+#if defined(_ChecksumPlugin_blake3)
+           "-C-blake3;\n"
+#elif defined(_ChecksumPlugin_md5)
            "-C-md5;\n"
-#else
-#   ifdef _ChecksumPlugin_crc32
+#elif defined(_ChecksumPlugin_crc32)
            "-C-crc32;\n"
-#   else
-#           error Need a strong Checksum!
-#   endif
+#else
+#          error Need a strong Checksum!
 #endif
            "      support checksum type:\n"
+#ifdef _ChecksumPlugin_blake3
+           "        -C-blake3\n"
+#endif
 #ifdef _ChecksumPlugin_md5
            "        -C-md5\n"
 #endif
@@ -307,6 +310,9 @@ static void _trySetChecksum(hpatch_TChecksum** out_checksumPlugin,const char* ch
 static hpatch_BOOL findChecksum(hpatch_TChecksum** out_checksumPlugin,const char* checksumType){
     *out_checksumPlugin=0;
     if (strlen(checksumType)==0) return hpatch_TRUE;
+#ifdef _ChecksumPlugin_blake3
+    _trySetChecksum(out_checksumPlugin,checksumType,&blake3ChecksumPlugin);
+#endif
 #ifdef _ChecksumPlugin_md5
     _trySetChecksum(out_checksumPlugin,checksumType,&md5ChecksumPlugin);
 #endif
@@ -317,6 +323,9 @@ static hpatch_BOOL findChecksum(hpatch_TChecksum** out_checksumPlugin,const char
 }
 
 static hpatch_TChecksum* getDefaultStrongChecksum(){
+#ifdef _ChecksumPlugin_blake3
+    return &blake3ChecksumPlugin;
+#endif
 #ifdef _ChecksumPlugin_md5
     return &md5ChecksumPlugin;
 #endif
