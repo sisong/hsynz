@@ -69,7 +69,8 @@
 #if (_IS_NEED_DEFAULT_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
 #   define _ChecksumPlugin_blake3
-//todo: #   define _ChecksumPlugin_md5
+#   define _ChecksumPlugin_curl_md5
+#   define _ChecksumPlugin_curl_sha256
 #   define _ChecksumPlugin_crc32
 #endif
 
@@ -117,8 +118,10 @@ static void printUsage(){
            "      set strong Checksum type for block data, DEFAULT "
 #if defined(_ChecksumPlugin_blake3)
            "-C-blake3;\n"
-#elif defined(_ChecksumPlugin_md5)
+#elif defined(_ChecksumPlugin_curl_md5)
            "-C-md5;\n"
+#elif defined(_ChecksumPlugin_curl_sha256)
+           "-C-sha256;\n"
 #elif defined(_ChecksumPlugin_crc32)
            "-C-crc32;\n"
 #else
@@ -128,8 +131,11 @@ static void printUsage(){
 #ifdef _ChecksumPlugin_blake3
            "        -C-blake3\n"
 #endif
-#ifdef _ChecksumPlugin_md5
+#ifdef _ChecksumPlugin_curl_md5
            "        -C-md5\n"
+#endif
+#ifdef _ChecksumPlugin_curl_sha256
+           "        -C-sha256\n"
 #endif
 #ifdef _ChecksumPlugin_crc32
            "        -C-crc32\n"
@@ -313,8 +319,11 @@ static hpatch_BOOL findChecksum(hpatch_TChecksum** out_checksumPlugin,const char
 #ifdef _ChecksumPlugin_blake3
     _trySetChecksum(out_checksumPlugin,checksumType,&blake3ChecksumPlugin);
 #endif
-#ifdef _ChecksumPlugin_md5
+#ifdef _ChecksumPlugin_curl_md5
     _trySetChecksum(out_checksumPlugin,checksumType,&md5ChecksumPlugin);
+#endif
+#ifdef _ChecksumPlugin_curl_sha256
+    _trySetChecksum(out_checksumPlugin,checksumType,&sha256ChecksumPlugin);
 #endif
 #ifdef _ChecksumPlugin_crc32
     _trySetChecksum(out_checksumPlugin,checksumType,&crc32ChecksumPlugin);
@@ -326,8 +335,11 @@ static hpatch_TChecksum* getDefaultStrongChecksum(){
 #ifdef _ChecksumPlugin_blake3
     return &blake3ChecksumPlugin;
 #endif
-#ifdef _ChecksumPlugin_md5
+#ifdef _ChecksumPlugin_curl_md5
     return &md5ChecksumPlugin;
+#endif
+#ifdef _ChecksumPlugin_curl_sha256
+    return &sha256ChecksumPlugin;
 #endif
 #ifdef _ChecksumPlugin_crc32
     return &crc32ChecksumPlugin;

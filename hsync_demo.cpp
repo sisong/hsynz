@@ -81,7 +81,8 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #if (_IS_NEED_DEFAULT_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
 #   define _ChecksumPlugin_blake3
-//todo: #   define _ChecksumPlugin_md5
+#   define _ChecksumPlugin_curl_md5
+#   define _ChecksumPlugin_curl_sha256
 #   define _ChecksumPlugin_crc32
 #endif
 #include "HDiffPatch/checksum_plugin_demo.h"
@@ -236,9 +237,13 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,blake3ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&blake3ChecksumPlugin;
 #endif
-#ifdef  _ChecksumPlugin_md5
+#ifdef  _ChecksumPlugin_curl_md5
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,md5ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&md5ChecksumPlugin;
+#endif
+#ifdef  _ChecksumPlugin_curl_sha256
+    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,sha256ChecksumPlugin.checksumType())))
+        strongChecksumPlugin=&sha256ChecksumPlugin;
 #endif
 #ifdef  _ChecksumPlugin_crc32
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,crc32ChecksumPlugin.checksumType())))
