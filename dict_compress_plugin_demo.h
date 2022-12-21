@@ -184,14 +184,14 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
     _def_fun_compressType(_zlib_dictCompressType,"zlibD");
     static const TDictCompressPlugin_zlib zlibDictCompressPlugin={
         {_zlib_dictCompressType,_default_maxCompressedSize,_zlib_getDictSizeByData,
-            _zlib_dictCompressOpen,_zlib_dictCompressClose,_zlib_dictCompress},
+            _zlib_dictCompressOpen,_zlib_dictCompressClose,0,_zlib_dictCompress},
         9,8,MAX_WBITS,hpatch_FALSE};
     static const char* k_gzip_dictCompressType="gzipD";
     _def_fun_compressType(_gzip_dictCompressType,k_gzip_dictCompressType);
     typedef TDictCompressPlugin_zlib TDictCompressPlugin_gzip;
     static const TDictCompressPlugin_gzip gzipDictCompressPlugin={
         {_gzip_dictCompressType,_default_maxCompressedSize,_zlib_getDictSizeByData,
-            _zlib_dictCompressOpen,_zlib_dictCompressClose,_zlib_dictCompress},
+            _zlib_dictCompressOpen,_zlib_dictCompressClose,0,_zlib_dictCompress},
         9,8,MAX_WBITS,hpatch_TRUE};
 
 #endif//_CompressPlugin_zlib
@@ -239,7 +239,9 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         _zstd_dictCompressClose(dictCompressPlugin,s);
         return 0; //error
     }
+
     #define _zstd_checkComp(v) _checkCompress(!ZSTD_isError(v))
+
     static size_t _zstd_dictCompress(hsync_dictCompressHandle dictHandle,
                                      unsigned char* out_code,unsigned char* out_codeEnd,
                                      const hpatch_byte* in_dict,const hpatch_byte* in_dictEnd_and_dataBegin,
@@ -261,16 +263,15 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         s_output.pos=0;
         _zstd_checkComp(ZSTD_compressStream2(s,&s_output,&s_input,in_isEnd?ZSTD_e_end:ZSTD_e_flush));
         assert(s_input.pos==s_input.size);
-        if (s_output.pos<s_input.size)
-            return s_output.pos;
-        else
+        if (s_output.pos>=s_input.size)
             return kDictCompressCancel; // cancel compress
+        return s_output.pos;
     }
     
     _def_fun_compressType(_zstd_dictCompressType,"zstdD");
     static const TDictCompressPlugin_zstd zstdDictCompressPlugin={
         {_zstd_dictCompressType,_default_maxCompressedSize,_zstd_getDictSizeByData,
-            _zstd_dictCompressOpen,_zstd_dictCompressClose,_zstd_dictCompress},
+            _zstd_dictCompressOpen,_zstd_dictCompressClose,0,_zstd_dictCompress},
         22,17};
 #endif//_CompressPlugin_zstd
 
