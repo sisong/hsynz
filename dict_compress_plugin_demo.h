@@ -62,6 +62,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
 
 #define _checkCompress(v)  do { if (!(v)) return kDictCompressError; } while(0)
 
+
 #ifdef  _CompressPlugin_zlib
 #if (_IsNeedIncludeDefaultCompressHead)
 #   include "zlib.h" // http://zlib.net/  https://github.com/madler/zlib
@@ -77,12 +78,13 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
     typedef struct{
         z_stream            stream;
         _CacheBlockDict_t   cache;
-        hpatch_BOOL         dict_isReset;
+        hpatch_BOOL         dict_isInReset;
         hpatch_BOOL         is_gzip;
     } _TDictCompressPlugin_zlib_data;
 
-    static size_t _zlib_limitDictSizeByData(struct hsync_TDictCompress* compressPlugin,hpatch_StreamPos_t dataSize){
+    static size_t _zlib_limitDictSizeByData(struct hsync_TDictCompress* compressPlugin,size_t blockCount,size_t blockSize){
         TDictCompressPlugin_zlib*  plugin=(TDictCompressPlugin_zlib*)compressPlugin;
+        const hpatch_StreamPos_t dataSize=((hpatch_StreamPos_t)blockCount)*blockSize;
         size_t dictBits=_getDictBitsByData(plugin->dict_bits,9,dataSize);
         plugin->dict_bits=(hpatch_byte)dictBits;
         return ((size_t)1)<<dictBits;
@@ -118,6 +120,14 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
             free(self);
         }
     }
+ 
+    static hpatch_byte* _zlib_getResetDictBuffer(hsync_dictCompressHandle dictHandle,size_t blockIndex,
+                                                 size_t* out_dictSize){
+        _TDictCompressPlugin_zlib_data* self=(_TDictCompressPlugin_zlib_data*)dictHandle;
+        assert(!self->dict_isInReset);
+        self->dict_isInReset=hpatch_TRUE;
+        return _CacheBlockDict_getResetDictBuffer(&self->cache,blockIndex,out_dictSize);
+    }
 
     static size_t _zlib_writeUncompressedBlock(unsigned char* out_code,unsigned char* out_codeEnd,const hpatch_byte* in_data,
                                                const unsigned char* in_dataEnd,hpatch_BOOL in_isEnd){
@@ -139,14 +149,6 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         }while (in_data<in_dataEnd);
         return result;
     }
- 
-    static hpatch_byte* _zlib_getResetDictBuffer(hsync_dictCompressHandle dictHandle,size_t blockIndex,
-                                                 size_t* out_dictSize){
-        _TDictCompressPlugin_zlib_data* self=(_TDictCompressPlugin_zlib_data*)dictHandle;
-        assert(!self->dict_isReset);
-        self->dict_isReset=hpatch_TRUE;
-        return _CacheBlockDict_getResetDictBuffer(&self->cache,blockIndex,out_dictSize);
-    }
 
     static size_t _zlib_dictCompress(hsync_dictCompressHandle dictHandle,size_t blockIndex,
                                      hpatch_byte* out_code,hpatch_byte* out_codeEnd,
@@ -155,11 +157,11 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         const size_t dataSize=in_dataEnd-in_dataBegin;
         const hpatch_BOOL in_isEnd=blockIndex+1==self->cache.blockCount;
         size_t result;
-        if (self->dict_isReset){ //reset dict
+        if (self->dict_isInReset){ //reset dict
             hpatch_byte* dict;
             size_t       dictSize;
             _CacheBlockDict_usedDict(&self->cache,blockIndex,&dict,&dictSize);
-            self->dict_isReset=hpatch_FALSE;
+            self->dict_isInReset=hpatch_FALSE;
             assert(dictSize==(uInt)dictSize);
             _checkCompress(deflateReset(&self->stream)==Z_OK);
             _checkCompress(deflateSetDictionary(&self->stream,dict,(uInt)dictSize)==Z_OK);
@@ -227,62 +229,146 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         hpatch_byte         compress_level; //0..22
         hpatch_byte         dict_bits;  // 10..27
     };
+
+    typedef struct{
+        ZSTD_CCtx*          s;
+        ZSTD_CDict*         d;
+        _CacheBlockDict_t   cache;
+        size_t              deltaCount;
+        hpatch_BOOL         dict_isInReset;
+        hpatch_byte         compress_level;
+    } _TDictCompressPlugin_zstd_data;
     
-    static size_t _zstd_limitDictSizeByData(struct hsync_TDictCompress* compressPlugin,hpatch_StreamPos_t dataSize){
-        TDictCompressPlugin_zstd*  plugin=(TDictCompressPlugin_zstd*)compressPlugin;
-        size_t dictBits=_getDictBitsByData(plugin->dict_bits,10,dataSize);
-        plugin->dict_bits=(hpatch_byte)dictBits;
-        return ((size_t)1)<<dictBits;
+    static size_t __zstd_getMaxDictSize(size_t dictSize,size_t kBlockCount,size_t kBlockSize,
+                                        size_t* out_minDictSize){
+        const size_t backDictSize=dictSize;
+        if (kBlockCount<=1)
+            return 0; //not need cache
+        if (dictSize<_kMinCacheBlockDictMemSize)
+            dictSize=_kMinCacheBlockDictMemSize;
+        while (dictSize/2<kBlockSize)
+            dictSize*=2;
+        if (out_minDictSize){
+            size_t _deltaSize=dictSize/_kMinCacheBlockDictSize_r;
+            size_t deltaCount=_deltaSize/kBlockSize;
+            while ((size_t)(dictSize-deltaCount*kBlockSize)>=backDictSize+kBlockSize)
+                ++deltaCount;
+            if (deltaCount==0) deltaCount=1;
+            *out_minDictSize=dictSize-deltaCount*kBlockSize;
+        }
+        return dictSize;
     }
 
-    static void _zstd_dictCompressClose(const struct hsync_TDictCompress* compressPlugin,
-                                        hsync_dictCompressHandle dictHandle){
-        ZSTD_CCtx* s=(ZSTD_CCtx*)dictHandle;
-        if (s!=0){
-            size_t ret=ZSTD_freeCCtx(s);
+    static size_t _zstd_limitDictSizeByData(struct hsync_TDictCompress* compressPlugin,size_t blockCount,size_t blockSize){
+        TDictCompressPlugin_zstd*  plugin=(TDictCompressPlugin_zstd*)compressPlugin;
+        const hpatch_StreamPos_t dataSize=((hpatch_StreamPos_t)blockCount)*blockSize;
+        size_t dictBits=_getDictBitsByData(plugin->dict_bits,10,dataSize);
+        plugin->dict_bits=(hpatch_byte)dictBits;
+        return __zstd_getMaxDictSize(((size_t)1)<<dictBits,blockCount,blockSize,0);
+    }
+
+    
+    static hpatch_inline void __zstd_clear_cd(_TDictCompressPlugin_zstd_data* self){
+        ZSTD_CDict* d=self->d;
+        self->d=0;
+        if (d!=0){
+            size_t ret=ZSTD_freeCDict(d);
             assert(ret==0);
         }
     }
-    static hsync_dictCompressHandle _zstd_dictCompressOpen(const struct hsync_TDictCompress* compressPlugin){
+
+    static void _zstd_dictCompressClose(struct hsync_TDictCompress* compressPlugin,
+                                        hsync_dictCompressHandle dictHandle){
+        _TDictCompressPlugin_zstd_data* self=(_TDictCompressPlugin_zstd_data*)dictHandle;
+        if (self!=0){
+            ZSTD_CCtx*  s=self->s;
+            __zstd_clear_cd(self);
+            self->s=0;
+            if (s!=0){
+                size_t ret=ZSTD_freeCCtx(s);
+                assert(ret==0);
+            }
+            free(self);
+        }
+    }
+
+    #define _zstd_checkOpen(v) do { if (ZSTD_isError(v)) goto _on_error; } while(0)
+
+    static hsync_dictCompressHandle _zstd_dictCompressOpen(struct hsync_TDictCompress* compressPlugin,size_t blockCount,size_t blockSize){
         const TDictCompressPlugin_zstd*  plugin=(const TDictCompressPlugin_zstd*)compressPlugin;
-        size_t     ret;
-        ZSTD_CCtx* s=ZSTD_createCCtx();
-        if (s==0) return 0; //error
-        ret=ZSTD_CCtx_setParameter(s,ZSTD_c_compressionLevel,plugin->compress_level);
-        if (ZSTD_isError(ret)) goto _on_error;
-        ret=ZSTD_CCtx_setParameter(s,ZSTD_c_windowLog,plugin->dict_bits);
-        if (ZSTD_isError(ret)) goto _on_error;
-        ret=ZSTD_CCtx_setParameter(s,ZSTD_c_format,ZSTD_f_zstd1_magicless);
-        if (ZSTD_isError(ret)) goto _on_error;
-        return s;
+        const size_t _dictSize=((size_t)1<<plugin->dict_bits);
+        size_t minDictSize=-1;
+        const size_t maxDictSize=__zstd_getMaxDictSize(_dictSize,blockCount,blockSize,&minDictSize);
+        _TDictCompressPlugin_zstd_data* self=(_TDictCompressPlugin_zstd_data*)malloc(sizeof(_TDictCompressPlugin_zstd_data)+maxDictSize);
+        if (self==0) return 0;
+        memset(self,0,sizeof(*self));
+        assert(blockCount>0);
+        self->compress_level=plugin->compress_level;
+        self->deltaCount=(maxDictSize-minDictSize)/blockSize;
+        _CacheBlockDict_init(&self->cache,((hpatch_byte*)self)+sizeof(*self),
+                             maxDictSize,minDictSize,blockCount,blockSize);
+
+        self->s=ZSTD_createCCtx();
+        if (self->s==0) goto _on_error;
+        _zstd_checkOpen(ZSTD_CCtx_setParameter(self->s,ZSTD_c_compressionLevel,plugin->compress_level));
+        _zstd_checkOpen(ZSTD_CCtx_setParameter(self->s,ZSTD_c_windowLog,plugin->dict_bits));
+        _zstd_checkOpen(ZSTD_CCtx_setParameter(self->s,ZSTD_c_format,ZSTD_f_zstd1_magicless));
+        return self;
     _on_error:
-        _zstd_dictCompressClose(compressPlugin,s);
+        _zstd_dictCompressClose(compressPlugin,self);
         return 0; //error
+    }
+
+    static hpatch_byte* _zstd_getResetDictBuffer(hsync_dictCompressHandle dictHandle,size_t blockIndex,
+                                                 size_t* out_dictSize){
+        _TDictCompressPlugin_zstd_data* self=(_TDictCompressPlugin_zstd_data*)dictHandle;
+        assert(!self->dict_isInReset);
+        self->dict_isInReset=hpatch_TRUE;
+        return _CacheBlockDict_getResetDictBuffer(&self->cache,blockIndex,out_dictSize);
     }
 
     #define _zstd_checkComp(v) _checkCompress(!ZSTD_isError(v))
 
-    static size_t _zstd_dictCompress(hsync_dictCompressHandle dictHandle,
-                                     unsigned char* out_code,unsigned char* out_codeEnd,
-                                     const hpatch_byte* in_dict,const hpatch_byte* in_dictEnd_and_dataBegin,
-                                     const unsigned char* in_dataEnd,hpatch_BOOL dict_isReset,hpatch_BOOL in_isEnd){
-        ZSTD_CCtx* s=(ZSTD_CCtx*)dictHandle;
+    static void __zstd_reCreateCDict(_TDictCompressPlugin_zstd_data* self){
+        const size_t kMaxDictSize=self->cache.uncompressEnd-self->cache.uncompress;
+        const size_t dictSize=self->cache.uncompressCur-self->cache.uncompress;
+        __zstd_clear_cd(self);
+        self->d=ZSTD_createCDict_delta(self->cache.uncompress,kMaxDictSize,
+                                       kMaxDictSize-dictSize,self->compress_level,0);
+    }
+
+    static size_t _zstd_dictCompress(hsync_dictCompressHandle dictHandle,size_t blockIndex,
+                                     hpatch_byte* out_code,hpatch_byte* out_codeEnd,
+                                     const hpatch_byte* in_dataBegin,const hpatch_byte* in_dataEnd){
+        _TDictCompressPlugin_zstd_data* self=(_TDictCompressPlugin_zstd_data*)dictHandle;
+        ZSTD_CCtx* s=self->s;
         ZSTD_inBuffer       s_input;
         ZSTD_outBuffer      s_output;
-        size_t dictSize=in_dictEnd_and_dataBegin-in_dict;
-        if ((dictSize>0)){//&&dict_isReset){ //reset dict
+        const size_t dataSize=in_dataEnd-in_dataBegin;
+        const hpatch_BOOL in_isEnd=blockIndex+1==self->cache.blockCount;
+        if (_CacheBlockDict_isHaveDict(&self->cache)){ //reset dict
             _zstd_checkComp(ZSTD_CCtx_reset(s,ZSTD_reset_session_only));
-            _zstd_checkComp(ZSTD_CCtx_refPrefix(s,in_dict,dictSize));
+            _zstd_checkComp(ZSTD_CCtx_refCDict(self->s,self->d));
         }
 
-        s_input.src=in_dictEnd_and_dataBegin;
-        s_input.size=in_dataEnd-in_dictEnd_and_dataBegin;
+        s_input.src=in_dataBegin;
+        s_input.size=dataSize;
         s_input.pos=0;
         s_output.dst=out_code;
         s_output.size=out_codeEnd-out_code;
         s_output.pos=0;
         _zstd_checkComp(ZSTD_compressStream2(s,&s_output,&s_input,in_isEnd?ZSTD_e_end:ZSTD_e_flush));
         assert(s_input.pos==s_input.size);
+        if (!in_isEnd){//update cache & dict
+            const hpatch_byte* lastUpdated=self->cache.uncompressCur;
+            _CacheBlockDict_dictUncompress(&self->cache,blockIndex,blockIndex+1,in_dataBegin,in_dataEnd);
+            if ((self->d!=0)&&(lastUpdated+dataSize==self->cache.uncompressCur)){
+                _zstd_checkComp(ZSTD_updateCDict_delta(self->d,lastUpdated,self->cache.uncompressCur-lastUpdated));
+            }else{
+                __zstd_reCreateCDict(self);
+                _checkCompress(self->d!=0);
+            }
+        }
         if (s_output.pos>=s_input.size)
             return kDictCompressCancel; // cancel compress
         return s_output.pos;
@@ -291,7 +377,8 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
     _def_fun_compressType(_zstd_dictCompressType,"zstdD");
     static const TDictCompressPlugin_zstd zstdDictCompressPlugin={
         {_zstd_dictCompressType,_default_maxCompressedSize,_zstd_limitDictSizeByData,
-            _zstd_dictCompressOpen,_zstd_dictCompressClose,0,_zstd_dictCompress},
+            _zstd_dictCompressOpen,_zstd_dictCompressClose,0,
+            _zstd_getResetDictBuffer,_zstd_dictCompress},
         22,17};
 #endif//_CompressPlugin_zstd
 

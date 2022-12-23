@@ -3,7 +3,7 @@
 	url = https://github.com/sisong/HDiffPatch.git
 [submodule "zstd"]
 	path = zstd
-	url = https://github.com/facebook/zstd.git
+	url = https://github.com/sisong/zstd.git
 [submodule "zlib"]
 	path = zlib
 	url = https://github.com/madler/zlib.git

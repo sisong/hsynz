@@ -143,22 +143,34 @@ extern "C" {
     //zstdDictDecompressPlugin
     typedef struct{
         hsync_TDictDecompress base;
-        hpatch_byte           dict_bits;
+        size_t                dictSize;
     } TDictDecompressPlugin_zstd;
     typedef struct{
         ZSTD_DCtx*            s;
+        ZSTD_DDict*           d;
         _CacheBlockDict_t     cache;
     } _TDictDecompressPlugin_zstd_data;
 
     static hpatch_BOOL _zstd_dict_is_can_open(const char* compressType){
         return (0==strcmp(compressType,"zstdD"));
     }
+    static hpatch_inline void __zstd_clear_dd(_TDictDecompressPlugin_zstd_data* self){
+        ZSTD_DDict* d=self->d;
+        self->d=0;
+        if (d!=0){
+            size_t ret=ZSTD_freeDDict(d);
+            assert(ret==0);
+        }
+    }
     static void _zstd_dictDecompressClose(struct hsync_TDictDecompress* decompressPlugin,
                                           hsync_dictDecompressHandle dictHandle){
         _TDictDecompressPlugin_zstd_data* self=(_TDictDecompressPlugin_zstd_data*)dictHandle;
         if (self!=0){
-            if (self->s!=0){
-                size_t ret=ZSTD_freeDCtx(self->s);
+            ZSTD_DCtx*  s=self->s;
+            __zstd_clear_dd(self);
+            self->s=0;
+            if (s!=0){
+                size_t ret=ZSTD_freeDCtx(s);
                 assert(ret==0);
             }
             free(self);
@@ -176,12 +188,13 @@ extern "C" {
     static hsync_dictDecompressHandle _zstd_dictDecompressOpen(struct hsync_TDictDecompress* decompressPlugin,size_t blockCount,size_t blockSize,
                                                                const hpatch_byte* in_info,const hpatch_byte* in_infoEnd){
         const TDictDecompressPlugin_zstd*  plugin=(const TDictDecompressPlugin_zstd*)decompressPlugin;
-        const size_t dictSize=((size_t)1<<plugin->dict_bits);
+        const size_t dictSize=plugin->dictSize;
         const size_t cacheDictSize=_getCacheBlockDictSize(dictSize,blockCount,blockSize);
         _TDictDecompressPlugin_zstd_data* self=(_TDictDecompressPlugin_zstd_data*)malloc(sizeof(_TDictDecompressPlugin_zstd_data)+cacheDictSize);
         if (self==0) return 0;
         memset(self,0,sizeof(*self));
         assert(blockCount>0);
+        assert(dictSize>0);
         _CacheBlockDict_init(&self->cache,((hpatch_byte*)self)+sizeof(*self),
                              cacheDictSize,dictSize,blockCount,blockSize);
 
@@ -195,6 +208,22 @@ extern "C" {
         return 0; //error
     }
 
+    static void __zstd_resetDDict(_TDictDecompressPlugin_zstd_data* self){
+        const size_t dictSize=self->cache.uncompressCur-self->cache.uncompress;
+        if (self->d==0){
+            self->d=ZSTD_createDDict_advanced(self->cache.uncompress,dictSize,ZSTD_dlm_byRef,ZSTD_dct_rawContent,ZSTD_defaultCMem); 
+        }else{
+            const ZSTD_DDict* refd=ZSTD_initStaticDDict(self->d,ZSTD_sizeof_DDict(self->d),self->cache.uncompress,dictSize,ZSTD_dlm_byRef,ZSTD_dct_rawContent);
+            if (refd!=0){
+                assert(self->d==refd);
+                self->d=(ZSTD_DDict*)refd;
+            }else{
+                __zstd_clear_dd(self);
+            }
+        }
+    }
+
+
     #define _zstd_checkDec(v)  do { if (ZSTD_isError(v)) return hpatch_FALSE; } while(0)
 
     static hpatch_BOOL _zstd_dictDecompress(hpatch_decompressHandle dictHandle,size_t blockIndex,
@@ -206,11 +235,10 @@ extern "C" {
         ZSTD_outBuffer      s_output;
         const size_t dataSize=(size_t)(out_dataEnd-out_dataBegin);
         if (_CacheBlockDict_isHaveDict(&self->cache)){ //reset dict
-            hpatch_byte* dict;
-            size_t       dictSize;
-            _CacheBlockDict_usedDict(&self->cache,blockIndex,&dict,&dictSize);
+            __zstd_resetDDict(self);
+            if (self->d==0) return hpatch_FALSE;
             _zstd_checkDec(ZSTD_DCtx_reset(s,ZSTD_reset_session_only));
-            _zstd_checkDec(ZSTD_DCtx_refPrefix(s,dict,dictSize));
+            _zstd_checkDec(ZSTD_DCtx_refDDict(s,self->d));
         }
         s_input.src=in_code;
         s_input.size=in_codeEnd-in_code;
@@ -227,7 +255,7 @@ extern "C" {
     static const TDictDecompressPlugin_zstd zstdDictDecompressPlugin={
         { _zstd_dict_is_can_open, _zstd_dictDecompressOpen,
           _zstd_dictDecompressClose, _zstd_dictDecompress, _zstd_dictUncompress },
-        20 };
+        0 };
 #endif//_CompressPlugin_zstd
 
 

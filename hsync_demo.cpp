@@ -217,7 +217,7 @@ static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,
 #ifdef  _CompressPlugin_zstd
     if ((!decompressPlugin)&&zstdDictDecompressPlugin.base.is_can_open(compressType)){
         static TDictDecompressPlugin_zstd _zstdDictDecompressPlugin=zstdDictDecompressPlugin;
-        _zstdDictDecompressPlugin.dict_bits=(hpatch_byte)_dictSizeToDictBits(dictSize);
+        _zstdDictDecompressPlugin.dictSize=dictSize;
         decompressPlugin=&_zstdDictDecompressPlugin.base;
     }
 #endif
