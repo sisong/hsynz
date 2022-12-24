@@ -110,8 +110,8 @@ static void printUsage(){
            "            compress by zlib, but out_hsynz_file is .gz file format.\n"
 #endif
 #ifdef _CompressPlugin_zstd
-           "        -c-zstd[-{0..22}[-dictBits]]    DEFAULT level 22\n"
-           "            dictBits can 10--27, DEFAULT 17.\n"
+           "        -c-zstd[-{10..22}[-dictBits]]    DEFAULT level 20\n"
+           "            dictBits can 15--30, DEFAULT 23.\n"
            "            WARNING: now only for test, compress very slow with big dictBits.\n"
 #endif
            "  -C-checksumType\n"
@@ -276,7 +276,7 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
     size_t      compressLevel=0;
 #if (defined _CompressPlugin_zlib)||(defined _CompressPlugin_zstd)
     size_t       dictBits=0;
-    const size_t defaultDictBits=17+0; //128k
+    const size_t defaultDictBits=20+3;    //8m
     const size_t defaultDictBits_zlib=15; //32k
 #endif
 #ifdef _CompressPlugin_zlib
@@ -295,7 +295,7 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
 #endif
 #ifdef _CompressPlugin_zstd
     __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zstd","zstdD",
-                                        &compressLevel,0,22,22, &dictBits,10,
+                                        &compressLevel,10,22,20, &dictBits,15,
                                         30,defaultDictBits),"-c-zstd-?"){
         static TDictCompressPlugin_zstd _zstdCompressPlugin=zstdDictCompressPlugin;
         _zstdCompressPlugin.compress_level=(hpatch_byte)compressLevel;

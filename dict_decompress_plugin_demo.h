@@ -202,6 +202,8 @@ extern "C" {
         if (self->s==0) goto _on_error;
         _zstd_checkOpen(ZSTD_DCtx_setParameter(self->s,ZSTD_d_format,ZSTD_f_zstd1_magicless));
         _zstd_checkOpen(ZSTD_DCtx_setParameter(self->s,ZSTD_d_forceIgnoreChecksum,ZSTD_d_ignoreChecksum));
+        #define _ZSTD_WINDOWLOG_MAX 30
+        ZSTD_DCtx_setParameter(self->s,ZSTD_d_windowLogMax,_ZSTD_WINDOWLOG_MAX);
         return self;
     _on_error:
         _zstd_dictDecompressClose(decompressPlugin,self);
