@@ -129,27 +129,6 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         return _CacheBlockDict_getResetDictBuffer(&self->cache,blockIndex,out_dictSize);
     }
 
-    static size_t _zlib_writeUncompressedBlock(unsigned char* out_code,unsigned char* out_codeEnd,const hpatch_byte* in_data,
-                                               const unsigned char* in_dataEnd,hpatch_BOOL in_isEnd){
-        size_t result=0;
-        do{
-            const size_t kMaxULen=(((size_t)1)<<16)-1;
-            size_t ulen=in_dataEnd-in_data;
-            _checkCompress(ulen+5<=(size_t)(out_codeEnd-out_code));
-            ulen=(ulen<=kMaxULen)?ulen:kMaxULen;
-            *out_code++=((in_isEnd?1:0)|((0)<<1))<<5; // blockType
-            *out_code++=(hpatch_byte)ulen;
-            *out_code++=(hpatch_byte)(ulen>>8);
-            *out_code++=(hpatch_byte)(ulen^0xFF);
-            *out_code++=(hpatch_byte)((ulen>>8)^0xFF);
-            memcpy(out_code,in_data,ulen);
-            result+=ulen+5;
-            out_code+=ulen;
-            in_data+=ulen;
-        }while (in_data<in_dataEnd);
-        return result;
-    }
-
     static size_t _zlib_dictCompress(hsync_dictCompressHandle dictHandle,size_t blockIndex,
                                      hpatch_byte* out_code,hpatch_byte* out_codeEnd,
                                      const hpatch_byte* in_dataBegin,const hpatch_byte* in_dataEnd){
@@ -192,13 +171,9 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         result=self->stream.total_out;
         self->stream.total_out=0;
         assert(self->stream.avail_in==0);
-        if (result<dataSize)
-            return result;
-        else if (!self->is_gzip)
+        if ((result>=dataSize)&&(!self->is_gzip))
             return kDictCompressCancel;// cancel compress
-        else
-            return _zlib_writeUncompressedBlock(out_code,out_codeEnd,
-                                                in_dataBegin,in_dataEnd,in_isEnd);
+        return result;
     }
     
     _def_fun_compressType(_zlib_dictCompressType,"zlibD");
@@ -307,7 +282,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         self->s=ZSTD_createCCtx();
         if (self->s==0) goto _on_error;
         _zstd_checkOpen(ZSTD_CCtx_setParameter(self->s,ZSTD_c_compressionLevel,plugin->compress_level));
-        _zstd_checkOpen(ZSTD_CCtx_setParameter(self->s,ZSTD_c_windowLog,_getDictBitsByData(plugin->dict_bits,10,blockSize)));
+        _zstd_checkOpen(ZSTD_CCtx_setParameter(self->s,ZSTD_c_windowLog,(int)_getDictBitsByData(plugin->dict_bits,10,blockSize)));
         _zstd_checkOpen(ZSTD_CCtx_setParameter(self->s,ZSTD_c_format,ZSTD_f_zstd1_magicless));
         return self;
     _on_error:

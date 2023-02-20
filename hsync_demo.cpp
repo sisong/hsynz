@@ -706,11 +706,28 @@ static const char* TDirSyncPatchListener_getOldPathByIndex(TDirSyncPatchListener
     assert(oldIndex<self->oldManifest->pathList.size());
     return self->oldManifest->pathList[oldIndex].c_str();
 }
-        
+    
+    static hpatch_BOOL _dirSyncPatch_setIsExecuteFile(TNewDirOutput* newDirOutput){
+        hpatch_BOOL result=hpatch_TRUE;
+        for (size_t i=0;i<newDirOutput->newExecuteCount;++i){
+            const char* executeFileName=TNewDirOutput_getNewExecuteFileByIndex(newDirOutput,i);
+            if (!hpatch_setIsExecuteFile(executeFileName)){
+                result=hpatch_FALSE;
+                printf("WARNING: can't set Execute tag to new file \"");
+                hpatch_printPath_utf8(executeFileName); printf("\"\n");
+            }
+        }
+        return result;
+    }
 static hpatch_BOOL _dirSyncPatchFinish(IDirSyncPatchListener* listener,hpatch_BOOL isPatchSuccess,
                                        const TNewDataSyncInfo* newSyncInfo,TNewDirOutput* newDirOutput){
     TDirSyncPatchListener* self=(TDirSyncPatchListener*)listener->patchImport;
     //can do your works
+    if (isPatchSuccess){
+        if (self->newDirRoot){
+            _dirSyncPatch_setIsExecuteFile(newDirOutput);
+        }
+    }
     return hpatch_TRUE;
 }
 
