@@ -66,6 +66,10 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
 #ifdef  _CompressPlugin_zlib
 #if (_IsNeedIncludeDefaultCompressHead)
 #   include "zlib.h" // http://zlib.net/  https://github.com/madler/zlib
+#   define _IS_ZLIB_CompressContinueAfterEnd 1
+#   if (_IS_ZLIB_CompressContinueAfterEnd)
+#       include "deflate.h" // if no "deflate.h" file, define _IS_ZLIB_CompressContinueAfterEnd to 0
+#   endif
 #endif
     //zlibDictCompressPlugin
     typedef struct{
@@ -134,7 +138,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
                                      const hpatch_byte* in_dataBegin,const hpatch_byte* in_dataEnd){
         _TDictCompressPlugin_zlib_data* self=(_TDictCompressPlugin_zlib_data*)dictHandle;
         const size_t dataSize=in_dataEnd-in_dataBegin;
-        const hpatch_BOOL in_isEnd=blockIndex+1==self->cache.blockCount;
+        const hpatch_BOOL in_isEnd=(blockIndex+1==self->cache.blockCount);
         size_t result;
         if (self->dict_isInReset){ //reset dict
             hpatch_byte* dict;
@@ -151,7 +155,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         self->stream.next_out =out_code;
         self->stream.avail_out=(uInt)(out_codeEnd-out_code);
         assert(self->stream.avail_out==(size_t)(out_codeEnd-out_code));
-        if (!in_isEnd){
+        if (self->is_gzip&&(!in_isEnd)){
             int bits; 
             _checkCompress(deflate(&self->stream,Z_BLOCK)==Z_OK);
             // add enough empty blocks to get to a byte boundary
@@ -167,6 +171,17 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
             }
         }else{
             _checkCompress(deflate(&self->stream,Z_FINISH)==Z_STREAM_END);
+            if ((!self->is_gzip)&&(!in_isEnd)){
+                #if (_IS_ZLIB_CompressContinueAfterEnd)
+                    //hack zlib state, compress continue
+                    self->stream.state->status=BUSY_STATE;
+                #else
+                    //update dict & deflateSetDictionary every block (NOTE: deflateSetDictionary slow)
+                    _CacheBlockDict_dictUncompress(&self->cache,blockIndex,blockIndex+1,
+                                                   in_dataBegin,in_dataEnd);
+                    self->dict_isInReset=hpatch_TRUE;
+                #endif
+            }
         }
         result=self->stream.total_out;
         self->stream.total_out=0;

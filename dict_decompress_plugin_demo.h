@@ -52,6 +52,7 @@ extern "C" {
     } TDictDecompressPlugin_zlib;
     typedef struct{
         z_stream              stream;
+        hpatch_BOOL           dict_isInReset;
         _CacheBlockDict_t     cache;
     } _TDictDecompressPlugin_zlib_data;
     
@@ -68,6 +69,7 @@ extern "C" {
         memset(self,0,sizeof(*self));
         assert(in_info==in_infoEnd);
         assert(blockCount>0);
+        self->dict_isInReset=hpatch_FALSE;
         _CacheBlockDict_init(&self->cache,((hpatch_byte*)self)+sizeof(*self),
                              cacheDictSize,dictSize,blockCount,blockSize);
         if (inflateInit2(&self->stream,-plugin->dict_bits)!=Z_OK){
@@ -101,7 +103,7 @@ extern "C" {
         _TDictDecompressPlugin_zlib_data* self=(_TDictDecompressPlugin_zlib_data*)dictHandle;
         int z_ret;
         const size_t dataSize=out_dataEnd-out_dataBegin;
-        if (_CacheBlockDict_isMustResetDict(&self->cache,blockIndex)){ //reset dict
+        if (self->dict_isInReset||_CacheBlockDict_isMustResetDict(&self->cache,blockIndex)){ //reset dict
             hpatch_byte* dict;
             size_t       dictSize;
             _CacheBlockDict_usedDict(&self->cache,blockIndex,&dict,&dictSize);
@@ -118,7 +120,9 @@ extern "C" {
         self->stream.avail_out=(uInt)dataSize;
         assert(self->stream.avail_out==dataSize);
         z_ret=inflate(&self->stream,Z_PARTIAL_FLUSH);
-        if ((z_ret!=Z_STREAM_END)&&(z_ret!=Z_OK))
+        if (z_ret==Z_STREAM_END)
+            self->dict_isInReset=hpatch_TRUE;
+        else if (z_ret!=Z_OK)
             return hpatch_FALSE;//error
         assert(self->stream.avail_in==0);
         if (self->stream.total_out!=dataSize)
