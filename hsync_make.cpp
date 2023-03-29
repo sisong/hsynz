@@ -110,8 +110,8 @@ static void printUsage(){
            "            compress by zlib, but out_hsynz_file is .gz file format.\n"
 #endif
 #ifdef _CompressPlugin_zstd
-           "        -c-zstd[-{10..22}[-dictBits]]    DEFAULT level 20\n"
-           "            dictBits can 15--30, DEFAULT 23.\n"
+           "        -c-zstd[-{10..22}[-dictBits]]    DEFAULT level 21\n"
+           "            dictBits can 15--30, DEFAULT 25.\n"
            "            WARNING: now only for test, compress very slow with big dictBits.\n"
 #endif
            "  -C-checksumType\n"
@@ -282,7 +282,7 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
     size_t      compressLevel=0;
 #if (defined _CompressPlugin_zlib)||(defined _CompressPlugin_zstd)
     size_t       dictBits=0;
-    const size_t defaultDictBits=20+3;    //8m
+    const size_t defaultDictBits=20+5;    //32m
     const size_t defaultDictBits_zlib=15; //32k
 #endif
 #ifdef _CompressPlugin_zlib
@@ -301,7 +301,7 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
 #endif
 #ifdef _CompressPlugin_zstd
     __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zstd","zstdD",
-                                        &compressLevel,10,22,20, &dictBits,15,
+                                        &compressLevel,10,22,21, &dictBits,15,
                                         30,defaultDictBits),"-c-zstd-?"){
         static TDictCompressPlugin_zstd _zstdCompressPlugin=zstdDictCompressPlugin;
         _zstdCompressPlugin.compress_level=(hpatch_byte)compressLevel;
@@ -369,13 +369,13 @@ static bool printFileInfo(const char *path_utf8,const char *tag,hpatch_StreamPos
 }
 
 static void printCreateSyncInfo(size_t kSafeHashClashBit,hpatch_StreamPos_t newDataSize,
-                                uint32_t kSyncBlockSize,bool isUsedCompress){
+                                uint32_t kSyncBlockSize,size_t dictSize){
     printf("  block size : %d\n",kSyncBlockSize);
     hpatch_StreamPos_t blockCount=getSyncBlockCount(newDataSize,kSyncBlockSize);
     printf("  block count: %" PRIu64 "\n",blockCount);
     printf("  safe  bit  : %d\n",(int)kSafeHashClashBit);
     double patchMemSize=(double)estimatePatchMemSize(kSafeHashClashBit,newDataSize,
-                                                     kSyncBlockSize,isUsedCompress);
+                                                     kSyncBlockSize,dictSize>0) + dictSize;
     if (patchMemSize>=(1<<20))
         printf("  sync_patch memory size: ~ %.1f MB\n",patchMemSize/(1<<20));
     else
@@ -646,7 +646,8 @@ int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_fil
     _return_check2(isSafeHashClash,SYNC_MAKE_BLOCKSIZE_OR_SAFE_BITS_ERROR,
                    "hash clash error! matchBlockSize(%d) too small or safeHashClashBit(%d) too large",
                    (uint32_t)makeSets.kSyncBlockSize,(uint32_t)makeSets.kSafeHashClashBit);
-    printCreateSyncInfo(makeSets.kSafeHashClashBit,newDataSize,(uint32_t)makeSets.kSyncBlockSize,(compressPlugin!=0));
+    printCreateSyncInfo(makeSets.kSafeHashClashBit,newDataSize,(uint32_t)makeSets.kSyncBlockSize,
+                        compressPlugin?compressPlugin->getDictSize(compressPlugin):0);
     
     try {
         create_sync_data_by_file(newDataFile,out_hsyni_file,out_hsynz_file,
@@ -671,9 +672,9 @@ struct DirPathIgnoreListener:public CDirPathIgnore,IDirPathIgnore{
 };
 
 struct DirSyncListener:public IDirSyncListener{
-    explicit DirSyncListener(bool isUsedCompress=true)
-    :_isUsedCompress(isUsedCompress),_isSafeHashClash(true){ }
-    const bool  _isUsedCompress;
+    explicit DirSyncListener(size_t dictSize)
+    :_dictSize(dictSize),_isSafeHashClash(true){ }
+    size_t      _dictSize;
     bool        _isSafeHashClash;
     
     //IDirSyncListener
@@ -690,7 +691,7 @@ struct DirSyncListener:public IDirSyncListener{
         _isSafeHashClash=isSafeHashClash;
         printf("  path count : %" PRIu64 "\n",(hpatch_StreamPos_t)pathCount);
         printf("  files size : %" PRIu64 "\n",(hpatch_StreamPos_t)refFileSize);
-        printCreateSyncInfo(kSafeHashClashBit,refFileSize,kSyncBlockSize,_isUsedCompress);
+        printCreateSyncInfo(kSafeHashClashBit,refFileSize,kSyncBlockSize,_dictSize);
     }
 };
 
@@ -702,7 +703,7 @@ int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
     std::string newDir(newDataDir);
     assignDirTag(newDir);
     printf("\nin new dir: \""); hpatch_printPath_utf8(newDir.c_str()); printf("\"\n");
-    DirSyncListener listener(compressPlugin!=0);
+    DirSyncListener listener(compressPlugin?compressPlugin->getDictSize(compressPlugin):0);
     TManifest newManifest;
     try {
         DirPathIgnoreListener pathIgnore(ignoreNewPathList);
