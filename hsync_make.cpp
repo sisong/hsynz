@@ -112,7 +112,6 @@ static void printUsage(){
 #ifdef _CompressPlugin_zstd
            "        -c-zstd[-{10..22}[-dictBits]]    DEFAULT level 21\n"
            "            dictBits can 15--30, DEFAULT 25.\n"
-           "            WARNING: now only for test, compress very slow with big dictBits.\n"
 #endif
            "  -C-checksumType\n"
            "      set strong Checksum type for block data, DEFAULT "
@@ -139,6 +138,7 @@ static void printUsage(){
 #endif
 #ifdef _ChecksumPlugin_crc32
            "        -C-crc32\n"
+           "            WARNING: crc32 is not strong & secure enough!\n"
 #endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  -n-maxOpenFileNumber\n"
