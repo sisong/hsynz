@@ -2,7 +2,7 @@
 //  dict compress plugin demo for hsync_make
 /*
  The MIT License (MIT)
- Copyright (c) 2020-2022 HouSisong
+ Copyright (c) 2020-2023 HouSisong
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
