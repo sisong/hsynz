@@ -607,7 +607,8 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                                  isUsedDownloadContinue,&downloadPlugin,
                                  kMaxOpenFileNumber,(int)threadNum);
     double time1=clock_s();
-    printf("\nsync_patch_%s2%s time: %.3f s\n\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
+    printf("\nsync_patch_%s2%s time: %.3f s\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
+    if (result==kSyncClient_ok) printf("run ok.\n"); else printf("\nERROR!\n\n");
     return result;
 }
 
@@ -722,7 +723,7 @@ TSyncClient_resultType
                 "close hsynz_file \"",hsynz_file_url,"\"");
     if ((result==kSyncClient_ok)&&localDiffFile&&(outNewFile==0)) printFileInfo(localDiffFile,"\nout  diff   ");
     if ((result==kSyncClient_ok)&&outNewFile) printFileInfo(outNewFile,    "\nout new file");
-    if (result!=kSyncClient_ok) {  LOG_ERR(" run throw errorCode: %d\n",result); }
+    if (result!=kSyncClient_ok) {  LOG_ERR("\nrun throw errorCode: %d\n",result); }
     return result;
 }
 
@@ -831,7 +832,7 @@ TSyncClient_resultType
                 (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,
                 "close hsynz_file \"",hsynz_file_url,"\"");
     if ((result==kSyncClient_ok)&&localDiffFile&&(outNewDir==0)) printFileInfo(localDiffFile,"\nout  diff  ");
-    if (result!=kSyncClient_ok) {  LOG_ERR(" run throw errorCode: %d\n",result); }
+    if (result!=kSyncClient_ok) {  LOG_ERR("\nrun throw errorCode: %d\n",result); }
     return result;
 }
 #endif

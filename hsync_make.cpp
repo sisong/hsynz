@@ -599,7 +599,8 @@ int sync_make_cmd_line(int argc, const char * argv[]){
                           SYNC_MAKE_OUTFILE_ERROR,"run printFileInfo(%s,)",out_hsynz_file);
         }
     }
-    printf("\ncreate%s_sync_data time: %.3f s\n\n",isUseDirSyncUpdate?"_dir":"",(time1-time0));
+    printf("\ncreate%s_sync_data time: %.3f s\n",isUseDirSyncUpdate?"_dir":"",(time1-time0));
+    if (result==SYNC_MAKE_SUCCESS) printf("run ok.\n"); else printf("\nERROR!\n\n");
     return result;
 }
 
