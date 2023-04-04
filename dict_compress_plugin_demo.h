@@ -418,7 +418,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
             _zstd_limitDictSizeByData,_zstd_getBestWorkBlockCount,
             _zstd_getDictSize,_zstd_dictCompressOpen,_zstd_dictCompressClose,0,
             _zstd_getResetDictBuffer,_zstd_dictCompress},
-        21,25};
+        21,24};
 #endif//_CompressPlugin_zstd
 
 

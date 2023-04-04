@@ -110,6 +110,7 @@ extern "C" {
             assert(dictSize==(uInt)dictSize);
             if (inflateReset(&self->stream)!=Z_OK)
                 return hpatch_FALSE;
+            self->dict_isInReset=hpatch_FALSE;
             if (inflateSetDictionary(&self->stream,dict,(uInt)dictSize)!=Z_OK)
                 return hpatch_FALSE; //error
         }

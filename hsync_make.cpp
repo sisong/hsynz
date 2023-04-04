@@ -90,10 +90,10 @@ static void printUsage(){
            "  if newDataPath is a file & no -c-... option, out_hsynz_file can empty. \n"
            "options:\n"
            "  -s-matchBlockSize\n"
-           "      matchBlockSize>=128, DEFAULT -s-2048, recommended 4096,8k,16k...\n"
+           "      matchBlockSize>=128, DEFAULT -s-2k, recommended 1024,4k,...\n"
            "  -b-safeBit\n"
            "      set allow patch fail hash clash probability: 1/2^safeBit;\n"
-           "      safeBit>=20, DEFAULT -b-24, recommended 28,32,40...\n"
+           "      safeBit>=14, DEFAULT -b-24, recommended 20,32...\n"
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
            "    DEFAULT -p-4;\n"
@@ -110,8 +110,8 @@ static void printUsage(){
            "            compress by zlib, but out_hsynz_file is .gz file format.\n"
 #endif
 #ifdef _CompressPlugin_zstd
-           "        -c-zstd[-{10..22}[-dictBits]]    DEFAULT level 21\n"
-           "            dictBits can 15--30, DEFAULT 25.\n"
+           "        -c-zstd[-{10..22}[-dictBits]]   DEFAULT level 21\n"
+           "            dictBits can 15--30, DEFAULT 24.\n"
 #endif
            "  -C-checksumType\n"
            "      set strong Checksum type for block data, DEFAULT "
@@ -155,11 +155,11 @@ static void printUsage(){
            "  -f  Force overwrite, ignore write path already exists;\n"
            "      DEFAULT (no -f) not overwrite and then return error;\n"
            "      if used -f and write path is exist directory, will always return error.\n"
-           "  -h or -?\n"
-           "      output Help info (this usage).\n"
            "  --patch\n"
            "      swap to hsync_demo mode.\n"
-           "  -v  output Version info.\n\n"
+           "  -v  output Version info.\n"
+           "  -h or -?\n"
+           "      output Help info (this usage).\n\n"
            );
 }
 
@@ -282,7 +282,7 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
     size_t      compressLevel=0;
 #if (defined _CompressPlugin_zlib)||(defined _CompressPlugin_zstd)
     size_t       dictBits=0;
-    const size_t defaultDictBits=20+5;    //32m
+    const size_t defaultDictBits=20+4;    //16m
     const size_t defaultDictBits_zlib=15; //32k
 #endif
 #ifdef _CompressPlugin_zlib

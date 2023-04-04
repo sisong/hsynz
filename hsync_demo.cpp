@@ -54,8 +54,8 @@
 #   include "client_download_demo.h"
 #   include "hsync_import_patch.h"
 hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
-    out_downloadPlugin->download_part_open=downloadEmulation_open_by_file;
-    out_downloadPlugin->download_part_close=downloadEmulation_close;
+    out_downloadPlugin->download_range_open=downloadEmulation_open_by_file;
+    out_downloadPlugin->download_range_close=downloadEmulation_close;
     out_downloadPlugin->download_file=downloadEmulation_download_file;
     return hpatch_TRUE;
 }
@@ -112,7 +112,7 @@ static void printUsage(){
            "  -dl#hsyni_file_" _NOTE_TEXT_URL "\n"
            "    download hsyni_file from hsyni_file_" _NOTE_TEXT_URL " befor sync patch;\n"
            "  -diff#outDiffFile\n"
-           "    create diffFile from part of hsynz_file_" _NOTE_TEXT_URL " befor local patch;\n"
+           "    create diffFile from ranges of hsynz_file_" _NOTE_TEXT_URL " befor local patch;\n"
            "  -patch#diffFile\n"
            "    local patch(oldPath+diffFile) to outNewPath;\n"
            "  -cdl\n"
@@ -158,9 +158,9 @@ static void printUsage(){
            "        if patch output directory, will overwrite, but not delete\n"
            "          needless existing files in directory.\n"
 #endif
+           "  -v  output Version info.\n"
            "  -h or -?\n"
-           "      output Help info (this usage).\n"
-           "  -v  output Version info.\n\n"
+           "      output Help info (this usage).\n\n"
            );
 }
 
@@ -171,16 +171,16 @@ int sync_client_cmd_line(int argc, const char * argv[]);
 TSyncClient_resultType 
     hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                       const std::vector<std::string>& ignoreOldPathList,
-                      const char* hsyni_file,const char* hsynz_file_url,const char* localDiffFile,
-                      hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
-                      size_t kMaxOpenFileNumber,int threadNum);
+                      const char* hsyni_file,const char* hsynz_file_url,
+                      const char* localDiffFile,hpatch_BOOL isMinDiff,hpatch_BOOL isUsedDownloadContinue,
+                      const TSyncDownloadPlugin* downloadPlugin,size_t kMaxOpenFileNumber,int threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 TSyncClient_resultType
     hsync_patch_2dir(const char* outNewDir,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const char* hsynz_file_url,const char* localDiffFile,
-                     hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,int threadNum);
+                     const char* hsyni_file,const char* hsynz_file_url,
+                     const char* localDiffFile,hpatch_BOOL isMinDiff,hpatch_BOOL isUsedDownloadContinue,
+                     const TSyncDownloadPlugin* downloadPlugin,size_t kMaxOpenFileNumber,int threadNum);
 #endif
 
 static TSyncClient_resultType
@@ -340,6 +340,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     hpatch_BOOL isOutputVersion=_kNULL_VALUE;
     hpatch_BOOL isOldPathInputEmpty=_kNULL_VALUE;
     hpatch_BOOL isUsedDownloadContinue=_kNULL_VALUE;
+    hpatch_BOOL isMinDiff=hpatch_FALSE;
     const char* hsyni_file_url=0;
     const char* diff_to_diff_file=0;
     const char* patch_by_diff_file=0;
@@ -398,16 +399,25 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                 }
             } break;
             case 'd':{
-                if (strstr(op,"-diff#")==op){
-                    const char* pfname=op+6;
-                    _options_check((diff_to_diff_file==0)&&(strlen(pfname)>0),"-diff#?");
-                    diff_to_diff_file=pfname;
+                if (strstr(op,"-diff")==op){
+                    if (strstr(op,"-diff#")==op){
+                        const char* pfname=op+6;
+                        _options_check((diff_to_diff_file==0)&&(strlen(pfname)>0),"-diff#?");
+                        diff_to_diff_file=pfname;
+                    }else if (strstr(op,"-diff_min#")==op){ //now hidden option
+                        const char* pfname=op+10;
+                        _options_check((diff_to_diff_file==0)&&(strlen(pfname)>0),"-diff_min#?");
+                        diff_to_diff_file=pfname;
+                        isMinDiff=hpatch_TRUE; //NOTE: now, will run as single-thread
+                    }else{
+                        _options_check(false,"-diff?");
+                    }
                 }else if (strstr(op,"-dl#")==op){
                     const char* purl=op+4;
                     _options_check((hsyni_file_url==0)&&(strlen(purl)>0),"-dl#?");
                     hsyni_file_url=purl;
                 }else{
-                    _options_check(false,"-dl#? or -diff#?");
+                    _options_check(false,"-dl#? or -diff?");
                 }
             } break;
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -597,15 +607,15 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (newIsDir)
         result=hsync_patch_2dir(outNewPath,oldPath,oldIsDir,ignoreOldPathList,
-                                hsyni_file,hsynz_file_url,localDiffFile,
-                                isUsedDownloadContinue,&downloadPlugin,
-                                kMaxOpenFileNumber,(int)threadNum);
+                                hsyni_file,hsynz_file_url,
+                                localDiffFile,isMinDiff,isUsedDownloadContinue,
+                                &downloadPlugin,kMaxOpenFileNumber,(int)threadNum);
     else
 #endif
         result=hsync_patch_2file(outNewPath,oldPath,oldIsDir,ignoreOldPathList,
-                                 hsyni_file,hsynz_file_url,localDiffFile,
-                                 isUsedDownloadContinue,&downloadPlugin,
-                                 kMaxOpenFileNumber,(int)threadNum);
+                                 hsyni_file,hsynz_file_url,
+                                 localDiffFile,isMinDiff,isUsedDownloadContinue,
+                                 &downloadPlugin,kMaxOpenFileNumber,(int)threadNum);
     double time1=clock_s();
     printf("\nsync_patch_%s2%s time: %.3f s\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
     if (result==kSyncClient_ok) printf("run ok.\n"); else printf("\nERROR!\n\n");
@@ -661,9 +671,9 @@ static bool printFileInfo(const char *path_utf8,const char *tag,bool isOutSize=t
 TSyncClient_resultType
    hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const char* hsynz_file_url,const char* localDiffFile,
-                     hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,int threadNum){
+                     const char* hsyni_file,const char* hsynz_file_url,
+                     const char* localDiffFile,hpatch_BOOL isMinDiff,hpatch_BOOL isUsedDownloadContinue,
+                     const TSyncDownloadPlugin* downloadPlugin,size_t kMaxOpenFileNumber,int threadNum){
 #if (_IS_NEED_DIR_DIFF_PATCH)
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
 #endif
@@ -689,7 +699,7 @@ TSyncClient_resultType
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.needSyncInfo=_needSyncInfo;
     if (hsynz_file_url)
-        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynz_file_url),
+        _check3(downloadPlugin->download_range_open(&syncDataListener,hsynz_file_url),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynz_file_url,"\"");
     TSyncClient_resultType result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -699,7 +709,7 @@ TSyncClient_resultType
                                     isUsedDownloadContinue,kMaxOpenFileNumber,threadNum);
         else if (outNewFile==0) //local diff
             result=sync_local_diff_2file(&listener,&syncDataListener,oldManifest,hsyni_file,localDiffFile,
-                                         isUsedDownloadContinue,kMaxOpenFileNumber,threadNum);
+                                         isMinDiff,isUsedDownloadContinue,kMaxOpenFileNumber,threadNum);
         else //local patch
             result=sync_local_patch_2file(&listener,localDiffFile,oldManifest,hsyni_file,outNewFile,
                                           kMaxOpenFileNumber,threadNum);
@@ -712,13 +722,13 @@ TSyncClient_resultType
                                         isUsedDownloadContinue,threadNum);
         else if (outNewFile==0) //local diff
             result=sync_local_diff_file2file(&listener,&syncDataListener,oldPath,hsyni_file,
-                                             localDiffFile,isUsedDownloadContinue,threadNum);
+                                             localDiffFile,isMinDiff,isUsedDownloadContinue,threadNum);
         else //local patch
             result=sync_local_patch_file2file(&listener,localDiffFile,oldPath,hsyni_file,
                                               outNewFile,isUsedDownloadContinue,threadNum);
     }
     if (hsynz_file_url)
-        _check3(downloadPlugin->download_part_close(&syncDataListener),
+        _check3(downloadPlugin->download_range_close(&syncDataListener),
                 (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,
                 "close hsynz_file \"",hsynz_file_url,"\"");
     if ((result==kSyncClient_ok)&&localDiffFile&&(outNewFile==0)) printFileInfo(localDiffFile,"\nout  diff   ");
@@ -775,9 +785,9 @@ static hpatch_BOOL _dirSyncPatchFinish(IDirSyncPatchListener* listener,hpatch_BO
 TSyncClient_resultType
     hsync_patch_2dir(const char* outNewDir,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const char* hsynz_file_url,const char* localDiffFile,
-                     hpatch_BOOL isUsedDownloadContinue,const TSyncDownloadPlugin* downloadPlugin,
-                     size_t kMaxOpenFileNumber,int threadNum){
+                     const char* hsyni_file,const char* hsynz_file_url,
+                     const char* localDiffFile,hpatch_BOOL isMinDiff,hpatch_BOOL isUsedDownloadContinue,
+                     const TSyncDownloadPlugin* downloadPlugin,size_t kMaxOpenFileNumber,int threadNum){
     std::string _outNewDir(outNewDir?outNewDir:"");
     if (outNewDir) { assignDirTag(_outNewDir); outNewDir=outNewDir?_outNewDir.c_str():0; }
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
@@ -809,7 +819,7 @@ TSyncClient_resultType
     listener.patchFinish=_dirSyncPatchFinish;
     
     if (hsynz_file_url)
-        _check3(downloadPlugin->download_part_open(&syncDataListener,hsynz_file_url),
+        _check3(downloadPlugin->download_range_open(&syncDataListener,hsynz_file_url),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynz_file_url,"\"");
     TSyncClient_resultType result=kSyncClient_ok;
     if (localDiffFile==0){
@@ -821,14 +831,14 @@ TSyncClient_resultType
                                oldManifest,hsyni_file,outNewDir,kMaxOpenFileNumber,threadNum);
     }else if (outNewDir==0){ //local diff
         result=sync_local_diff_2dir(&defaultPatchDirlistener,&listener,&syncDataListener,
-                                    oldManifest,hsyni_file,localDiffFile,
+                                    oldManifest,hsyni_file,localDiffFile,isMinDiff,
                                     isUsedDownloadContinue,kMaxOpenFileNumber,threadNum);
     }else{ //local patch
         result=sync_local_patch_2dir(&defaultPatchDirlistener,&listener,localDiffFile,
                                      oldManifest,hsyni_file,outNewDir,kMaxOpenFileNumber,threadNum);
     }
     if (hsynz_file_url)
-        _check3(downloadPlugin->download_part_close(&syncDataListener),
+        _check3(downloadPlugin->download_range_close(&syncDataListener),
                 (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,
                 "close hsynz_file \"",hsynz_file_url,"\"");
     if ((result==kSyncClient_ok)&&localDiffFile&&(outNewDir==0)) printFileInfo(localDiffFile,"\nout  diff  ");

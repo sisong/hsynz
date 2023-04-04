@@ -36,7 +36,7 @@ struct TDownloadEmulation {
 
 static hpatch_BOOL _readSyncData(IReadSyncDataListener* listener,uint32_t blockIndex,
                                  hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData,
-                                 uint32_t syncDataSize,unsigned char* out_syncDataBuf){
+                                 unsigned char* out_syncDataBuf,uint32_t syncDataSize){
 //warning: Read newSyncData from emulation data;
 //         In the actual project, these data need downloaded from server.
     TDownloadEmulation* self=(TDownloadEmulation*)listener->readSyncDataImport;
@@ -92,7 +92,7 @@ hpatch_BOOL downloadEmulation_close(IReadSyncDataListener* emulation){
 hpatch_BOOL downloadEmulation_download_file(const char* file_url,const hpatch_TStreamOutput* out_stream,
                                             hpatch_StreamPos_t continueDownloadPos){
     //copy file_url file data to out_stream
-    const size_t _tempCacheSize=hpatch_kStreamCacheSize*4;
+    const size_t _tempCacheSize=hpatch_kFileIOBufBetterSize;
     hpatch_BOOL result=hpatch_TRUE;
     TByte        temp_cache[_tempCacheSize];
     hpatch_StreamPos_t pos=continueDownloadPos;
@@ -100,7 +100,8 @@ hpatch_BOOL downloadEmulation_download_file(const char* file_url,const hpatch_TS
     hpatch_TFileStreamInput_init(&oldFile);
     
     check(hpatch_TFileStreamInput_open(&oldFile,file_url)); //local file!
-    while (pos<oldFile.base.streamSize) {
+    check(oldFile.base.streamSize>=continueDownloadPos);
+    while (pos<oldFile.base.streamSize){
         size_t copyLen=_tempCacheSize;
         if (pos+copyLen>oldFile.base.streamSize)
             copyLen=(size_t)(oldFile.base.streamSize-pos);
