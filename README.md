@@ -135,7 +135,7 @@ options:
       output Help info (this usage).
 ```
 
-## **hsync_curl** command line usage:  
+## **hsync_http** command line usage:  
 //todo:
 
 ---

@@ -88,21 +88,20 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
       输出命令行帮助信息 (该说明)。
 ```
 
-## **hsync_demo** command line usage:  
+## **hsync_http** command line usage:  
 ```
-同步打补丁  : [options] oldPath [-dl#hsyni_file_test] hsyni_file hsynz_file_test outNewPath
-下载文件    : [options] -dl#hsyni_file_test hsyni_file
+同步打补丁  : [options] oldPath [-dl#hsyni_file_url] hsyni_file hsynz_file_test outNewPath
+下载文件    : [options] -dl#hsyni_file_url hsyni_file
 创建本地补丁: [options] oldPath hsyni_file hsynz_file_test -diff#diffFile
 本地打补丁  : [options] oldPath hsyni_file -patch#diffFile outNewPath
 显示同步信息: [options] oldPath hsyni_file
   oldPath可以是文件或文件夹；oldPath可以为空, 输入参数为 ""
 选项:
-  -dl#hsyni_file_test
-    在同步打补丁开始前，将hsyni_file_test测试路径对应的文件下载为本地文件hsyni_file; 
-    (该功能用于测试，实际使用时是将URL对应的文件下载为本地文件，见hsync_curl命令行)
+  -dl#hsyni_file_url
+    在同步打补丁开始前，将hsyni_file_url测试路径对应的文件下载为本地文件hsyni_file; 
+    (该功能用于测试，实际使用时是将URL对应的文件下载为本地文件，见hsync_http命令行)
   -diff#outDiffFile
     开始打补丁前，创建oldPath到hsynz_file_test的diffFile补丁文件;
-    (该功能用于测试，实际使用时是将URL对应的文件下载需要的部分为本地补丁文件，见hsync_curl命令行)
   -patch#diffFile
     对oldPath应用diffFile补丁文件后得到outNewPath;
   -cdl
@@ -133,7 +132,8 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
       输出命令行帮助信息 (该说明)。
 ```
 
-## **hsync_curl** command line usage:  
+## **hsync_demo** command line usage:  
+    (该功能用于测试，实际使用时是将URL对应的文件下载需要的部分为本地补丁文件，见hsync_http命令行)
 //todo:
 
 ---

@@ -1,5 +1,5 @@
-//  client_download_curl.h
-//  hsync_curl: http(s) download demo by curl
+//  client_download_http.cpp
+//  hsync_http: http(s) download demo by http(s)
 //  Created by housisong on 2020-01-29.
 /*
  The MIT License (MIT)
@@ -26,16 +26,36 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef client_download_curl_h
-#define client_download_curl_h
-#include "sync_client/sync_client_type.h"
+#include "client_download_http.h"
+#include <assert.h>
+#include "hsync_import_patch.h" // HSYNC_VERSION_STRING
 
-//download range of file by http(s)
-hpatch_BOOL download_range_by_http_open(IReadSyncDataListener* out_httpListener,const char* file_url);
-hpatch_BOOL download_range_by_http_close(IReadSyncDataListener* httpListener);
 
-//download file by http(s)
-hpatch_BOOL download_file_by_http(const char* file_url,const hpatch_TStreamOutput* out_stream,
-                                  hpatch_StreamPos_t continueDownloadPos);
-        
-#endif // client_download_curl_h
+static const size_t kStepBufSize=(1<<20);
+static const size_t kStepLimitRangCount=64;
+static const int    kTimeout_s=6;
+const hpatch_StreamPos_t kEmptyEndPos=~(hpatch_StreamPos_t)0;
+static const char*  kHttpUserAgent="hsync" HSYNC_VERSION_STRING;
+
+
+#define _check(_v) do{ if (!(_v)) { result=hpatch_FALSE; goto _clear; } }while(0)
+
+
+hpatch_BOOL download_range_by_http_open(IReadSyncDataListener* out_httpListener,const char* url){
+    return hpatch_FALSE;
+}
+
+hpatch_BOOL download_range_by_http_close(IReadSyncDataListener* httpListener){
+    return hpatch_FALSE;
+}
+
+hpatch_BOOL download_file_by_http(const char* url,const hpatch_TStreamOutput* out_stream,
+                                  hpatch_StreamPos_t continueDownloadPos){
+    hpatch_BOOL result=hpatch_TRUE;
+    hpatch_StreamPos_t endPos=kEmptyEndPos;
+ 
+
+_clear:
+
+    return result;
+}

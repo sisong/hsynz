@@ -1,5 +1,5 @@
-//  hsync_curl.cpp
-//  hsync_curl: client sync patch support http(s) by curl
+//  client_download_http.h
+//  hsync_http: http(s) download demo by http(s)
 //  Created by housisong on 2020-01-29.
 /*
  The MIT License (MIT)
@@ -26,17 +26,16 @@
  FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  OTHER DEALINGS IN THE SOFTWARE.
  */
-#define  _IS_NEED_MAIN 1
-#define  _IS_SYNC_PATCH_DEMO 0
-#define _NOTE_TEXT_URL  "url"
-#define _NOTE_TEXT_APP  "hsync::hsync_curl"
+#ifndef client_download_http_h
+#define client_download_http_h
+#include "HDiffPatch/libhsync/sync_client/sync_client_type.h"
 
-#include "hsync_demo.cpp" //main()
-#include "client_download_curl.h"
+//download range of file by http(s)
+hpatch_BOOL download_range_by_http_open(IReadSyncDataListener* out_httpListener,const char* url);
+hpatch_BOOL download_range_by_http_close(IReadSyncDataListener* httpListener);
 
-hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
-    out_downloadPlugin->download_range_open=download_range_by_http_open;
-    out_downloadPlugin->download_range_close=download_range_by_http_close;
-    out_downloadPlugin->download_file=download_file_by_http;
-    return hpatch_TRUE;
-}
+//download file by http(s)
+hpatch_BOOL download_file_by_http(const char* url,const hpatch_TStreamOutput* out_stream,
+                                  hpatch_StreamPos_t continueDownloadPos);
+        
+#endif // client_download_http_h

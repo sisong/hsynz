@@ -41,6 +41,7 @@
 #   define _IS_NEED_tempDirPatchListener 0
 #   include "HDiffPatch/hpatch_dir_listener.h"
 #endif
+#   include "hsync_import_patch.h"
 #ifndef _IS_NEED_MAIN
 #   define  _IS_NEED_MAIN 1
 #endif
@@ -52,7 +53,6 @@
 #if (_IS_SYNC_PATCH_DEMO)
 //simple file demo plugin
 #   include "client_download_demo.h"
-#   include "hsync_import_patch.h"
 hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin){
     out_downloadPlugin->download_range_open=downloadEmulation_open_by_file;
     out_downloadPlugin->download_range_close=downloadEmulation_close;
@@ -80,9 +80,10 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #endif
 #if (_IS_NEED_DEFAULT_ChecksumPlugin)
 //===== select needs checksum plugins or change to your plugin=====
-#   define _ChecksumPlugin_blake3
-#   define _ChecksumPlugin_curl_md5
-#   define _ChecksumPlugin_curl_sha256
+#   define _ChecksumPlugin_xxh128
+#   define _ChecksumPlugin_mbedtls_md5
+#   define _ChecksumPlugin_mbedtls_sha512
+#   define _ChecksumPlugin_mbedtls_sha256
 #   define _ChecksumPlugin_crc32
 #endif
 #include "HDiffPatch/checksum_plugin_demo.h"
@@ -244,15 +245,19 @@ static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,
 static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const char* strongChecksumType){
     assert((strongChecksumType!=0)&&(strlen(strongChecksumType)>0));
     hpatch_TChecksum* strongChecksumPlugin=0;
-#ifdef  _ChecksumPlugin_blake3
-    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,blake3ChecksumPlugin.checksumType())))
-        strongChecksumPlugin=&blake3ChecksumPlugin;
+#ifdef  _ChecksumPlugin_xxh128
+    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,xxh128ChecksumPlugin.checksumType())))
+        strongChecksumPlugin=&xxh128ChecksumPlugin;
 #endif
-#ifdef  _ChecksumPlugin_curl_md5
+#ifdef  _ChecksumPlugin_mbedtls_md5
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,md5ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&md5ChecksumPlugin;
 #endif
-#ifdef  _ChecksumPlugin_curl_sha256
+#ifdef  _ChecksumPlugin_mbedtls_sha512
+    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,sha512ChecksumPlugin.checksumType())))
+        strongChecksumPlugin=&sha512ChecksumPlugin;
+#endif
+#ifdef  _ChecksumPlugin_mbedtls_sha256
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,sha256ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&sha256ChecksumPlugin;
 #endif
