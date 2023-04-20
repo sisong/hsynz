@@ -14,6 +14,7 @@ jobs:
       - name: makeInit
         run: |
           make ZSTD=0 ZLIB=0 DIR_DIFF=0 MT=0 HTTPS=0 -j
+          make clean
       - name: makeAll
         run: |
           make -j
