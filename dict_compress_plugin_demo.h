@@ -229,7 +229,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
 #ifdef  _CompressPlugin_zstd
 #if (_IsNeedIncludeDefaultCompressHead)
 #define ZSTD_STATIC_LINKING_ONLY
-#   include "zstd.h" // "zstd/lib/zstd.h" https://github.com/facebook/zstd
+#   include "zstd.h" // "zstd/lib/zstd.h" https://github.com/sisong/zstd
 #endif
     struct TDictCompressPlugin_zstd{
         hsync_TDictCompress base;

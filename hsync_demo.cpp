@@ -278,7 +278,7 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
 
     static void printMatchResult(const TNeedSyncInfos* nsi) {
         const uint32_t kBlockCount=nsi->blockCount;
-        const hpatch_StreamPos_t localDataSize=nsi->newDataSize-((hpatch_StreamPos_t)nsi->kSyncBlockSize*nsi->needSyncBlockCount);
+        const hpatch_StreamPos_t localDataSize=nsi->newDataSize-(nsi->kSyncBlockSize*(hpatch_StreamPos_t)nsi->needSyncBlockCount);
         printf("  syncBlockCount: %d, /%d=%.1f%%\n  localDataSize : %" PRIu64 "\n  syncDataSize  : %" PRIu64 "\n",
                nsi->needSyncBlockCount,kBlockCount,100.0*nsi->needSyncBlockCount/kBlockCount,
                localDataSize,nsi->needSyncSumSize);

@@ -1,5 +1,5 @@
 # [hsync](https://github.com/sisong/hsync)
-[![release](https://img.shields.io/badge/release-v0.4.2-blue.svg)](https://github.com/sisong/hsync/releases) 
+[![release](https://img.shields.io/badge/release-v0.9.0-blue.svg)](https://github.com/sisong/hsync/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsync/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsync/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsync?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsync/issues)   

@@ -1,0 +1,345 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0DD68AB129EFF91D000EFD20 /* libMiniHttps.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D694F9F423F7C1D600D41FD7 /* libMiniHttps.a */; };
+		D60DBC77241C74FF00C5EE19 /* client_download_http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D60DBC75241C74FF00C5EE19 /* client_download_http.cpp */; };
+		D60DBC78241C74FF00C5EE19 /* hsync_http.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D60DBC76241C74FF00C5EE19 /* hsync_http.cpp */; };
+		D6C378D723F53E59009A11D7 /* libHSyncClient.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D688CB6723E1DBAB006427D4 /* libHSyncClient.a */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D694F9F323F7C1D600D41FD7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D6C378CD23F539D7009A11D7 /* libMiniHttp.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D694F9E323F7C0E400D41FD7;
+			remoteInfo = libMiniHttps;
+		};
+		D6C378D123F539D7009A11D7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D6C378CD23F539D7009A11D7 /* libMiniHttp.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D6C378C623F538FE009A11D7;
+			remoteInfo = libMiniHttp;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D688CAB123E1C962006427D4 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		D60DBC74241C74FF00C5EE19 /* client_download_http.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = client_download_http.h; path = ../../client_download_http.h; sourceTree = "<group>"; };
+		D60DBC75241C74FF00C5EE19 /* client_download_http.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = client_download_http.cpp; path = ../../client_download_http.cpp; sourceTree = "<group>"; };
+		D60DBC76241C74FF00C5EE19 /* hsync_http.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hsync_http.cpp; path = ../../hsync_http.cpp; sourceTree = "<group>"; };
+		D688CAB323E1C962006427D4 /* hsync_http */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hsync_http; sourceTree = BUILT_PRODUCTS_DIR; };
+		D688CB6723E1DBAB006427D4 /* libHSyncClient.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libHSyncClient.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		D688CB6923E1DBB2006427D4 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
+		D6C378CD23F539D7009A11D7 /* libMiniHttp.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = libMiniHttp.xcodeproj; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D688CAB023E1C962006427D4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0DD68AB129EFF91D000EFD20 /* libMiniHttps.a in Frameworks */,
+				D6C378D723F53E59009A11D7 /* libHSyncClient.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		D688CAAA23E1C962006427D4 = {
+			isa = PBXGroup;
+			children = (
+				D60DBC75241C74FF00C5EE19 /* client_download_http.cpp */,
+				D60DBC74241C74FF00C5EE19 /* client_download_http.h */,
+				D60DBC76241C74FF00C5EE19 /* hsync_http.cpp */,
+				D6C378CD23F539D7009A11D7 /* libMiniHttp.xcodeproj */,
+				D688CAB423E1C962006427D4 /* Products */,
+				D688CB6623E1DBAB006427D4 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		D688CAB423E1C962006427D4 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D688CAB323E1C962006427D4 /* hsync_http */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		D688CB6623E1DBAB006427D4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				D688CB6923E1DBB2006427D4 /* libz.tbd */,
+				D688CB6723E1DBAB006427D4 /* libHSyncClient.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		D6C378CE23F539D7009A11D7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				D6C378D223F539D7009A11D7 /* libMiniHttp.a */,
+				D694F9F423F7C1D600D41FD7 /* libMiniHttps.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		D688CAB223E1C962006427D4 /* hsync_http */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D688CABA23E1C962006427D4 /* Build configuration list for PBXNativeTarget "hsync_http" */;
+			buildPhases = (
+				D688CAAF23E1C962006427D4 /* Sources */,
+				D688CAB023E1C962006427D4 /* Frameworks */,
+				D688CAB123E1C962006427D4 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = hsync_http;
+			productName = hsync_client_http;
+			productReference = D688CAB323E1C962006427D4 /* hsync_http */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D688CAAB23E1C962006427D4 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1030;
+				ORGANIZATIONNAME = sisong;
+				TargetAttributes = {
+					D688CAB223E1C962006427D4 = {
+						CreatedOnToolsVersion = 10.3;
+					};
+				};
+			};
+			buildConfigurationList = D688CAAE23E1C962006427D4 /* Build configuration list for PBXProject "hsync_http" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = D688CAAA23E1C962006427D4;
+			productRefGroup = D688CAB423E1C962006427D4 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = D6C378CE23F539D7009A11D7 /* Products */;
+					ProjectRef = D6C378CD23F539D7009A11D7 /* libMiniHttp.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				D688CAB223E1C962006427D4 /* hsync_http */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		D694F9F423F7C1D600D41FD7 /* libMiniHttps.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libMiniHttps.a;
+			remoteRef = D694F9F323F7C1D600D41FD7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		D6C378D223F539D7009A11D7 /* libMiniHttp.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libMiniHttp.a;
+			remoteRef = D6C378D123F539D7009A11D7 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D688CAAF23E1C962006427D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D60DBC77241C74FF00C5EE19 /* client_download_http.cpp in Sources */,
+				D60DBC78241C74FF00C5EE19 /* hsync_http.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		D688CAB823E1C962006427D4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					"_IS_USED_PTHREAD=1",
+					"_IS_USED_MULTITHREAD=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../zstd/lib,
+					../../zlib,
+					../../minihttp/mbedtls/include,
+					../../xxHash,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		D688CAB923E1C962006427D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEPLOYMENT_POSTPROCESSING = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"NDEBUG=1",
+					"_IS_USED_PTHREAD=1",
+					"_IS_USED_MULTITHREAD=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = (
+					../../zstd/lib,
+					../../zlib,
+					../../minihttp/mbedtls/include,
+					../../xxHash,
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		D688CABB23E1C962006427D4 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		D688CABC23E1C962006427D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		D688CAAE23E1C962006427D4 /* Build configuration list for PBXProject "hsync_http" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D688CAB823E1C962006427D4 /* Debug */,
+				D688CAB923E1C962006427D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D688CABA23E1C962006427D4 /* Build configuration list for PBXNativeTarget "hsync_http" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D688CABB23E1C962006427D4 /* Debug */,
+				D688CABC23E1C962006427D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = D688CAAB23E1C962006427D4 /* Project object */;
+}
