@@ -173,10 +173,23 @@ struct THttpRangeDownload:public THttpDownload{
     :_hd(*this),_file_url(file_url),_readPos(0),_writePos(0),nsi(0),
     curBlockIndex(~0),curPosInNewSyncData(hpatch_kNullStreamPos){}
     virtual ~THttpRangeDownload(){ _closeAll();  }
-    static hpatch_BOOL readSyncDataBegin(IReadSyncDataListener* listener,
-                                         const TNeedSyncInfos* needSyncInfo){
+    static hpatch_BOOL readSyncDataBegin(IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo,
+                                         uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData){
         THttpRangeDownload* self=(THttpRangeDownload*)listener->readSyncDataImport;
         self->nsi=needSyncInfo;
+        try{
+            size_t cacheSize=kBestRangesCacheSize;
+            self->_cache.realloc(cacheSize);
+            self->_writePos=0;
+            self->_readPos=0;
+            //if (!self->_sendDownloads_all(blockIndex,posInNewSyncData))
+            //    return hpatch_FALSE;
+            if (!self->_sendDownloads_init(blockIndex,posInNewSyncData)) //step by step send
+                return hpatch_FALSE;
+        }catch(...){
+            return hpatch_FALSE;
+        }
+
         return hpatch_TRUE;
     }
     static void readSyncDataEnd(IReadSyncDataListener* listener){ 
@@ -188,7 +201,11 @@ struct THttpRangeDownload:public THttpDownload{
                                     hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData,
                                     unsigned char* out_syncDataBuf,uint32_t syncDataSize){
         THttpRangeDownload* self=(THttpRangeDownload*)listener->readSyncDataImport;
-        return self->readSyncData(blockIndex,posInNewSyncData,posInNeedSyncData,out_syncDataBuf,syncDataSize);
+        try{
+            return self->readSyncData(blockIndex,posInNewSyncData,posInNeedSyncData,out_syncDataBuf,syncDataSize);
+        }catch(...){
+            return hpatch_FALSE;
+        }
     }
 protected:
     THttpDownload&    _hd;
@@ -223,19 +240,6 @@ protected:
     inline hpatch_BOOL readSyncData(uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,
                                     hpatch_StreamPos_t posInNeedSyncData,
                                     unsigned char* out_syncDataBuf,uint32_t syncDataSize){
-        if (_cache.data()==0){//need init
-            try{
-                size_t cacheSize=kBestRangesCacheSize;
-                _cache.realloc(cacheSize);
-                _writePos=0;
-                _readPos=0;
-                if (!_sendDownloads_init(blockIndex,posInNewSyncData))
-                    return hpatch_FALSE;
-            }catch(...){
-                return hpatch_FALSE;
-            }
-        }
-
         while (syncDataSize>0){
             size_t savedSize=_savedSize();
             if (savedSize>0){
@@ -283,10 +287,14 @@ protected:
         return _sendDownloads_step();
     }
     bool _sendDownloads_step(){
-        while (curBlockIndex<nsi->blockCount){
-            makeRanges(_hd.Ranges(),curBlockIndex,curPosInNewSyncData);
-            if (!_hd.Ranges().empty())
-                return _hd.doDownload(_file_url);
+        try{
+            while (curBlockIndex<nsi->blockCount){
+                makeRanges(_hd.Ranges(),curBlockIndex,curPosInNewSyncData);
+                if (!_hd.Ranges().empty())
+                    return _hd.doDownload(_file_url);
+            }
+        }catch(...){
+            return false;
         }
         return true;
     }
@@ -299,7 +307,7 @@ protected:
                 is_write_error=true;
         }
     }
-    bool _sendDownloads(uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData){
+    bool _sendDownloads_all(uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData){
         if (!_sendDownloads_init(blockIndex,posInNewSyncData))
             return false;
         while (curBlockIndex<nsi->blockCount){
