@@ -69,19 +69,6 @@ static const int    kTimeout_s=10;
 static const hpatch_StreamPos_t kEmptyEndPos=kNullRangePos;
 static const char*  kHttpUserAgent="hsync/" HSYNC_VERSION_STRING;
 
-static inline 
-bool _isCanCombine(const std::vector<TRange>& out_ranges,hpatch_StreamPos_t rangeBegin){
-    return (!out_ranges.empty())&&(out_ranges.back().second+1==rangeBegin);
-}
-static inline
-void _addRange(std::vector<TRange>& out_ranges,
-                hpatch_StreamPos_t rangeBegin,hpatch_StreamPos_t rangeEnd){
-    assert(rangeBegin<rangeEnd);
-    hpatch_StreamPos_t rangLast=(rangeEnd!=kEmptyEndPos)?(rangeEnd-1):kEmptyEndPos;
-    out_ranges.push_back(TRange(rangeBegin,rangLast));
-}
-
-
 struct THttpDownload:public HttpSocket{
     explicit THttpDownload(const hpatch_TStreamOutput* out_stream=0,hpatch_StreamPos_t curOutPos=0)
     :requestSumSize(0),requestCount(0),is_write_error(false),
@@ -216,22 +203,10 @@ protected:
     const TNeedSyncInfos* nsi;
     void makeRanges(std::vector<TRange>& out_ranges,uint32_t& blockIndex,
                     hpatch_StreamPos_t& posInNewSyncData){
-        out_ranges.clear();
-        while (blockIndex<nsi->blockCount){
-            hpatch_BOOL isNeedSync;
-            uint32_t    syncSize;
-            nsi->getBlockInfoByIndex(nsi,blockIndex,&isNeedSync,&syncSize);
-            if (isNeedSync){
-                if (_isCanCombine(out_ranges,posInNewSyncData))
-                    out_ranges.back().second+=syncSize;
-                else if (out_ranges.size()>=kStepLimitRangCount)
-                    break; //finish
-                else
-                    _addRange(out_ranges,posInNewSyncData,posInNewSyncData+syncSize);
-            }
-            posInNewSyncData+=syncSize;
-            ++blockIndex;
-        }
+        out_ranges.resize(kStepLimitRangCount);
+        size_t gotRangeCount=TNeedSyncInfos_getNextRanges(nsi,(hpatch_StreamPos_t*)out_ranges.data(),
+                                                          kStepLimitRangCount,&blockIndex,&posInNewSyncData);
+        out_ranges.resize(gotRangeCount);
     }
     inline void _closeAll(){
         _hd.close();
@@ -386,14 +361,13 @@ hpatch_BOOL download_range_by_http_close(IReadSyncDataListener* httpListener){
 
 hpatch_BOOL download_file_by_http(const char* file_url,const hpatch_TStreamOutput* out_stream,
                                   hpatch_StreamPos_t continueDownloadPos){
-    hpatch_StreamPos_t endPos=kEmptyEndPos;
     THttpDownload hd(out_stream,continueDownloadPos);
     if (continueDownloadPos>0)
-        _addRange(hd.Ranges(),continueDownloadPos,endPos);
-
+        hd.Ranges().push_back(TRange(continueDownloadPos,kEmptyEndPos));
     if (!hd.waitDownloaded(file_url))
         return hpatch_FALSE;
-                         
+
+    hpatch_StreamPos_t endPos;
     if (continueDownloadPos>0)
         endPos=hd.GetRangsBytesLen();
     else

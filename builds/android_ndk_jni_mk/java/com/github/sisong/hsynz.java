@@ -3,18 +3,16 @@ package com.github.sisong;
 public class hsynz{
 
         public final static class TNeedDownloadRanges{
-            private long rangeCount;
             private long sumDataLen;
             private long cNeedRangesHandle;
-            public final long sumNeedRangeCount(){ return rangeCount;}
             public final long sumNeedDownloadDataLen(){return sumDataLen;}
 
             //return got range count             
-            // note: 2 long values are a range
+            //  note: 2 long values are a range; if range is (25,29) means need from file pos 25, download (29+1-25) length data;
             public final int getNextRanges(long[] dstRanges){
                 final int dstRangePos=0;
-                final int maxRangeLen=(dstRanges.length>>1)-dstRangePos;
-                return getNextRanges(cNeedRangesHandle,dstRanges,dstRangePos,maxRangeLen); 
+                final int maxGetRangeLen=(dstRanges.length>>1)-dstRangePos;
+                return getNextRanges(cNeedRangesHandle,dstRanges,dstRangePos,maxGetRangeLen); 
             }
         }
         
@@ -37,6 +35,9 @@ public class hsynz{
     // return TSyncClient_resultType, 0 is ok;
     public final static int diff(String oldFile,String hsyniFile,IRangeDownloader hsynzDownloader,
                                  String outDiffFile,boolean isContinue,int threadNum){
+        //if (StringUtils.isEmpty(hsyniFile)) return kSyncClient_optionsError;
+        //if (StringUtils.isEmpty(outDiffFile)) return kSyncClient_optionsError;
+        //if (StringUtils.isEmpty(hsynzDownloader)) return kSyncClient_optionsError;
         return hsyncz_patch(oldFile,hsyniFile,hsynzDownloader,outDiffFile,kSyncDiff_default,
                             null,isContinue,threadNum,new TByteBuf(),new TNeedDownloadRanges());
     }
@@ -45,6 +46,9 @@ public class hsynz{
     // return TSyncClient_resultType, 0 is ok;
     public final static int patch(String oldFile,String hsyniFile,String diffFile,
                                   String outNewFile,boolean isContinue){
+        //if (StringUtils.isEmpty(hsyniFile)) return kSyncClient_optionsError;
+        //if (StringUtils.isEmpty(diffFile)) return kSyncClient_optionsError;
+        //if (StringUtils.isEmpty(outNewFile)) return kSyncClient_optionsError;
         return hsyncz_patch(oldFile,hsyniFile,null,diffFile,kSyncDiff_default,
                             outNewFile,isContinue,1,null,null);
     }
@@ -57,6 +61,9 @@ public class hsynz{
     // return TSyncClient_resultType, 0 is ok;
     public final static int sync_patch(String oldFile,String hsyniFile,IRangeDownloader hsynzDownloader,
                                        String diffInfoCacheTempFile,String outNewFile,boolean isContinue,int threadNum){
+        //if (StringUtils.isEmpty(hsyniFile)) return kSyncClient_optionsError;
+        //if (StringUtils.isEmpty(hsynzDownloader)) return kSyncClient_optionsError;
+        //if (StringUtils.isEmpty(outNewFile)) return kSyncClient_optionsError;
         return hsyncz_patch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheTempFile,kSyncDiff_info,
                             outNewFile,isContinue,threadNum,new TByteBuf(),new TNeedDownloadRanges());
     }
@@ -68,6 +75,7 @@ public class hsynz{
     }
 
     private static native void nativeInit();
+    private static final  int  kSyncClient_optionsError=1;
     private static final  int  kSyncDiff_default=0; // diffFile saved info+data
     private static final  int  kSyncDiff_info=1;    // saved diff result info
     private static final  int  kSyncDiff_data=2;    // saved download diff data, only for test 

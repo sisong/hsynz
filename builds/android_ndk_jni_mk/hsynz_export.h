@@ -5,7 +5,7 @@
 #ifndef hsynz_export_h
 #define hsynz_export_h
 #include <string.h> // strlen size_t
-#include "../../HDiffPatch/libhsync/sync_client/sync_client_type.h"
+#include "../../HDiffPatch/libhsync/sync_client/sync_info_client.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
