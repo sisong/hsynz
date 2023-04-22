@@ -13,9 +13,9 @@ extern "C" {
 
 //like as hsync_patch_2file in hsync_demo.c
 //return TSyncClient_resultType
-int hsynz_patch(const char* outNewFile,const char* oldPath,const char* hsyni_file,
+int hsynz_patch(const char* outNewFile,const char* oldFile,const char* hsyni_file,
                 IReadSyncDataListener* syncDataListener,const char* localDiffFile,
-                TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,int threadNum) HSYNZ_EXPORT;
+                TSyncDiffType diffType,hpatch_BOOL isContinue,int threadNum) HSYNZ_EXPORT;
 
 #ifdef __cplusplus
 }

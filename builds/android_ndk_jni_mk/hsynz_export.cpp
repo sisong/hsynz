@@ -14,9 +14,9 @@
 
 static const std::vector<std::string> _emptyIgnore;
 
-int hsynz_patch(const char* outNewFile,const char* oldPath,const char* hsyni_file,
+int hsynz_patch(const char* outNewFile,const char* oldFile,const char* hsyni_file,
                 IReadSyncDataListener* syncDataListener,const char* localDiffFile,
-                TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,int threadNum){
-    return hsync_patch_2file(outNewFile,oldPath,false,_emptyIgnore,hsyni_file,syncDataListener,
-                             localDiffFile,diffType,isUsedDownloadContinue,-1,threadNum);
+                TSyncDiffType diffType,hpatch_BOOL isContinue,int threadNum){
+    return hsync_patch_2file(outNewFile,oldFile,false,_emptyIgnore,hsyni_file,syncDataListener,
+                             localDiffFile,diffType,isContinue,-1,threadNum);
 }
