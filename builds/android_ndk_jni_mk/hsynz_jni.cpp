@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
     typedef struct{
+        jfieldID    sumRangeCount;
         jfieldID    sumDataLen;
         jfieldID    cNeedRangesHandle;
     } TNeedDownloadRangesIDs;
@@ -28,11 +29,12 @@ extern "C" {
     JNIEXPORT void
     Java_com_github_sisong_hsynz_nativeInit(JNIEnv* jenv,jobject jobj){
         jclass objClass = jenv->FindClass("com/github/sisong/hsynz$TNeedDownloadRanges");
+        _g_needDownloadRangesIDs.sumRangeCount    =jenv->GetFieldID(objClass,"sumRangeCount",    "J");
         _g_needDownloadRangesIDs.sumDataLen       =jenv->GetFieldID(objClass,"sumDataLen",       "J");
         _g_needDownloadRangesIDs.cNeedRangesHandle=jenv->GetFieldID(objClass,"cNeedRangesHandle","J");
 
         objClass=jenv->FindClass("com/github/sisong/hsynz$IRangeDownloader");
-        _g_rangeDownloaderIDs.downloadRanges    =jenv->GetMethodID(objClass,"downloadRanges",    "(Lcom/github/sisong/hsynz$TNeedDownloadRanges)Z");
+        _g_rangeDownloaderIDs.downloadRanges    =jenv->GetMethodID(objClass,"downloadRanges",    "(Lcom/github/sisong/hsynz$TNeedDownloadRanges;)Z");
         _g_rangeDownloaderIDs.readDownloadedData=jenv->GetMethodID(objClass,"readDownloadedData","(Lcom/github/sisong/hsynz$TByteBuf;I)Z");
 
         objClass=jenv->FindClass("com/github/sisong/hsynz$TByteBuf");
@@ -74,7 +76,8 @@ extern "C" {
         self->cNeedRanges->curPosInNewSyncData=posInNewSyncData;
 
         const TNeedDownloadRangesIDs* needRangesIDs=getNeedDownloadRangesIDs();
-        self->jenv->SetLongField(self->needRanges,needRangesIDs->sumDataLen,(jlong)(size_t)(needSyncInfo->needSyncSumSize-posInNeedSyncData));
+        self->jenv->SetLongField(self->needRanges,needRangesIDs->sumRangeCount,(jlong)TNeedSyncInfos_getRangeCount(needSyncInfo,blockIndex,posInNewSyncData));
+        self->jenv->SetLongField(self->needRanges,needRangesIDs->sumDataLen,   (jlong)(size_t)(needSyncInfo->needSyncSumSize-posInNeedSyncData));
         self->jenv->SetLongField(self->needRanges,needRangesIDs->cNeedRangesHandle,(jlong)(size_t)self->cNeedRanges);
         
         const IRangeDownloaderIDs* rangeDownloaderIDs=getRangeDownloaderIDs();
@@ -97,21 +100,21 @@ extern "C" {
 
     
     JNIEXPORT jint 
-    Java_com_github_sisong_hsynz_getNextRanges(JNIEnv* jenv,jobject jobj,
-                                               jlong cNeedRangesHandle,jlongArray dstNextRanges,jint dstRangePos,jint maxGetRangeLen){
+    Java_com_github_sisong_hsynz_nativeGetNextRanges(JNIEnv* jenv,jobject jobj,
+                                                     jlong cNeedRangesHandle,jlongArray dstNextRanges,jint dstRangePos,jint maxGetRangeLen){
         jlong* dstRanges=jenv->GetLongArrayElements(dstNextRanges,NULL);
         if (dstRanges==0) return 0; //error
         TNeedDownloadRanges_c* needRanges=(TNeedDownloadRanges_c*)cNeedRangesHandle;
         int result=needRanges->getNextRanges(dstRanges+dstRangePos,maxGetRangeLen);
-        jenv->ReleaseLongArrayElements(dstNextRanges,dstRanges,JNI_ABORT);
+        jenv->ReleaseLongArrayElements(dstNextRanges,dstRanges,0);
         return result;
     }
 
     JNIEXPORT jint
-    Java_com_github_sisong_hsynz_patch(JNIEnv* jenv,jobject jobj,
-                                       jstring oldFile,jstring hsyniFile,jobject hsynzDownloader,
-                                       jstring localDiffFile,jint diffType,jstring outNewFile,jboolean isContinue,
-                                       jint threadNum,jobject dstBuf,jobject needRanges){
+    Java_com_github_sisong_hsynz_doSyncPatch(JNIEnv* jenv,jobject jobj,
+                                             jstring oldFile,jstring hsyniFile,jobject hsynzDownloader,
+                                             jstring localDiffFile,jint diffType,jstring outNewFile,jboolean isContinue,
+                                             jint threadNum,jobject dstBuf,jobject needRanges){
         const char* cOldFile=0;
         const char* cHsyniFile=0;
         const char* cLocalDiffFile=0;

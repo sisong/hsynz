@@ -721,7 +721,6 @@ TSyncClient_resultType
 #if (_IS_NEED_DIR_DIFF_PATCH)
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
 #endif
-    printf("\n");
     printFileInfo(oldPath,oldIsDir?"in old dir  ":"in old file ",!oldIsDir);
 #if (_IS_NEED_DIR_DIFF_PATCH)
     TManifest oldManifest;
@@ -782,7 +781,7 @@ TSyncClient_resultType
                      const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
                      size_t kMaxOpenFileNumber,int threadNum){
-    if (hsynz_file_url) printFileInfo(hsynz_file_url,                  "sync  url   ",false);
+    if (hsynz_file_url) printFileInfo(hsynz_file_url,                  "sync  url   ",_IS_SYNC_PATCH_DEMO);
 
     IReadSyncDataListener syncDataListener; memset(&syncDataListener,0,sizeof(syncDataListener));
     if (hsynz_file_url)
