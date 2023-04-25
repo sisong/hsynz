@@ -1,5 +1,5 @@
 # [hsync](https://github.com/sisong/hsync)
-[![release](https://img.shields.io/badge/release-v0.9.0-blue.svg)](https://github.com/sisong/hsync/releases) 
+[![release](https://img.shields.io/badge/release-v0.9.1-blue.svg)](https://github.com/sisong/hsync/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsync/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsync/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsync?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsync/issues)   
@@ -20,6 +20,12 @@ hsync_demo提供了一个测试客户端demo，用于本地文件测试。
 hsync_http提供了一个支持http(s)的下载客户端demo，支持从提供http(s)文件下载服务的服务端(比如CDN服务器)进行同步更新。   
 提示：你也可以自定义其他通讯方式用于同步。   
    
+---
+## 和 [zsync](http://zsync.moria.org.uk) 对比
+* 除了支持源和目标为文件，还为文件夹(目录)提供了支持。
+* 除了支持zlib压缩发布包，还支持zstd压缩，提供更好的压缩率；即下载的补丁包更小。
+* 对服务端的make速度进行了优化，并且提供了多线程并行加速的支持。
+* 对客户端的diff速度进行了优化，并且提供了多线程并行加速的支持。
 
 ---
 ## 二进制发布包

@@ -1,5 +1,5 @@
 # [hsync](https://github.com/sisong/hsync)
-[![release](https://img.shields.io/badge/release-v0.9.0-blue.svg)](https://github.com/sisong/hsync/releases) 
+[![release](https://img.shields.io/badge/release-v0.9.1-blue.svg)](https://github.com/sisong/hsync/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsync/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsync/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsync?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsync/issues)   
@@ -20,6 +20,12 @@ hsync_demo provides a test client demo for local file testing.
 hsync_http provides a download client demo with http(s) support for sync update from a server that provides an http(s) file download service(e.g CDN).   
 Tip: You can also customise other communication methods for sync.   
     
+---
+## Compare with [zsync](http://zsync.moria.org.uk)
+* In addition to supporting source and target as files, support is also provided for directories(folders).
+* In addition to supporting compressed release package by zlib, zstd compressior is also supported, providing better compression ratio; i.e. smaller downloaded patch package.
+* The server-side make speed has been optimised, and support for multi-threaded parallel acceleration.
+* The client-side diff speed has been optimised, and also support for multi-threaded parallel acceleration.
 
 ---
 ## Releases/Binaries
