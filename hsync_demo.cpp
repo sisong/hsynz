@@ -320,7 +320,7 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
         }
     }
 //ISyncInfoListener::needSyncInfo
-static void _needSyncInfo(ISyncInfoListener* listener,const TNeedSyncInfos* needSyncInfo){
+static void _onNeedSyncInfo(ISyncInfoListener* listener,const TNeedSyncInfos* needSyncInfo){
     printMatchResult(needSyncInfo);
 }
 
@@ -741,7 +741,7 @@ TSyncClient_resultType
     ISyncInfoListener listener; memset(&listener,0,sizeof(listener));
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
-    listener.needSyncInfo=_needSyncInfo;
+    listener.onNeedSyncInfo=_onNeedSyncInfo;
     TSyncClient_resultType result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (oldIsDir){
@@ -875,7 +875,7 @@ TSyncClient_resultType
     IReadSyncDataListener syncDataListener; memset(&syncDataListener,0,sizeof(syncDataListener));
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
-    listener.needSyncInfo=_needSyncInfo;
+    listener.onNeedSyncInfo=_onNeedSyncInfo;
     
     listener.patchImport=&listener;
     listener.newDirRoot=outNewDir?&_outNewDir:0;

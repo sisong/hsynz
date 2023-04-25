@@ -2,6 +2,14 @@ package com.github.sisong;
 
 import android.text.TextUtils;  //isEmpty
 
+//Usage A:  diff(oldFile,hsyniFile,hsynzDownloader,outDiffFile,...) 
+//        + patch(oldFile,hsyniFile,diffFile,outNewFile,...)
+
+//Usage B:  sync_info(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,...)
+//        + sync_patch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,outNewFile,...)
+
+//Usage C: sync_patch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,outNewFile,...)
+
 public class hsynz{
 
         public final static class TNeedDownloadRanges{
@@ -11,7 +19,7 @@ public class hsynz{
             public final long getSumRangeCount(){return sumRangeCount;}
             public final long getSumDataLen(){return sumDataLen;}
 
-            //return got range count             
+            //return got range count
             //  note: 2 long values are a range; if range is (25,29) means need from file pos 25, download (29+1-25) length data;
             public final int getNextRanges(long[] dstRanges){
                 final int dstRangePos=0;
@@ -28,15 +36,18 @@ public class hsynz{
         }
 
     public static interface IRangeDownloader{
-        //only call once
+        //only call once when got sync info
+        public void    onSyncInfo(long newFileSize,long diffSize);
+
+        //only call once befor download begin
         public boolean downloadRanges(TNeedDownloadRanges needRanges);
         //if no data wait until got; if error return false;
         public boolean readDownloadedData(TByteBuf dstBuf,int readDataLen);
     }
 
     //sync diff: download diffFile
-    // isContinue: if (isContinue&(outDiffFile's fileSize>0)) then continue download;
-    // return TSyncClient_resultType, 0 is ok;
+    //  isContinue: if (isContinue&(outDiffFile's fileSize>0)) then continue download;
+    //  return TSyncClient_resultType, 0 is ok;
     public final static int diff(String oldFile,String hsyniFile,IRangeDownloader hsynzDownloader,
                                  String outDiffFile,boolean isContinue,int threadNum){
         if (TextUtils.isEmpty(hsyniFile)) return kSyncClient_optionsError;
@@ -47,7 +58,7 @@ public class hsynz{
     }
 
     //local patch: patch with diffFile
-    // return TSyncClient_resultType, 0 is ok;
+    //  return TSyncClient_resultType, 0 is ok;
     public final static int patch(String oldFile,String hsyniFile,String diffFile,
                                   String outNewFile,boolean isContinue){
         if (TextUtils.isEmpty(hsyniFile)) return kSyncClient_optionsError;
@@ -58,17 +69,28 @@ public class hsynz{
     }
 
 
+    //get sync info: time-consuming diff calculation, & call back hsynzDownloader.onSyncInfo(); not download data.
+    //  diffInfoCacheFile: can null; cache store diff result info, sync_patch() can skip the diff calculation when used this cache file.
+    //  return TSyncClient_resultType, 0 is ok;
+    public final static int sync_info(String oldFile,String hsyniFile,IRangeDownloader hsynzDownloader,
+                                      String diffInfoCacheFile,int threadNum){
+        if (TextUtils.isEmpty(hsyniFile)) return kSyncClient_optionsError;
+        if (hsynzDownloader==null) return kSyncClient_optionsError;
+        return doSyncPatch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,kSyncDiff_info,
+                           null,true,threadNum,null,null);
+    }
+
     //sync patch: sync diff + patch
-    // diffInfoCacheTempFile: can null; cache store temp info of diff result; 
-    //    Different oldFile--hsyniFile pair, can't used same cache file;
-    //    sync_patch() func will not auto delete this temp file.
-    // return TSyncClient_resultType, 0 is ok;
+    //  diffInfoCacheFile: can null; cache store diff result info;
+    //    if different oldFile--hsyniFile pair, can't used same cache file;
+    //    sync_patch() func will not auto delete this temp cache file.
+    //  return TSyncClient_resultType, 0 is ok;
     public final static int sync_patch(String oldFile,String hsyniFile,IRangeDownloader hsynzDownloader,
-                                       String diffInfoCacheTempFile,String outNewFile,boolean isContinue,int threadNum){
+                                       String diffInfoCacheFile,String outNewFile,boolean isContinue,int threadNum){
         if (TextUtils.isEmpty(hsyniFile)) return kSyncClient_optionsError;
         if (hsynzDownloader==null) return kSyncClient_optionsError;
         if (TextUtils.isEmpty(outNewFile)) return kSyncClient_optionsError;
-        return doSyncPatch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheTempFile,kSyncDiff_info,
+        return doSyncPatch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,kSyncDiff_info,
                            outNewFile,isContinue,threadNum,new TByteBuf(),new TNeedDownloadRanges());
     }
 

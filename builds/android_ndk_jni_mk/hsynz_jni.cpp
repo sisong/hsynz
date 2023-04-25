@@ -17,6 +17,7 @@ extern "C" {
     }
 
     typedef struct{
+        jmethodID   onSyncInfo;
         jmethodID   downloadRanges;
         jmethodID   readDownloadedData;
         jfieldID    cBufHandle;
@@ -34,6 +35,7 @@ extern "C" {
         _g_needDownloadRangesIDs.cNeedRangesHandle=jenv->GetFieldID(objClass,"cNeedRangesHandle","J");
 
         objClass=jenv->FindClass("com/github/sisong/hsynz$IRangeDownloader");
+        _g_rangeDownloaderIDs.onSyncInfo        =jenv->GetMethodID(objClass,"onSyncInfo",        "(JJ)V");
         _g_rangeDownloaderIDs.downloadRanges    =jenv->GetMethodID(objClass,"downloadRanges",    "(Lcom/github/sisong/hsynz$TNeedDownloadRanges;)Z");
         _g_rangeDownloaderIDs.readDownloadedData=jenv->GetMethodID(objClass,"readDownloadedData","(Lcom/github/sisong/hsynz$TByteBuf;I)Z");
 
@@ -67,6 +69,14 @@ extern "C" {
         jobject                 needRanges;
         TNeedDownloadRanges_c*  cNeedRanges;
     };
+
+    void TReadSyncDataListener_onNeedSyncInfo(struct  IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo){
+        TReadSyncDataListener* self=(TReadSyncDataListener*)listener->readSyncDataImport;
+        self->cNeedRanges->needSyncInfo=needSyncInfo;
+        const IRangeDownloaderIDs* rangeDownloaderIDs=getRangeDownloaderIDs();
+        self->jenv->CallVoidMethod(self->hsynzDownloader,rangeDownloaderIDs->onSyncInfo,
+                                   needSyncInfo->newDataSize,needSyncInfo->needSyncSumSize);
+    }
 
     hpatch_BOOL TReadSyncDataListener_readSyncDataBegin(struct  IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo,
                                                         uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData){
@@ -135,6 +145,7 @@ extern "C" {
         syncDataListener.needRanges=needRanges;
         syncDataListener.cNeedRanges=&cNeedRanges;
         syncDataListener.base.readSyncDataImport=&syncDataListener;
+        syncDataListener.base.onNeedSyncInfo=TReadSyncDataListener_onNeedSyncInfo;
         syncDataListener.base.readSyncDataBegin=TReadSyncDataListener_readSyncDataBegin;
         syncDataListener.base.readSyncData=TReadSyncDataListener_readSyncData;
         syncDataListener.base.readSyncDataEnd=TReadSyncDataListener_readSyncDataEnd;
