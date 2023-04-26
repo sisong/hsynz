@@ -67,7 +67,7 @@ static const size_t kBestRangesCacheSize=hpatch_kFileIOBestMaxSize;
 static const size_t kStepLimitRangCount=32;
 static const int    kTimeout_s=10;
 static const hpatch_StreamPos_t kEmptyEndPos=kNullRangePos;
-static const char*  kHttpUserAgent="hsync/" HSYNC_VERSION_STRING;
+static const char*  kHttpUserAgent="hsynz/" HSYNC_VERSION_STRING;
 
 struct THttpDownload:public HttpSocket{
     explicit THttpDownload(const hpatch_TStreamOutput* out_stream=0,hpatch_StreamPos_t curOutPos=0)

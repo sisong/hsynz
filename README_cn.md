@@ -1,14 +1,14 @@
-# [hsync](https://github.com/sisong/hsync)
-[![release](https://img.shields.io/badge/release-v0.9.1-blue.svg)](https://github.com/sisong/hsync/releases) 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsync/blob/main/LICENSE) 
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsync/pulls)
-[![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsync?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsync/issues)   
+# [hsynz](https://github.com/sisong/hsynz)
+[![release](https://img.shields.io/badge/release-v0.9.1-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
+[![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
 
-[![Build Status](https://github.com/sisong/hsync/workflows/ci/badge.svg?branch=main)](https://github.com/sisong/hsync/actions?query=workflow%3Aci+branch%3Amain)   
+[![Build Status](https://github.com/sisong/hsynz/workflows/ci/badge.svg?branch=main)](https://github.com/sisong/hsynz/actions?query=workflow%3Aci+branch%3Amain)   
 
  中文版 | [english](README.md)   
 
-hsync 是一个用使用同步算法来进行增量更新的库，类似于[zsync](http://zsync.moria.org.uk)。   
+hsynz 是一个用使用同步算法来进行增量更新的库，类似于[zsync](http://zsync.moria.org.uk)。   
 
 适用的场景：旧版本数量非常多 或者 无法得到旧版本(没有保存或被修改等) 从而无法提前计算出全部的增量补丁，这时推荐使用hsync同步分发技术。    
 
@@ -29,23 +29,23 @@ hsync_http提供了一个支持http(s)的下载客户端demo，支持从提供ht
 
 ---
 ## 二进制发布包
-[从 release 下载](https://github.com/sisong/hsync/releases) : 分别运行在 Windows、Linux、MacOS操作系统的命令行程序。     
-( 编译出这些发布文件的项目路径在 `hsync/builds` )   
+[从 release 下载](https://github.com/sisong/hsynz/releases) : 分别运行在 Windows、Linux、MacOS操作系统的命令行程序。     
+( 编译出这些发布文件的项目路径在 `hsynz/builds` )   
 
 ## 自己编译
 ### Linux or MacOS X ###
 ```
 $ cd <dir>
-$ git clone --recursive https://github.com/sisong/hsync.git
-$ cd hsync
+$ git clone --recursive https://github.com/sisong/hsynz.git
+$ cd hsynz
 $ make
 ```
 ### Windows ###
 ```
 $ cd <dir>
-$ git clone --recursive https://github.com/sisong/hsync.git
+$ git clone --recursive https://github.com/sisong/hsynz.git
 ```
-用 [`Visual Studio`](https://visualstudio.microsoft.com) 打开 `hsync/builds/vc/hsync.sln` 编译   
+用 [`Visual Studio`](https://visualstudio.microsoft.com) 打开 `hsynz/builds/vc/hsynz.sln` 编译   
 
 ---
 ## 性能测试

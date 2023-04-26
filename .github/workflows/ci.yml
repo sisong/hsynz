@@ -42,9 +42,9 @@ jobs:
           git submodule update --init --recursive
       - name: buildByXcode
         run: |
-          xcodebuild -workspace builds/xcode/hsync.xcworkspace -scheme hsync_demo -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin
-          xcodebuild -workspace builds/xcode/hsync.xcworkspace -scheme hsync_make -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin
-          xcodebuild -workspace builds/xcode/hsync.xcworkspace -scheme hsync_http -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin
+          xcodebuild -workspace builds/xcode/hsynz.xcworkspace -scheme hsync_demo -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin
+          xcodebuild -workspace builds/xcode/hsynz.xcworkspace -scheme hsync_make -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin
+          xcodebuild -workspace builds/xcode/hsynz.xcworkspace -scheme hsync_http -configuration Release OBJROOT=$PWD/bin SYMROOT=$PWD/bin
 
   vc-build:
     runs-on: windows-latest
@@ -58,7 +58,7 @@ jobs:
           git submodule update --init --recursive
       - name: buildByVC
         run: |
-          msbuild builds/vc/hsync.sln -t:rebuild -verbosity:diag -property:Configuration=Release
+          msbuild builds/vc/hsynz.sln -t:rebuild -verbosity:diag -property:Configuration=Release
 
 
   macos-ndk-build:

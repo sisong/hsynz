@@ -104,7 +104,7 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 
 #if (_IS_SYNC_PATCH_DEMO)
 #   define _NOTE_TEXT_URL  "test"
-#   define _NOTE_TEXT_APP  "hsync::hsync_demo"
+#   define _NOTE_TEXT_APP  "hsynz::hsync_demo"
 #endif
 
 

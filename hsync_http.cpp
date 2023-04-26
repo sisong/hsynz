@@ -29,7 +29,7 @@
 #define  _IS_NEED_MAIN 1
 #define  _IS_SYNC_PATCH_DEMO 0
 #define _NOTE_TEXT_URL  "url"
-#define _NOTE_TEXT_APP  "hsync::hsync_http"
+#define _NOTE_TEXT_APP  "hsynz::hsync_http"
 
 #include "hsync_demo.cpp" //main()
 #include "client_download_http.h"
