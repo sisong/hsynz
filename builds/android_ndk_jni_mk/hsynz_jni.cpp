@@ -35,7 +35,7 @@ extern "C" {
         _g_needDownloadRangesIDs.cNeedRangesHandle=jenv->GetFieldID(objClass,"cNeedRangesHandle","J");
 
         objClass=jenv->FindClass("com/github/sisong/hsynz$IRangeDownloader");
-        _g_rangeDownloaderIDs.onSyncInfo        =jenv->GetMethodID(objClass,"onSyncInfo",        "(JJ)V");
+        _g_rangeDownloaderIDs.onSyncInfo        =jenv->GetMethodID(objClass,"onSyncInfo",        "(JJJ)V");
         _g_rangeDownloaderIDs.downloadRanges    =jenv->GetMethodID(objClass,"downloadRanges",    "(Lcom/github/sisong/hsynz$TNeedDownloadRanges;)Z");
         _g_rangeDownloaderIDs.readDownloadedData=jenv->GetMethodID(objClass,"readDownloadedData","(Lcom/github/sisong/hsynz$TByteBuf;I)Z");
 
@@ -75,7 +75,7 @@ extern "C" {
         self->cNeedRanges->needSyncInfo=needSyncInfo;
         const IRangeDownloaderIDs* rangeDownloaderIDs=getRangeDownloaderIDs();
         self->jenv->CallVoidMethod(self->hsynzDownloader,rangeDownloaderIDs->onSyncInfo,
-                                   needSyncInfo->newDataSize,needSyncInfo->needSyncSumSize);
+                                   needSyncInfo->newDataSize,needSyncInfo->newSyncDataSize,needSyncInfo->needSyncSumSize);
     }
 
     hpatch_BOOL TReadSyncDataListener_readSyncDataBegin(struct  IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo,

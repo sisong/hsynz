@@ -2,42 +2,46 @@ package com.github.sisong;
 
 import android.text.TextUtils;  //isEmpty
 
-//Usage A:  diff(oldFile,hsyniFile,hsynzDownloader,outDiffFile,...) 
-//        + patch(oldFile,hsyniFile,diffFile,outNewFile,...)
+/*
 
-//Usage B:  sync_info(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,...)
-//        + sync_patch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,outNewFile,...)
+Usage A:  diff(oldFile,hsyniFile,hsynzDownloader,outDiffFile,...)
+        + patch(oldFile,hsyniFile,diffFile,outNewFile,...)
 
-//Usage C: sync_patch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,outNewFile,...)
+Usage B:  sync_info(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,...)
+        + sync_patch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,outNewFile,...)
+
+Usage C: sync_patch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,outNewFile,...)
+
+*/
 
 public class hsynz{
 
-        public final static class TNeedDownloadRanges{
-            private long sumRangeCount;
-            private long sumDataLen;
-            private long cNeedRangesHandle;
-            public final long getSumRangeCount(){return sumRangeCount;}
-            public final long getSumDataLen(){return sumDataLen;}
+    public final static class TNeedDownloadRanges{
+        private long sumRangeCount;
+        private long sumDataLen;
+        private long cNeedRangesHandle;
+        public final long getSumRangeCount(){return sumRangeCount;}
+        public final long getSumDataLen(){return sumDataLen;}
 
-            //return got range count
-            //  note: 2 long values are a range; if range is (25,29) means need from file pos 25, download (29+1-25) length data;
-            public final int getNextRanges(long[] dstRanges){
-                final int dstRangePos=0;
-                final int maxGetRangeLen=(dstRanges.length>>1)-dstRangePos;
-                return nativeGetNextRanges(cNeedRangesHandle,dstRanges,dstRangePos,maxGetRangeLen);
-            }
+        //return got range count
+        //  note: 2 long values are a range; if range is (25,29) means need from file pos 25, download (29+1-25) length data;
+        public final int getNextRanges(long[] dstRanges){
+            final int dstRangePos=0;
+            final int maxGetRangeLen=(dstRanges.length>>1)-dstRangePos;
+            return nativeGetNextRanges(cNeedRangesHandle,dstRanges,dstRangePos,maxGetRangeLen);
         }
-        
-        public final static class TByteBuf{
-            private long cBufHandle;
-            public final void setData(int bufPos,byte[] src,int srcPos,int dataLen){
-                setByteBufData(cBufHandle,bufPos,src,srcPos,dataLen);
-            }
+    }
+
+    public final static class TByteBuf{
+        private long cBufHandle;
+        public final void setData(int bufPos,byte[] src,int srcPos,int dataLen){
+            setByteBufData(cBufHandle,bufPos,src,srcPos,dataLen);
         }
+    }
 
     public static interface IRangeDownloader{
         //only call once when got sync info
-        public void    onSyncInfo(long newFileSize,long diffSize);
+        public void    onSyncInfo(long newFileSize,long hsynzFileSize,long hsynzDiffSize);
 
         //only call once befor download begin
         public boolean downloadRanges(TNeedDownloadRanges needRanges);
@@ -54,7 +58,7 @@ public class hsynz{
         if (TextUtils.isEmpty(outDiffFile)) return kSyncClient_optionsError;
         if (hsynzDownloader==null) return kSyncClient_optionsError;
         return doSyncPatch(oldFile,hsyniFile,hsynzDownloader,outDiffFile,kSyncDiff_default,
-                           null,isContinue,threadNum,new TByteBuf(),new TNeedDownloadRanges());
+                null,isContinue,threadNum,new TByteBuf(),new TNeedDownloadRanges());
     }
 
     //local patch: patch with diffFile
@@ -65,7 +69,7 @@ public class hsynz{
         if (TextUtils.isEmpty(diffFile)) return kSyncClient_optionsError;
         if (TextUtils.isEmpty(outNewFile)) return kSyncClient_optionsError;
         return doSyncPatch(oldFile,hsyniFile,null,diffFile,kSyncDiff_default,
-                           outNewFile,isContinue,1,null,null);
+                outNewFile,isContinue,1,null,null);
     }
 
 
@@ -77,7 +81,7 @@ public class hsynz{
         if (TextUtils.isEmpty(hsyniFile)) return kSyncClient_optionsError;
         if (hsynzDownloader==null) return kSyncClient_optionsError;
         return doSyncPatch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,kSyncDiff_info,
-                           null,true,threadNum,null,null);
+                null,true,threadNum,null,null);
     }
 
     //sync patch: sync diff + patch
@@ -91,7 +95,7 @@ public class hsynz{
         if (hsynzDownloader==null) return kSyncClient_optionsError;
         if (TextUtils.isEmpty(outNewFile)) return kSyncClient_optionsError;
         return doSyncPatch(oldFile,hsyniFile,hsynzDownloader,diffInfoCacheFile,kSyncDiff_info,
-                           outNewFile,isContinue,threadNum,new TByteBuf(),new TNeedDownloadRanges());
+                outNewFile,isContinue,threadNum,new TByteBuf(),new TNeedDownloadRanges());
     }
 
 

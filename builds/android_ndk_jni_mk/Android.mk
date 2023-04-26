@@ -3,9 +3,17 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := hsynz
 
+ZSTD  := 1
+MD5   := 0
+SHA256:= 0
+SHA512:= 0
+
 jni_PATH:= $(LOCAL_PATH)
 
 ZSTD_PATH  := $(LOCAL_PATH)/../../zstd/lib
+ifeq ($(ZSTD),0)
+Zstd_Files :=
+else
 Zstd_Files := $(ZSTD_PATH)/decompress/zstd_decompress.c \
               $(ZSTD_PATH)/decompress/zstd_decompress_block.c \
               $(ZSTD_PATH)/decompress/zstd_ddict.c \
@@ -15,6 +23,7 @@ Zstd_Files := $(ZSTD_PATH)/decompress/zstd_decompress.c \
               $(ZSTD_PATH)/common/fse_decompress.c \
               $(ZSTD_PATH)/common/xxhash.c \
               $(ZSTD_PATH)/common/error_private.c
+endif
 
 HDP_PATH  := $(LOCAL_PATH)/../../HDiffPatch
 Hdp_Files := $(HDP_PATH)/file_for_patch.c \
@@ -31,7 +40,19 @@ Sync_Files := $(SYNC_PATH)/libhsync/sync_client/sync_client.cpp \
 			  $(SYNC_PATH)/libhsync/sync_client/match_in_old.cpp
 
 HTTPS_C := $(LOCAL_PATH)/../../minihttp/mbedtls/library
-# Sync_Files += $(HTTPS_C)/md5.c  $(HTTPS_C)/sha256.c  $(HTTPS_C)/sha512.c
+HTTPS_H := $(LOCAL_PATH)/../../minihttp/mbedtls/include
+ifeq ($(MD5),0)
+else
+	Sync_Files += $(HTTPS_C)/md5.c
+endif
+ifeq ($(SHA256),0)
+else
+	Sync_Files += $(HTTPS_C)/sha256.c
+endif
+ifeq ($(SHA512),0)
+else
+	Sync_Files += $(HTTPS_C)/sha512.c
+endif
 
 Src_Files := $(jni_PATH)/hsynz_export.cpp \
              $(jni_PATH)/hsynz_jni.cpp
@@ -44,10 +65,27 @@ LOCAL_CFLAGS     := -Os -DANDROID_NDK -DNDEBUG -D_IS_USED_MULTITHREAD=1 -D_IS_US
 					-D_IS_NEED_DEFAULT_CompressPlugin=0 \
 					-D_IS_NEED_DEFAULT_ChecksumPlugin=0 \
 					-D_ChecksumPlugin_xxh128 -I'../../xxHash'
-LOCAL_CFLAGS     += -D_CompressPlugin_zlib -D_CompressPlugin_zstd -I$(ZSTD_PATH)
+LOCAL_CFLAGS     += -D_CompressPlugin_zlib
+
+ifeq ($(ZSTD),0)
+else
+LOCAL_CFLAGS     += -D_CompressPlugin_zstd -I$(ZSTD_PATH) -I$(ZSTD_PATH)/common -I$(ZSTD_PATH)/decompress
 LOCAL_CFLAGS     += -DZSTD_HAVE_WEAK_SYMBOLS=0 -DZSTD_TRACE=0 -DZSTD_DISABLE_ASM=1 -DZSTDLIB_VISIBLE= -DZSTDLIB_HIDDEN= \
 					-DDYNAMIC_BMI2=0 -DZSTD_LEGACY_SUPPORT=0 -DZSTD_LIB_DEPRECATED=0 -DHUF_FORCE_DECOMPRESS_X1=1 \
 					-DZSTD_FORCE_DECOMPRESS_SEQUENCES_SHORT=1 -DZSTD_NO_INLINE=1 -DZSTD_STRIP_ERROR_STRINGS=1 
+endif
+ifeq ($(MD5),0)
+else
+	LOCAL_CFLAGS += -D_ChecksumPlugin_mbedtls_md5 -I$(HTTPS_H)
+endif
+ifeq ($(SHA256),0)
+else
+	LOCAL_CFLAGS += -D_ChecksumPlugin_mbedtls_sha256 -I$(HTTPS_H)
+endif
+ifeq ($(SHA512),0)
+else
+	LOCAL_CFLAGS += -D_ChecksumPlugin_mbedtls_sha512 -I$(HTTPS_H)
+endif
 
 include $(BUILD_SHARED_LIBRARY)
 
