@@ -1,46 +1,52 @@
-# [hsync](https://github.com/sisong/hsync)
-[![release](https://img.shields.io/badge/release-v0.9.0-blue.svg)](https://github.com/sisong/hsync/releases) 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsync/blob/main/LICENSE) 
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsync/pulls)
-[![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsync?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsync/issues)   
+# [hsynz](https://github.com/sisong/hsynz)
+[![release](https://img.shields.io/badge/release-v0.9.1-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
+[![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
 
-[![Build Status](https://github.com/sisong/hsync/workflows/ci/badge.svg?branch=main)](https://github.com/sisong/hsync/actions?query=workflow%3Aci+branch%3Amain)   
+[![Build Status](https://github.com/sisong/hsynz/workflows/ci/badge.svg?branch=main)](https://github.com/sisong/hsynz/actions?query=workflow%3Aci+branch%3Amain)   
 
  english | [中文版](README_cn.md)   
 
-hsync is a library for delta update using sync algorithm, like [zsync](http://zsync.moria.org.uk).   
+hsynz is a library for delta update using sync algorithm, like [zsync](http://zsync.moria.org.uk).   
 
 Recommended scenarios: Very large number of older versions or where older versions are not available (not saved or modified, etc.) so that all deltas cannot be calculated in advance.   
 
 The server uses hsync_make to process the latest version of the data once, generating a summary info file(hsyni) of the new version of the data in chunks, and optionally compressing the new version of the data in chunks to get the release file(hsynz), which would be the hsynz equivalent if the new version of the original file were not compressed.   
 
-The client first downloads the hsyni file from the server, calculates the updated blocks it needs to download based on its old version, and learns the location of these blocks in hsynz based on the information in hsyni, selects a communication method to download them on demand from the server's hsynz file, and merges the downloaded blocks with the existing data locally to get the latest version of the data.   
+The client first downloads the hsyni file from the server or another user's share, calculates the updated blocks it needs to download based on its old version, and learns the location of these blocks in hsynz based on the information in hsyni, selects a communication method to download them on demand from the server's hsynz file, and merges the downloaded blocks with the existing data locally to get the latest version of the data.   
 
 hsync_demo provides a test client demo for local file testing.   
 hsync_http provides a download client demo with http(s) support for sync update from a server that provides an http(s) file download service(e.g CDN).   
 Tip: You can also customise other communication methods for sync.   
     
+---
+## Compare with [zsync](http://zsync.moria.org.uk)
+* In addition to supporting source and target as files, support is also provided for directories(folders).
+* In addition to supporting compressed release package by zlib, zstd compressior is also supported, providing better compression ratio; i.e. smaller downloaded patch package.
+* The server-side make support multi-threaded parallel acceleration.
+* The client-side diff speed has been optimized, and also support multi-threaded parallel acceleration.
 
 ---
 ## Releases/Binaries
-[Download from latest release](https://github.com/sisong/hsync/releases) : Command line app for Windows, Linux, MacOS.     
-( release files build by projects in path `hsync/builds` )   
+[Download from latest release](https://github.com/sisong/hsynz/releases) : Command line app for Windows, Linux, MacOS.     
+( release files build by projects in path `hsynz/builds` )   
 
 ## Build it yourself
 ### Linux or MacOS X ###
 ```
 $ cd <dir>
-$ git clone --recursive https://github.com/sisong/hsync.git
-$ cd hsync
+$ git clone --recursive https://github.com/sisong/hsynz.git
+$ cd hsynz
 $ make
 ```
 
 ### Windows ###
 ```
 $ cd <dir>
-$ git clone --recursive https://github.com/sisong/hsync.git
+$ git clone --recursive https://github.com/sisong/hsynz.git
 ```
-build `hsync/builds/vc/hsync.sln` with [`Visual Studio`](https://visualstudio.microsoft.com)   
+build `hsynz/builds/vc/hsynz.sln` with [`Visual Studio`](https://visualstudio.microsoft.com)   
 
 ---
 ## performance testing

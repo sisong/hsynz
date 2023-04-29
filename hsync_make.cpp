@@ -79,7 +79,7 @@
 
 
 static void printVersion(){
-    printf("hsync::hsync_make v" HSYNC_VERSION_STRING "\n\n");
+    printf("hsynz::hsync_make v" HSYNC_VERSION_STRING "\n\n");
 }
 
 static void printUsage(){

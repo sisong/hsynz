@@ -1,45 +1,51 @@
-# [hsync](https://github.com/sisong/hsync)
-[![release](https://img.shields.io/badge/release-v0.9.0-blue.svg)](https://github.com/sisong/hsync/releases) 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsync/blob/main/LICENSE) 
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsync/pulls)
-[![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsync?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsync/issues)   
+# [hsynz](https://github.com/sisong/hsynz)
+[![release](https://img.shields.io/badge/release-v0.9.1-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
+[![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
 
-[![Build Status](https://github.com/sisong/hsync/workflows/ci/badge.svg?branch=main)](https://github.com/sisong/hsync/actions?query=workflow%3Aci+branch%3Amain)   
+[![Build Status](https://github.com/sisong/hsynz/workflows/ci/badge.svg?branch=main)](https://github.com/sisong/hsynz/actions?query=workflow%3Aci+branch%3Amain)   
 
  中文版 | [english](README.md)   
 
-hsync 是一个用使用同步算法来进行增量更新的库，类似于[zsync](http://zsync.moria.org.uk)。   
+hsynz 是一个用使用同步算法来进行增量更新的库，类似于[zsync](http://zsync.moria.org.uk)。   
 
 适用的场景：旧版本数量非常多 或者 无法得到旧版本(没有保存或被修改等) 从而无法提前计算出全部的增量补丁，这时推荐使用hsync同步分发技术。    
 
 服务端使用hsync_make对最新版本的数据进行一次处理，将新版本数据按块生成摘要信息文件(hsyni)，同时也可以选择对新版本数据分块进行压缩得到发布文件(hsynz)，如果不压缩新版本原文件就是hsynz等价文件。   
 
-客户端先从服务端下载hsyni文件，根据自己的旧版本计算出需要下载的更新块，并根据hsyni中的信息得知这些块在hsynz中的位置，选择一种通讯方式从服务端的hsynz文件中按需下载，下载好的块和本地已有数据合并得到最新版本的数据。   
+客户端先从服务端或其他用户分享处下载hsyni文件，根据自己的旧版本计算出需要下载的更新块，并根据hsyni中的信息得知这些块在hsynz中的位置，选择一种通讯方式从服务端的hsynz文件中按需下载，下载好的块和本地已有数据合并得到最新版本的数据。   
 
 hsync_demo提供了一个测试客户端demo，用于本地文件测试。   
 hsync_http提供了一个支持http(s)的下载客户端demo，支持从提供http(s)文件下载服务的服务端(比如CDN服务器)进行同步更新。   
 提示：你也可以自定义其他通讯方式用于同步。   
    
+---
+## 和 [zsync](http://zsync.moria.org.uk) 对比
+* 除了支持源和目标为文件，还为文件夹(目录)提供了支持。
+* 除了支持zlib压缩发布包，还支持zstd压缩，提供更好的压缩率；即下载的补丁包更小。
+* 服务端make时提供了多线程并行加速的支持。
+* 对客户端的diff速度进行了优化，并且提供了多线程并行加速的支持。
 
 ---
 ## 二进制发布包
-[从 release 下载](https://github.com/sisong/hsync/releases) : 分别运行在 Windows、Linux、MacOS操作系统的命令行程序。     
-( 编译出这些发布文件的项目路径在 `hsync/builds` )   
+[从 release 下载](https://github.com/sisong/hsynz/releases) : 分别运行在 Windows、Linux、MacOS操作系统的命令行程序。     
+( 编译出这些发布文件的项目路径在 `hsynz/builds` )   
 
 ## 自己编译
 ### Linux or MacOS X ###
 ```
 $ cd <dir>
-$ git clone --recursive https://github.com/sisong/hsync.git
-$ cd hsync
+$ git clone --recursive https://github.com/sisong/hsynz.git
+$ cd hsynz
 $ make
 ```
 ### Windows ###
 ```
 $ cd <dir>
-$ git clone --recursive https://github.com/sisong/hsync.git
+$ git clone --recursive https://github.com/sisong/hsynz.git
 ```
-用 [`Visual Studio`](https://visualstudio.microsoft.com) 打开 `hsync/builds/vc/hsync.sln` 编译   
+用 [`Visual Studio`](https://visualstudio.microsoft.com) 打开 `hsynz/builds/vc/hsynz.sln` 编译   
 
 ---
 ## 性能测试
