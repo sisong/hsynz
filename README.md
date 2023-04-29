@@ -14,7 +14,7 @@ Recommended scenarios: Very large number of older versions or where older versio
 
 The server uses hsync_make to process the latest version of the data once, generating a summary info file(hsyni) of the new version of the data in chunks, and optionally compressing the new version of the data in chunks to get the release file(hsynz), which would be the hsynz equivalent if the new version of the original file were not compressed.   
 
-The client first downloads the hsyni file from the server, calculates the updated blocks it needs to download based on its old version, and learns the location of these blocks in hsynz based on the information in hsyni, selects a communication method to download them on demand from the server's hsynz file, and merges the downloaded blocks with the existing data locally to get the latest version of the data.   
+The client first downloads the hsyni file from the server or another user's share, calculates the updated blocks it needs to download based on its old version, and learns the location of these blocks in hsynz based on the information in hsyni, selects a communication method to download them on demand from the server's hsynz file, and merges the downloaded blocks with the existing data locally to get the latest version of the data.   
 
 hsync_demo provides a test client demo for local file testing.   
 hsync_http provides a download client demo with http(s) support for sync update from a server that provides an http(s) file download service(e.g CDN).   
@@ -24,8 +24,8 @@ Tip: You can also customise other communication methods for sync.
 ## Compare with [zsync](http://zsync.moria.org.uk)
 * In addition to supporting source and target as files, support is also provided for directories(folders).
 * In addition to supporting compressed release package by zlib, zstd compressior is also supported, providing better compression ratio; i.e. smaller downloaded patch package.
-* The server-side make speed has been optimised, and support for multi-threaded parallel acceleration.
-* The client-side diff speed has been optimised, and also support for multi-threaded parallel acceleration.
+* The server-side make support multi-threaded parallel acceleration.
+* The client-side diff speed has been optimized, and also support multi-threaded parallel acceleration.
 
 ---
 ## Releases/Binaries

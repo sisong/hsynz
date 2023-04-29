@@ -229,15 +229,6 @@ int main(int argc,char* argv[]){
 #   endif
 #endif
 
-static int _dictSizeToDictBits(size_t dictSize){
-    int bits=1;
-    while ((((size_t)1)<<bits)<dictSize){
-        ++bits;
-        if (bits==sizeof(size_t)*8) break;
-    }
-    return bits;
-}
-
 //ISyncInfoListener::findDecompressPlugin
 static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,const char* compressType,size_t dictSize){
     if (compressType==0) return 0; //ok

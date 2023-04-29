@@ -52,12 +52,16 @@ hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
     assert(result>dataSize);
     return result;
 }
+#endif
+
+#ifndef IS_REUSE_compress_handle
+#   define IS_REUSE_compress_handle 0
+#endif
 
 static size_t _default_getBestWorkBlockCount(hsync_TDictCompress* compressPlugin,size_t blockCount,
                                              size_t blockSize,size_t defaultWorkBlockCount){
     return defaultWorkBlockCount;
 }
-#endif
 
 static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t dataSize){
     while ((bits>kMinBits)&&(((hpatch_StreamPos_t)1)<<(bits-1)>=dataSize))
@@ -112,7 +116,6 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
         _TDictCompressPlugin_zlib_data* self=(_TDictCompressPlugin_zlib_data*)malloc(sizeof(_TDictCompressPlugin_zlib_data)+cacheDictSize);
         if (self==0) return 0;
         memset(self,0,sizeof(*self));
-        assert(blockCount>0);
         _CacheBlockDict_init(&self->cache,((hpatch_byte*)self)+sizeof(*self),
                              cacheDictSize,dictSize,blockCount,blockSize);
         if (deflateInit2(&self->stream,plugin->compress_level,Z_DEFLATED,
@@ -233,8 +236,8 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
 #endif
     struct TDictCompressPlugin_zstd{
         hsync_TDictCompress base;
-        hpatch_byte         compress_level; //0..22
-        hpatch_byte         dict_bits;  // 10..30
+        hpatch_byte         compress_level; //10..22
+        hpatch_byte         dict_bits;  // 15..30
     };
 
     typedef struct{
@@ -307,8 +310,13 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
             __zstd_clear_cd(self);
             self->s=0;
             if (s!=0){
+#if (IS_REUSE_compress_handle)
+                size_t ret=ZSTD_CCtx_reset(s,ZSTD_reset_parameters);
+                assert(ret==0);
+#else
                 size_t ret=ZSTD_freeCCtx(s);
                 assert(ret==0);
+#endif
             }
             free(self);
         }
@@ -326,14 +334,18 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
                             malloc(sizeof(_TDictCompressPlugin_zstd_data)+(isDeltaDict?dictSize:cacheDictSize));
         if (self==0) return 0;
         memset(self,0,sizeof(*self));
-        assert(blockCount>0);
         self->isDeltaDict=isDeltaDict;
         self->compress_level=plugin->compress_level;
         _CacheBlockDict_init(&self->cache,((hpatch_byte*)self)+sizeof(*self),
                              (isDeltaDict?dictSize:cacheDictSize),(isDeltaDict?dictSize-deltaSize:dictSize),
                              blockCount,blockSize);
-
+#if (IS_REUSE_compress_handle)
+        static ZSTD_CCtx*   _s=0;
+        if (_s==0) _s=ZSTD_createCCtx();
+        self->s=_s;
+#else
         self->s=ZSTD_createCCtx();
+#endif
         if (self->s==0) goto _on_error;
         _zstd_checkOpen(ZSTD_CCtx_setParameter(self->s,ZSTD_c_compressionLevel,plugin->compress_level));
         _zstd_checkOpen(ZSTD_CCtx_setParameter(self->s,ZSTD_c_windowLog,(int)_getDictBitsByData(plugin->dict_bits,10,blockSize)));
@@ -377,7 +389,7 @@ static size_t _getDictBitsByData(size_t bits,size_t kMinBits,hpatch_StreamPos_t 
             if (self->isDeltaDict){
                 if (self->dict_isInReset)
                     __zstd_reCreateCDict(self);
-                _zstd_checkComp(ZSTD_CCtx_refCDict(self->s,self->d));
+                _zstd_checkComp(ZSTD_CCtx_refCDict(s,self->d));
             }else{
                 hpatch_byte* dict;
                 size_t       dictSize;

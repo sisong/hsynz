@@ -40,6 +40,14 @@
 extern "C" {
 #endif
 
+static int _dictSizeToDictBits(size_t dictSize){
+    int bits=1;
+    while ((((size_t)1)<<bits)<dictSize){
+        ++bits;
+        if (bits==sizeof(size_t)*8) break;
+    }
+    return bits;
+}
 
 #ifdef  _CompressPlugin_zlib
 #if (_IsNeedIncludeDefaultCompressHead)
@@ -63,8 +71,11 @@ extern "C" {
                                                                const hpatch_byte* in_info,const hpatch_byte* in_infoEnd){
         const TDictDecompressPlugin_zlib*  plugin=(const TDictDecompressPlugin_zlib*)decompressPlugin;
         const size_t dictSize=((size_t)1<<plugin->dict_bits);
-        const size_t cacheDictSize=_getCacheBlockDictSize(dictSize,blockCount,blockSize);
-        _TDictDecompressPlugin_zlib_data* self=(_TDictDecompressPlugin_zlib_data*)malloc(sizeof(_TDictDecompressPlugin_zlib_data)+cacheDictSize);
+        size_t cacheDictSize=0;
+        _TDictDecompressPlugin_zlib_data* self=0;
+        if (plugin->dict_bits>MAX_WBITS) return 0; //error;
+        cacheDictSize=_getCacheBlockDictSize(dictSize,blockCount,blockSize);
+        self=(_TDictDecompressPlugin_zlib_data*)malloc(sizeof(_TDictDecompressPlugin_zlib_data)+cacheDictSize);
         if (self==0) return 0;
         memset(self,0,sizeof(*self));
         assert(in_info==in_infoEnd);
@@ -125,7 +136,8 @@ extern "C" {
             self->dict_isInReset=hpatch_TRUE;
         else if (z_ret!=Z_OK)
             return hpatch_FALSE;//error
-        assert(self->stream.avail_in==0);
+        if (self->stream.avail_in!=0)
+            return hpatch_FALSE;//error
         if (self->stream.total_out!=dataSize)
             return hpatch_FALSE;//error
         self->stream.total_out=0;
@@ -143,7 +155,7 @@ extern "C" {
 #ifdef  _CompressPlugin_zstd
 #define ZSTD_STATIC_LINKING_ONLY
 #if (_IsNeedIncludeDefaultCompressHead)
-#   include "zstd.h" // "zstd/lib/zstd.h" https://github.com/facebook/zstd
+#   include "zstd.h" // "zstd/lib/zstd.h" https://github.com/sisong/zstd
 #endif
     //zstdDictDecompressPlugin
     typedef struct{
@@ -189,17 +201,20 @@ extern "C" {
     }
 
     #define _zstd_checkOpen(v)  do { if (ZSTD_isError(v)) goto _on_error; } while(0)
+    #define _ZSTD_WINDOWLOG_MAX 30
 
     static hsync_dictDecompressHandle _zstd_dictDecompressOpen(struct hsync_TDictDecompress* decompressPlugin,size_t blockCount,size_t blockSize,
                                                                const hpatch_byte* in_info,const hpatch_byte* in_infoEnd){
         const TDictDecompressPlugin_zstd*  plugin=(const TDictDecompressPlugin_zstd*)decompressPlugin;
         const size_t dictSize=plugin->dictSize;
-        const size_t cacheDictSize=_getCacheBlockDictSize(dictSize,blockCount,blockSize);
-        _TDictDecompressPlugin_zstd_data* self=(_TDictDecompressPlugin_zstd_data*)malloc(sizeof(_TDictDecompressPlugin_zstd_data)+cacheDictSize);
+        size_t cacheDictSize=0;
+        _TDictDecompressPlugin_zstd_data* self=0;
+        if (dictSize>((size_t)1<<_ZSTD_WINDOWLOG_MAX)) return 0; //error;
+        cacheDictSize=_getCacheBlockDictSize(dictSize,blockCount,blockSize);
+        self=(_TDictDecompressPlugin_zstd_data*)malloc(sizeof(_TDictDecompressPlugin_zstd_data)+cacheDictSize);
         if (self==0) return 0;
         memset(self,0,sizeof(*self));
-        assert(blockCount>0);
-        assert(dictSize>0);
+        //assert(blockCount>0);
         _CacheBlockDict_init(&self->cache,((hpatch_byte*)self)+sizeof(*self),
                              cacheDictSize,dictSize,blockCount,blockSize);
 
@@ -207,7 +222,6 @@ extern "C" {
         if (self->s==0) goto _on_error;
         _zstd_checkOpen(ZSTD_DCtx_setParameter(self->s,ZSTD_d_format,ZSTD_f_zstd1_magicless));
         _zstd_checkOpen(ZSTD_DCtx_setParameter(self->s,ZSTD_d_forceIgnoreChecksum,ZSTD_d_ignoreChecksum));
-        #define _ZSTD_WINDOWLOG_MAX 30
         ZSTD_DCtx_setParameter(self->s,ZSTD_d_windowLogMax,_ZSTD_WINDOWLOG_MAX);
         return self;
     _on_error:
@@ -254,9 +268,9 @@ extern "C" {
         s_output.size=dataSize;
         s_output.pos=0;
         _zstd_checkDec(ZSTD_decompressStream(s,&s_output,&s_input));
-        assert(s_input.pos==s_input.size);
-        assert(s_output.pos==dataSize);
-        return (s_output.pos==dataSize);
+        if (s_input.pos!=s_input.size) return hpatch_FALSE;
+        if (s_output.pos!=dataSize) return hpatch_FALSE;
+        return hpatch_TRUE;
     }
     
     static const TDictDecompressPlugin_zstd zstdDictDecompressPlugin={
