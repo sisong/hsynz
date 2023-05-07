@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v0.9.1-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v0.9.2-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -203,9 +203,9 @@ client sync diff&patch by `hsync_demo {old} {newi} {newz} {out_new}` (all files 
 |Program|compress|make mem|speed|sync mem|max mem|speed|
 |:----|----:|----:|----:|----:|----:|----:|
 |zsync|52.94%|1M|285.1MB/s|7M|23M|25MB/s|
-|zsync -z|20.51%|1M|11.9MB/s|12M|37M|21MB/s|
-|hsynz p1|50.79%|5M|1687.8MB/s|5M|19M|222MB/s|
-|hsynz p8|50.79%|22M|3016.1MB/s|13M|27M|391MB/s|
+|zsync -z|20.67%|1M|11.9MB/s|12M|37M|21MB/s|
+|hsynz p1|51.05%|5M|1687.8MB/s|5M|19M|222MB/s|
+|hsynz p8|51.05%|22M|3016.1MB/s|13M|27M|391MB/s|
 |hsynz p1 -zlib|20.05%|6M|14.3MB/s|6M|21M|172MB/s|
 |hsynz p8 -zlib|20.05%|30M|89.8MB/s|13M|29M|254MB/s|
 |hsync p1 -gzip|20.12%|6M|14.2MB/s|6M|21M|171MB/s|
@@ -241,7 +241,7 @@ case list:
 |21|<img src="https://github.com/sisong/sfpatcher/raw/master/img/com.taobao.taobao.png" width="36">|com.taobao.taobao_10.18.10.apk <-- 10.17.0|117218670|117111874|
 |22|<img src="https://github.com/sisong/sfpatcher/raw/master/img/com.tencent.mm.png" width="36">|com.tencent.mm_8.0.28.apk <-- 8.0.27|266691829|276603782|
 |23|<img src="https://github.com/sisong/sfpatcher/raw/master/img/com.tencent.mobileqq.png" width="36">|com.tencent.mobileqq_8.9.15.apk <-- 8.9.13|311322716|310529631|
-|24|<img src="https://github.com/sisong/sfpatcher/raw/master/img/com.tencent.mtt.png" width="36">|com.tencent.mtt_13.2.0.0045.apk <-- 13.2.0.0103|97296757|97342747|
+|24|<img src="https://github.com/sisong/sfpatcher/raw/master/img/com.tencent.mtt.png" width="36">|com.tencent.mtt_13.2.0.0103.apk <-- 13.2.0.0045|97342747|97296757|
 |25|<img src="https://github.com/sisong/sfpatcher/raw/master/img/com.tripadvisor.tripadvisor.png" width="36">|com.tripadvisor.tripadvisor_49.5.apk <-- 49.3|28744498|28695346|
 |26|<img src="https://github.com/sisong/sfpatcher/raw/master/img/com.twitter.android.png" width="36">|com.twitter.android_9.61.0.apk <-- 9.58.2|36141840|35575484|
 |27|<img src="https://github.com/sisong/sfpatcher/raw/master/img/com.ubercab.png" width="36">|com.ubercab_4.442.10002.apk <-- 4.439.10002|69923232|64284150|
