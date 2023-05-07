@@ -54,7 +54,7 @@ extern "C" {
         const TNeedSyncInfos*   needSyncInfo;
         uint32_t                curBlockIndex;
         hpatch_StreamPos_t      curPosInNewSyncData;
-        int getNextRanges(jlong* dstRanges,int maxGetRangeLen){
+        inline int getNextRanges(jlong* dstRanges,int maxGetRangeLen){
             assert(sizeof(jlong)==sizeof(hpatch_StreamPos_t));
             return (int)TNeedSyncInfos_getNextRanges(needSyncInfo,(hpatch_StreamPos_t*)dstRanges,maxGetRangeLen,
                                                      &curBlockIndex,&curPosInNewSyncData);
@@ -111,11 +111,12 @@ extern "C" {
     
     JNIEXPORT jint 
     Java_com_github_sisong_hsynz_nativeGetNextRanges(JNIEnv* jenv,jobject jobj,
-                                                     jlong cNeedRangesHandle,jlongArray dstNextRanges,jint dstRangePos,jint maxGetRangeLen){
+                                                     jlong cNeedRangesHandle,jlongArray dstNextRanges,
+                                                     jint dstRangeBeginIndex,jint maxGetRangeLen){
         jlong* dstRanges=jenv->GetLongArrayElements(dstNextRanges,NULL);
         if (dstRanges==0) return 0; //error
         TNeedDownloadRanges_c* needRanges=(TNeedDownloadRanges_c*)cNeedRangesHandle;
-        int result=needRanges->getNextRanges(dstRanges+dstRangePos,maxGetRangeLen);
+        int result=needRanges->getNextRanges(dstRanges+dstRangeBeginIndex*2,maxGetRangeLen);
         jenv->ReleaseLongArrayElements(dstNextRanges,dstRanges,0);
         return result;
     }

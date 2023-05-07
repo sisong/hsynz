@@ -26,26 +26,32 @@ public class hsynz{
         //return got range count
         //  note: 2 long values are a range; if range is (25,29) means need from file pos 25, download (29+1-25) length data;
         public final int getNextRanges(long[] dstRanges){
-            final int dstRangePos=0;
-            final int maxGetRangeLen=(dstRanges.length>>1)-dstRangePos;
-            return nativeGetNextRanges(cNeedRangesHandle,dstRanges,dstRangePos,maxGetRangeLen);
+            final int dstRangeBeginIndex=0;
+            final int dstRangeEndIndex=(dstRanges.length>>1);
+            //if (dstRangeBeginIndex>=dstRangeEndIndex) return 0;
+            return nativeGetNextRanges(cNeedRangesHandle,dstRanges,dstRangeBeginIndex,dstRangeEndIndex-dstRangeIndex);
         }
     }
 
     public final static class TByteBuf{
         private long cBufHandle;
-        public final void setData(int bufPos,byte[] src,int srcPos,int dataLen){
-            setByteBufData(cBufHandle,bufPos,src,srcPos,dataLen);
+        //copy src data to this buf;
+        //  this buf needed data sum size is readDataLen, see IRangeDownloader::readDownloadedData();
+        //  dstBufPos default 0, if copyDataLen<readDataLen then dstBufPos+=copyDataLen for next;
+        public final void setData(int dstBufPos,byte[] src,int srcReadPos,int copyDataLen){
+            setByteBufData(cBufHandle,dstBufPos,src,srcReadPos,copyDataLen);
         }
     }
 
     public static interface IRangeDownloader{
         //only call once when got sync info
+        //  hsynzDiffSize is diff data total size
         public void    onSyncInfo(long newFileSize,long hsynzFileSize,long hsynzDiffSize);
 
         //only call once befor download begin
+        // if used continue download, needRanges's sum size == hsynzDiffSize - (downloaded size)
         public boolean downloadRanges(TNeedDownloadRanges needRanges);
-        //if no data wait until got; if error return false;
+        //loop call for get the downloaded data in order; if no data wait until got; if error return false;
         public boolean readDownloadedData(TByteBuf dstBuf,int readDataLen);
     }
 
