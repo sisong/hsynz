@@ -136,9 +136,11 @@ protected:
         --requestCount;
     }
     inline void _OnRecvSize(unsigned size){
-        if (requestSumSize<size)
-            is_write_error=true;
-        requestSumSize-=size;
+        if (requestSumSize!=kEmptyEndPos){
+            if (requestSumSize<size)
+                is_write_error=true;
+            requestSumSize-=size;
+        }
     }
     virtual void _OnRecv(void *incoming, unsigned size){
         if(!size || !IsSuccess() || is_write_error)
