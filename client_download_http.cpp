@@ -64,7 +64,6 @@ static bool doInitNetwork(){
 
 static const size_t kBestBufSize = hpatch_kFileIOBestMaxSize>>4;
 static const size_t kBestRangesCacheSize=hpatch_kFileIOBestMaxSize;
-static const size_t kStepLimitRangCount=32;
 static const int    kTimeout_s=10;
 static const hpatch_StreamPos_t kEmptyEndPos=kNullRangePos;
 static const char*  kHttpUserAgent="hsynz/" HSYNC_VERSION_STRING;
@@ -158,9 +157,11 @@ protected:
 
 
 struct THttpRangeDownload:public THttpDownload{
-    explicit THttpRangeDownload(const char* file_url)
+    explicit THttpRangeDownload(const char* file_url,size_t stepRangeNumber)
     :_hd(*this),_file_url(file_url),_readPos(0),_writePos(0),nsi(0),
-    curBlockIndex(~0),curPosInNewSyncData(hpatch_kNullStreamPos){}
+    curBlockIndex(~0),curPosInNewSyncData(hpatch_kNullStreamPos){
+        kStepRangeNumber=(stepRangeNumber>1)?stepRangeNumber:1;
+    }
     virtual ~THttpRangeDownload(){ _closeAll();  }
     static hpatch_BOOL readSyncDataBegin(IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo,
                                          uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData){
@@ -202,12 +203,13 @@ protected:
     TAutoMem          _cache;
     size_t            _readPos;
     size_t            _writePos;
+    size_t            kStepRangeNumber;
     const TNeedSyncInfos* nsi;
     void makeRanges(std::vector<TRange>& out_ranges,uint32_t& blockIndex,
                     hpatch_StreamPos_t& posInNewSyncData){
-        out_ranges.resize(kStepLimitRangCount);
+        out_ranges.resize(kStepRangeNumber);
         size_t gotRangeCount=TNeedSyncInfos_getNextRanges(nsi,(hpatch_StreamPos_t*)out_ranges.data(),
-                                                          kStepLimitRangCount,&blockIndex,&posInNewSyncData);
+                                                          kStepRangeNumber,&blockIndex,&posInNewSyncData);
         out_ranges.resize(gotRangeCount);
     }
     inline void _closeAll(){
@@ -333,10 +335,11 @@ protected:
 
 } //end namespace
 
-hpatch_BOOL download_range_by_http_open(IReadSyncDataListener* out_httpListener,const char* file_url){
+hpatch_BOOL download_range_by_http_open(IReadSyncDataListener* out_httpListener,
+                                        const char* file_url,size_t kStepRangeNumber){
     THttpRangeDownload* self=0;
     try {
-        self=new THttpRangeDownload(file_url);
+        self=new THttpRangeDownload(file_url,kStepRangeNumber);
     } catch (...) {
         if (self) delete self;
         return hpatch_FALSE;
