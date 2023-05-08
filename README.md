@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v0.9.2-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v0.9.3-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -23,7 +23,7 @@ Tip: You can also customise other communication methods for sync.
 ---
 ## Compare with [zsync](http://zsync.moria.org.uk)
 * In addition to supporting source and target as files, support is also provided for directories(folders).
-* In addition to supporting compressed release package by zlib, zstd compressior is also supported, providing better compression ratio; i.e. smaller downloaded patch package.
+* In addition to supporting compressed release package by zlib; also supported zstd compressor, providing better compression ratio, i.e. smaller downloaded patch package.
 * The server-side make support multi-threaded parallel acceleration.
 * The client-side diff speed has been optimized, and also support multi-threaded parallel acceleration.
 
@@ -123,6 +123,11 @@ options:
   -cdl
     continue download data from breakpoint;
     DEFAULT continue download mode is closed;
+  -r-stepRangeNumber
+    DEFAULT -r-32, recommended 16,20,...
+    limit the maximum number of .hsynz data ranges that can be downloaded
+    in a single request step;
+    if http(s) server not support muti-ranges request, must set -r-1
   -p-parallelThreadNumber
     DEFAULT -p-4;
     if parallelThreadNumber>1 then open multi-thread Parallel mode;

@@ -55,7 +55,8 @@
 
 typedef struct TSyncDownloadPlugin{
     //download range of file
-    hpatch_BOOL (*download_range_open) (IReadSyncDataListener* out_listener,const char* file_url);
+    hpatch_BOOL (*download_range_open) (IReadSyncDataListener* out_listener,
+                                        const char* file_url,size_t kStepRangeNumber);
     hpatch_BOOL (*download_range_close)(IReadSyncDataListener* listener);
     //download file
     hpatch_BOOL (*download_file)      (const char* file_url,const hpatch_TStreamOutput* out_stream,
@@ -135,6 +136,11 @@ static void printUsage(){
            "  -cdl\n"
            "    continue download data from breakpoint;\n"
            "    DEFAULT continue download mode is closed;\n"
+           "  -r-stepRangeNumber\n"
+           "    DEFAULT -r-32, recommended 16,20,...\n"
+           "    limit the maximum number of .hsynz data ranges that can be downloaded \n"
+           "    in a single request step; \n"
+           "    if http(s) server not support muti-ranges request, must set -r-1\n"
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
            "    DEFAULT -p-4; \n"
@@ -187,24 +193,24 @@ int sync_client_cmd_line(int argc, const char * argv[]);
 #endif //_IS_NEED_CMDLINE
 
 TSyncClient_resultType
-   hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
-                     const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,IReadSyncDataListener* syncDataListener,
-                     const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
-                     size_t kMaxOpenFileNumber,int threadNum);
+    hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
+                      const std::vector<std::string>& ignoreOldPathList,
+                      const char* hsyni_file,IReadSyncDataListener* syncDataListener,
+                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
+                      size_t kMaxOpenFileNumber,int threadNum);
 TSyncClient_resultType 
     hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                       const std::vector<std::string>& ignoreOldPathList,
                       const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                       const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
-                      size_t kMaxOpenFileNumber,int threadNum);
+                      size_t kStepRangeNumber,size_t kMaxOpenFileNumber,int threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 TSyncClient_resultType
     hsync_patch_2dir(const char* outNewDir,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
-                     size_t kMaxOpenFileNumber,int threadNum);
+                     size_t kStepRangeNumber,size_t kMaxOpenFileNumber,int threadNum);
 #endif
 
 static TSyncClient_resultType
@@ -336,6 +342,8 @@ if (!(value)) { _pferr(errInfo0); _pferr(errInfo1); _pferr(errInfo2); LOG_ERR(" 
 #define _THREAD_NUMBER_DEFUALT  4
 #define _THREAD_NUMBER_MAX      (1<<8)
 
+#define kStepRangeNumber_default    32
+
 enum TRunAsType{
     kRunAs_unknown =0,
     kRunAs_sync_patch,
@@ -364,6 +372,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     hpatch_BOOL isOutputVersion=_kNULL_VALUE;
     hpatch_BOOL isOldPathInputEmpty=_kNULL_VALUE;
     hpatch_BOOL isUsedDownloadContinue=_kNULL_VALUE;
+    size_t      kStepRangeNumber=_kNULL_SIZE;
     TSyncDiffType diffType=_kNULL_diffType;
     const char* hsyni_file_url=0;
     const char* diff_to_diff_file=0;
@@ -421,6 +430,11 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                 }else{
                     _options_check(false,"-cdl?");
                 }
+            } break;
+            case 'r':{
+                const char* pnum=op+3;
+                _options_check((kStepRangeNumber==_kNULL_SIZE)&&(op[2]=='-'),"-r-?");
+                _options_check(kmg_to_size(pnum,strlen(pnum),&kStepRangeNumber),"-r-?");
             } break;
             case 'd':{
                 if (strstr(op,"-diff")==op){
@@ -489,6 +503,10 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         isOutputVersion=hpatch_FALSE;
     if (isForceOverwrite==_kNULL_VALUE)
         isForceOverwrite=hpatch_FALSE;
+    if (kStepRangeNumber==_kNULL_SIZE)
+        kStepRangeNumber=kStepRangeNumber_default;
+    else if (kStepRangeNumber<1)
+        kStepRangeNumber=1;
 #if (_IS_USED_MULTITHREAD)
     if (threadNum==_THREAD_NUMBER_NULL)
         threadNum=_THREAD_NUMBER_DEFUALT;
@@ -642,13 +660,13 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         result=hsync_patch_2dir(outNewPath,oldPath,oldIsDir,ignoreOldPathList,
                                 hsyni_file,&downloadPlugin,hsynz_file_url,
                                 localDiffFile,diffType,isUsedDownloadContinue,
-                                kMaxOpenFileNumber,(int)threadNum);
+                                kStepRangeNumber,kMaxOpenFileNumber,(int)threadNum);
     else
 #endif
         result=hsync_patch_2file(outNewPath,oldPath,oldIsDir,ignoreOldPathList,
                                  hsyni_file,&downloadPlugin,hsynz_file_url,
                                  localDiffFile,diffType,isUsedDownloadContinue,
-                                 kMaxOpenFileNumber,(int)threadNum);
+                                 kStepRangeNumber,kMaxOpenFileNumber,(int)threadNum);
     double time1=clock_s();
     printf("\nsync_patch_%s2%s time: %.3f s\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
     if (result==kSyncClient_ok) printf("run ok.\n"); else printf("\nERROR!\n\n");
@@ -771,12 +789,12 @@ TSyncClient_resultType
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
-                     size_t kMaxOpenFileNumber,int threadNum){
+                     size_t kStepRangeNumber,size_t kMaxOpenFileNumber,int threadNum){
     if (hsynz_file_url) printFileInfo(hsynz_file_url,                  "sync  url   ",_IS_SYNC_PATCH_DEMO);
 
     IReadSyncDataListener syncDataListener; memset(&syncDataListener,0,sizeof(syncDataListener));
     if (hsynz_file_url)
-        _check3(downloadPlugin->download_range_open(&syncDataListener,hsynz_file_url),
+        _check3(downloadPlugin->download_range_open(&syncDataListener,hsynz_file_url,kStepRangeNumber),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynz_file_url,"\"");
     TSyncClient_resultType result=hsync_patch_2file(outNewFile,oldPath,oldIsDir,ignoreOldPathList,
                                                     hsyni_file,&syncDataListener,
@@ -839,7 +857,7 @@ TSyncClient_resultType
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
-                     size_t kMaxOpenFileNumber,int threadNum){
+                     size_t kStepRangeNumber,size_t kMaxOpenFileNumber,int threadNum){
     std::string _outNewDir(outNewDir?outNewDir:"");
     if (outNewDir) { assignDirTag(_outNewDir); outNewDir=outNewDir?_outNewDir.c_str():0; }
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
@@ -874,7 +892,7 @@ TSyncClient_resultType
     listener.patchFinish=_dirSyncPatchFinish;
     
     if (hsynz_file_url)
-        _check3(downloadPlugin->download_range_open(&syncDataListener,hsynz_file_url),
+        _check3(downloadPlugin->download_range_open(&syncDataListener,hsynz_file_url,kStepRangeNumber),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynz_file_url,"\"");
     TSyncClient_resultType result=kSyncClient_ok;
     if ((localDiffFile==0)||(diffType==kSyncDiff_info)){

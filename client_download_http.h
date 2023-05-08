@@ -31,7 +31,8 @@
 #include "HDiffPatch/libhsync/sync_client/sync_client_type.h"
 
 //download range of file by http(s)
-hpatch_BOOL download_range_by_http_open(IReadSyncDataListener* out_httpListener,const char* file_url);
+hpatch_BOOL download_range_by_http_open(IReadSyncDataListener* out_httpListener,
+                                        const char* file_url,size_t kStepRangeNumber);
 hpatch_BOOL download_range_by_http_close(IReadSyncDataListener* httpListener);
 
 //download file by http(s)

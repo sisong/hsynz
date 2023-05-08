@@ -63,7 +63,7 @@ hpatch_BOOL downloadEmulation_open(IReadSyncDataListener* out_emulation,
 }
 
 hpatch_BOOL downloadEmulation_open_by_file(IReadSyncDataListener* out_emulation,
-                                           const char* newSyncDataPath){
+                                           const char* newSyncDataPath,size_t kStepRangeNumber){
     assert(out_emulation->readSyncDataImport==0);
     TDownloadEmulation* self=(TDownloadEmulation*)malloc(sizeof(TDownloadEmulation));
     if (self==0) return hpatch_FALSE;

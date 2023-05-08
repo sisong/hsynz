@@ -35,7 +35,8 @@ extern "C" {
 
 //downloadEmulation for patch test:
 //  when need to download part of newSyncData, emulation read it from local data;
-hpatch_BOOL downloadEmulation_open_by_file(IReadSyncDataListener* out_emulation,const char* newSyncDataPath);
+hpatch_BOOL downloadEmulation_open_by_file(IReadSyncDataListener* out_emulation,
+                                           const char* newSyncDataPath,size_t kStepRangeNumber);
 hpatch_BOOL downloadEmulation_open(IReadSyncDataListener* out_emulation,const hpatch_TStreamInput* newSyncData);
 hpatch_BOOL downloadEmulation_close(IReadSyncDataListener* emulation);
 hpatch_BOOL downloadEmulation_download_file(const char* file_url,const hpatch_TStreamOutput* out_stream,
