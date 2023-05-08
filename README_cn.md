@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v0.9.2-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v0.9.3-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -121,6 +121,10 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
     对oldPath应用diffFile补丁文件后得到outNewPath;
   -cdl
     开启断点续传；默认关闭;
+  -r-stepRangeNumber
+    默认 -r-32, 推荐 16,20,...
+    从.hsynz下载时,限制在单次请求步骤中的最大区域(range)数;
+    如果http(s)服务器不支持多区域(muti-ranges)请求, 必须设置为 -r-1
   -p-parallelThreadNumber
     设置线程数parallelThreadNumber>1时,开启多线程并行模式;
     默认为4;
