@@ -9,12 +9,17 @@
  中文版 | [english](README.md)   
 
 hsynz 是一个用使用同步算法来进行增量更新的库，类似于 [zsync](http://zsync.moria.org.uk)。   
+通过http(s)实现rsync；在客户端实现同步算法，服务器端只需要提供http(s)的CDN。支持zstd和zlib压缩，支持大文件和目录(文件夹)，支持多线程。   
+   
 
-适用的场景：旧版本数量非常多 或者 无法得到旧版本(没有保存或被修改等) 从而无法提前计算出全部的增量补丁，这时推荐使用hsynz同步分发技术。    
+适用的场景：旧版本数量非常多 或者 无法得到旧版本(没有保存或被修改等) 从而无法提前计算出全部的增量补丁，这时推荐使用hsynz同步分发技术。   
+   
 
 服务端使用hsync_make对最新版本的数据进行一次处理，将新版本数据按块生成摘要信息文件(hsyni)，同时也可以选择对新版本数据分块进行压缩得到发布文件(hsynz)，如果不压缩新版本原文件就是hsynz等价文件。   
+   
 
 客户端先从服务端或其他用户分享处下载hsyni文件，根据自己的旧版本计算出需要下载的更新块，并根据hsyni中的信息得知这些块在hsynz中的位置，选择一种通讯方式从服务端的hsynz文件中按需下载，下载好的块和本地已有数据合并得到最新版本的数据。   
+   
 
 hsync_demo提供了一个测试客户端demo，用于本地文件测试。   
 hsync_http提供了一个支持http(s)的下载客户端demo，支持从提供http(s)文件下载服务的服务端(比如支持HTTP/1.1的多range请求的CDN服务器)进行同步更新。   
@@ -23,17 +28,17 @@ hsync_http提供了一个支持http(s)的下载客户端demo，支持从提供ht
 ---
 ## 特性和 [zsync](http://zsync.moria.org.uk) 对比
 * 除了支持源和目标为文件，还为文件夹(目录)提供了支持。
-* 除了支持zlib压缩发布包，还支持zstd压缩，提供更好的压缩率；即下载的补丁包更小。
+* 除了支持zlib压缩发布包；还支持zstd压缩，提供更好的压缩率，即下载的补丁包更小。
 * 服务端make时提供了多线程并行加速的支持。
 * 对客户端的diff速度进行了优化，并且提供了多线程并行加速的支持。
 
 ---
 ## 二进制发布包
-[从 release 下载](https://github.com/sisong/hsynz/releases) : 分别运行在 Windows、Linux、MacOS操作系统的命令行程序。     
+[从 release 下载](https://github.com/sisong/hsynz/releases) : 分别运行在 Windows、Linux、MacOS操作系统的命令行程序; .so 库用以支持安卓系统进行同步打补丁。     
 ( 编译出这些发布文件的项目路径在 `hsynz/builds` )   
 
 ## 自己编译
-### Linux or MacOS X ###
+### Linux 或 MacOS X ###
 ```
 $ cd <dir>
 $ git clone --recursive https://github.com/sisong/hsynz.git
@@ -46,6 +51,12 @@ $ cd <dir>
 $ git clone --recursive https://github.com/sisong/hsynz.git
 ```
 用 [`Visual Studio`](https://visualstudio.microsoft.com) 打开 `hsynz/builds/vc/hsynz.sln` 编译   
+   
+### 安卓库 libhsynz.so ###   
+* 先安装好 [Android NDK](https://developer.android.google.cn/ndk/downloads)
+* `$ cd <dir>/hsynz/builds/android_ndk_jni_mk`
+* `$ build_libs_static.sh`  (或者在 windows 系统上执行 `$ build_libs_static.bat`, 就可以得到 \*.so 文件)
+* 安卓项目添加 `com/github/sisong/hsynz.java` (路径在 `hsynz/builds/android_ndk_jni_mk/java/`) 和 .so 库文件, java代码中就可以调用libhsynz.so中的同步补丁函数了。   
    
 
 ---
@@ -66,7 +77,7 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
       默认为4;需要占用较多的内存。
   -c-compressType[-compressLevel]
       设置out_hsynz_file输出文件使用的压缩算法和压缩级别等, 默认不压缩;
-      所有的压缩算法都支持单线程并行压缩;
+      所有的压缩算法都支持多线程并行压缩;
       支持的压缩算法、压缩级别和字典大小等:
         -c-zlib[-{1..9}[-dictBits]]     默认级别 9
             压缩字典比特数dictBits可以为9到15, 默认为15。

@@ -9,12 +9,17 @@
  english | [中文版](README_cn.md)   
 
 hsynz is a library for delta update using sync algorithm, like [zsync](http://zsync.moria.org.uk).   
+rsync over http(s); implement the sync algorithm on client side, and server side only need http(s) cdn. support compressor zstd & zlib, support large file & directory(folder), support muti-thread.   
+   
 
 Recommended scenarios: Very large number of older versions or where older versions are not available (not saved or modified, etc.) so that all deltas cannot be calculated in advance.   
+   
 
 The server uses hsync_make to process the latest version of the data once, generating a summary info file(hsyni) of the new version of the data in chunks, and optionally compressing the new version of the data in chunks to get the release file(hsynz), which would be the hsynz equivalent if the new version of the original file were not compressed.   
+   
 
 The client first downloads the hsyni file from the server or another user's share, calculates the updated blocks it needs to download based on its old version, and learns the location of these blocks in hsynz based on the information in hsyni, selects a communication method to download them on demand from the server's hsynz file, and merges the downloaded blocks with the existing data locally to get the latest version of the data.   
+   
 
 hsync_demo provides a test client demo for local file testing.   
 hsync_http provides a download client demo with http(s) support for sync update from a server that provides an http(s) file download service(e.g CDN, support HTTP/1.1 muti range Requests).   
@@ -29,7 +34,7 @@ Tip: You can also customise other communication methods for sync.
 
 ---
 ## Releases/Binaries
-[Download from latest release](https://github.com/sisong/hsynz/releases) : Command line app for Windows, Linux, MacOS.     
+[Download from latest release](https://github.com/sisong/hsynz/releases) : Command line app for Windows, Linux, MacOS; and .so lib for Android.   
 ( release files build by projects in path `hsynz/builds` )   
 
 ## Build it yourself
@@ -47,6 +52,13 @@ $ cd <dir>
 $ git clone --recursive https://github.com/sisong/hsynz.git
 ```
 build `hsynz/builds/vc/hsynz.sln` with [`Visual Studio`](https://visualstudio.microsoft.com)   
+
+### libhsynz.so for Android ###   
+* install [Android NDK](https://developer.android.google.cn/ndk/downloads)
+* `$ cd <dir>/hsynz/builds/android_ndk_jni_mk`
+* `$ build_libs_static.sh`  (or `$ build_libs_static.bat` on windows, then got \*.so files)
+* import file `com/github/sisong/hsynz.java` (from `hsynz/builds/android_ndk_jni_mk/java/`) & .so files, java code can call the sync patch function in libhsynz.so
+   
 
 ---
 ## **hsync_make** command line usage:  
