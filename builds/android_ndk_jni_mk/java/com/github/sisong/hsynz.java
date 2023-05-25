@@ -29,7 +29,7 @@ public class hsynz{
             final int dstRangeBeginIndex=0;
             final int dstRangeEndIndex=(dstRanges.length>>1);
             //if (dstRangeBeginIndex>=dstRangeEndIndex) return 0;
-            return nativeGetNextRanges(cNeedRangesHandle,dstRanges,dstRangeBeginIndex,dstRangeEndIndex-dstRangeIndex);
+            return nativeGetNextRanges(cNeedRangesHandle,dstRanges,dstRangeBeginIndex,dstRangeEndIndex-dstRangeBeginIndex);
         }
     }
 
@@ -121,5 +121,5 @@ public class hsynz{
                                            String localDiffFile,int diffType,String outNewFile,boolean isContinue,
                                            int threadNum,TByteBuf dstBuf,TNeedDownloadRanges needRanges);
     private static native void setByteBufData(long cBufHandle,int bufPos,byte[] src,int srcPos,int dataLen);
-    private static native int  nativeGetNextRanges(long cNeedRangesHandle,long[] dstNextRanges,int dstRangePos,int maxRangeLen);
+    private static native int  nativeGetNextRanges(long cNeedRangesHandle,long[] dstNextRanges,int dstRangePos,int maxGetRangeLen);
 }
