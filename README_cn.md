@@ -193,8 +193,8 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
 |20|WeChat_3.8.0.41.win.tar <-- WeChat_3.8.0.33.win.tar|505876992|505018368|
    
 
-**测试PC**: Windows11, CPU Ryzen 5800H, SSD Disk, Memroy 8G*2 DDR4 3200MHz   
-**参与测试的程序版本**: hsynz 0.9.1, zsync 0.6.2  (更多程序的测试结果见 [HDiffPatch](https://github.com/sisong/HDiffPatch))   
+**测试PC**: Windows11, CPU R9-7945HX, SSD PCIe4.0x4 4T, DDR5 5200MHz 32Gx2   
+**参与测试的程序版本**: hsynz 0.9.3, zsync 0.6.2  (更多程序的测试结果见 [HDiffPatch](https://github.com/sisong/HDiffPatch))   
 **程序测试参数**:   
 **zsync** 运行 make 参数 `zsyncmake -b 2048 -o {out_newi} {new}`,   
 客户端同步 diff&patch 时参数 `zsync -i {old} -o {out_new} {newi}` (所有文件都在本地)   
@@ -213,16 +213,16 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
 **测试平均结果**:
 |程序|压缩率|make内存|速度|sync内存|最大内存|速度|
 |:----|----:|----:|----:|----:|----:|----:|
-|zsync|52.94%|1M|285.1MB/s|7M|23M|25MB/s|
-|zsync -z|20.67%|1M|11.9MB/s|12M|37M|21MB/s|
-|hsynz p1|51.05%|5M|1687.8MB/s|5M|19M|222MB/s|
-|hsynz p8|51.05%|22M|3016.1MB/s|13M|27M|391MB/s|
-|hsynz p1 -zlib|20.05%|6M|14.3MB/s|6M|21M|172MB/s|
-|hsynz p8 -zlib|20.05%|30M|89.8MB/s|13M|29M|254MB/s|
-|hsync p1 -gzip|20.12%|6M|14.2MB/s|6M|21M|171MB/s|
-|hsync p8 -gzip|20.12%|30M|89.1MB/s|13M|29M|251MB/s|
-|hsynz p1 -zstd|14.90%|532M|1.3MB/s|24M|35M|192MB/s|
-|hsynz p8 -zstd|14.90%|3349M|5.1MB/s|24M|35M|301MB/s|
+|zsync|52.94%|1M|353.9MB/s|7M|23M|34MB/s|
+|zsync -z|20.67%|1M|14.8MB/s|12M|37M|28MB/s|
+|hsynz|51.05%|5M|2219.3MB/s|5M|19M|191MB/s|
+|hsynz|51.05%|18M|4646.8MB/s|12M|27M|331MB/s|
+|hsynz p1 -zlib|20.05%|6M|17.7MB/s|6M|21M|160MB/s|
+|hsynz p8 -zlib|20.05%|30M|119.5MB/s|13M|29M|246MB/s|
+|hsynz p1 -gzip|20.12%|6M|17.6MB/s|6M|21M|160MB/s|
+|hsynz p8 -gzip|20.12%|30M|118.8MB/s|13M|29M|247MB/s|
+|hsynz p1 -zstd|14.97%|531M|1.9MB/s|24M|35M|173MB/s|
+|hsynz p8 -zstd|14.96%|3349M|10.2MB/s|24M|35M|278MB/s|
     
 
 ## 输入Apk文件进行测试: 
@@ -270,16 +270,16 @@ case list:
 **测试平均结果**:
 |程序|压缩率|make内存|速度|sync内存|最大内存|速度|
 |:----|----:|----:|----:|----:|----:|----:|
-|zsync|62.80%|1M|270.9MB/s|6M|12M|62MB/s|
-|zsync -z|59.56%|1M|15.8MB/s|8M|19M|50MB/s|
-|hsynz p1|62.43%|4M|1243.4MB/s|4M|10M|172MB/s|
-|hsynz p8|62.43%|25M|1902.6MB/s|12M|18M|293MB/s|
-|hsynz p1 -zlib|58.67%|5M|18.5MB/s|4M|11M|170MB/s|
-|hsynz p8 -zlib|58.67%|29M|107.6MB/s|12M|19M|285MB/s|
-|hsync p1 -gzip|58.95%|5M|18.4MB/s|4M|11M|165MB/s|
-|hsync p8 -gzip|58.95%|29M|106.6MB/s|12M|19M|266MB/s|
-|hsynz p1 -zstd|57.92%|534M|2.2MB/s|24M|28M|173MB/s|
-|hsynz p8 -zstd|57.92%|3434M|7.6MB/s|24M|28M|294MB/s|
+|zsync|62.80%|1M|329.8MB/s|6M|12M|76MB/s|
+|zsync -z|59.56%|1M|19.8MB/s|8M|19M|56MB/s|
+|hsynz p1|62.43%|4M|1647.6MB/s|4M|9M|152MB/s|
+|hsynz p8|62.43%|6M|2563.7MB/s|11M|18M|270MB/s|
+|hsynz p1 -zlib|58.67%|5M|23.7MB/s|4M|11M|151MB/s|
+|hsynz p8 -zlib|58.67%|29M|141.8MB/s|12M|19M|265MB/s|
+|hsynz p1 -gzip|58.95%|5M|23.5MB/s|4M|11M|148MB/s|
+|hsynz p8 -gzip|58.95%|29M|141.8MB/s|12M|19M|256MB/s|
+|hsynz p1 -zstd|57.74%|534M|2.7MB/s|24M|28M|151MB/s|
+|hsynz p8 -zstd|57.74%|3434M|13.2MB/s|24M|28M|265MB/s|
    
 
 ---
