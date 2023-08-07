@@ -10,6 +10,7 @@ extern "C" {
         jfieldID    sumRangeCount;
         jfieldID    sumDataLen;
         jfieldID    cNeedRangesHandle;
+        jmethodID   nullRanges_MTSafe;
     } TNeedDownloadRangesIDs;
     static TNeedDownloadRangesIDs _g_needDownloadRangesIDs={0};
     static inline const TNeedDownloadRangesIDs* getNeedDownloadRangesIDs(){
@@ -33,6 +34,7 @@ extern "C" {
         _g_needDownloadRangesIDs.sumRangeCount    =jenv->GetFieldID(objClass,"sumRangeCount",    "J");
         _g_needDownloadRangesIDs.sumDataLen       =jenv->GetFieldID(objClass,"sumDataLen",       "J");
         _g_needDownloadRangesIDs.cNeedRangesHandle=jenv->GetFieldID(objClass,"cNeedRangesHandle","J");
+        _g_needDownloadRangesIDs.nullRanges_MTSafe=jenv->GetMethodID(objClass,"nullRanges_MTSafe","()V");
 
         objClass=jenv->FindClass("com/github/sisong/hsynz$IRangeDownloader");
         _g_rangeDownloaderIDs.onSyncInfo        =jenv->GetMethodID(objClass,"onSyncInfo",        "(JJJ)V");
@@ -70,7 +72,7 @@ extern "C" {
         TNeedDownloadRanges_c*  cNeedRanges;
     };
 
-    void TReadSyncDataListener_onNeedSyncInfo(struct  IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo){
+    static void TReadSyncDataListener_onNeedSyncInfo(struct  IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo){
         TReadSyncDataListener* self=(TReadSyncDataListener*)listener->readSyncDataImport;
         self->cNeedRanges->needSyncInfo=needSyncInfo;
         const IRangeDownloaderIDs* rangeDownloaderIDs=getRangeDownloaderIDs();
@@ -78,8 +80,8 @@ extern "C" {
                                    needSyncInfo->newDataSize,needSyncInfo->newSyncDataSize,needSyncInfo->needSyncSumSize);
     }
 
-    hpatch_BOOL TReadSyncDataListener_readSyncDataBegin(struct  IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo,
-                                                        uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData){
+    static hpatch_BOOL TReadSyncDataListener_readSyncDataBegin(struct  IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo,
+                                                               uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData){
         TReadSyncDataListener* self=(TReadSyncDataListener*)listener->readSyncDataImport;
         self->cNeedRanges->needSyncInfo=needSyncInfo;
         self->cNeedRanges->curBlockIndex=blockIndex;
@@ -94,9 +96,9 @@ extern "C" {
         jboolean ret=self->jenv->CallBooleanMethod(self->hsynzDownloader,rangeDownloaderIDs->downloadRanges,self->needRanges);
         return ret;
     }
-    hpatch_BOOL TReadSyncDataListener_readSyncData(struct IReadSyncDataListener* listener,uint32_t blockIndex,
-                                                   hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData,
-                                                   unsigned char* out_syncDataBuf,uint32_t syncDataSize){
+    static hpatch_BOOL TReadSyncDataListener_readSyncData(struct IReadSyncDataListener* listener,uint32_t blockIndex,
+                                                          hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData,
+                                                          unsigned char* out_syncDataBuf,uint32_t syncDataSize){
         TReadSyncDataListener* self=(TReadSyncDataListener*)listener->readSyncDataImport;
         const IRangeDownloaderIDs* rangeDownloaderIDs=getRangeDownloaderIDs();
         self->jenv->SetLongField(self->dstBuf,rangeDownloaderIDs->cBufHandle,(jlong)(size_t)out_syncDataBuf);
@@ -104,8 +106,14 @@ extern "C" {
                                                    self->dstBuf,(int)syncDataSize);
         return ret;
     }
-    void TReadSyncDataListener_readSyncDataEnd(struct IReadSyncDataListener* listener){
-        TReadSyncDataListener* self=(TReadSyncDataListener*)listener->readSyncDataImport;
+    static void TReadSyncDataListener_readSyncDataEnd(struct IReadSyncDataListener* listener){
+        //TReadSyncDataListener* self=(TReadSyncDataListener*)listener->readSyncDataImport;
+    }
+
+    static hpatch_inline void _listener_finish(struct TReadSyncDataListener* self){
+        const TNeedDownloadRangesIDs* needRangesIDs=getNeedDownloadRangesIDs();
+        if (self->needRanges&&needRangesIDs->nullRanges_MTSafe)
+            self->jenv->CallVoidMethod(self->needRanges,needRangesIDs->nullRanges_MTSafe);
     }
 
     
@@ -153,6 +161,8 @@ extern "C" {
 
         result=hsynz_patch(cOutNewFile,cOldFile,cHsyniFile,&syncDataListener.base,cLocalDiffFile,
                            (TSyncDiffType)diffType,isContinue?1:0,threadNum);
+        _listener_finish(&syncDataListener);
+
     _clear:
         _jrelease_cstr(outNewFile,cOutNewFile);
         _jrelease_cstr(localDiffFile,cLocalDiffFile);
