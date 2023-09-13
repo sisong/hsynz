@@ -215,8 +215,8 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
 |:----|----:|----:|----:|----:|----:|----:|
 |zsync|52.94%|1M|353.9MB/s|7M|23M|34MB/s|
 |zsync -z|20.67%|1M|14.8MB/s|12M|37M|28MB/s|
-|hsynz|51.05%|5M|2219.3MB/s|5M|19M|191MB/s|
-|hsynz|51.05%|18M|4646.8MB/s|12M|27M|331MB/s|
+|hsynz p1|51.05%|5M|2219.3MB/s|5M|19M|191MB/s|
+|hsynz p8|51.05%|18M|4646.8MB/s|12M|27M|331MB/s|
 |hsynz p1 -zlib|20.05%|6M|17.7MB/s|6M|21M|160MB/s|
 |hsynz p8 -zlib|20.05%|30M|119.5MB/s|13M|29M|246MB/s|
 |hsynz p1 -gzip|20.12%|6M|17.6MB/s|6M|21M|160MB/s|

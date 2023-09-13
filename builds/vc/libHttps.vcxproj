@@ -209,56 +209,56 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\minihttp\mbedtls\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\https_obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\minihttp\mbedtls\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\https_obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\minihttp\mbedtls\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\https_obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <LinkIncremental>true</LinkIncremental>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\minihttp\mbedtls\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\https_obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\minihttp\mbedtls\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\https_obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\minihttp\mbedtls\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\https_obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\minihttp\mbedtls\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\https_obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetExt>.lib</TargetExt>
-    <IncludePath>..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\minihttp\mbedtls\include;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\https_obj\</IntDir>
   </PropertyGroup>
