@@ -11,9 +11,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#define HSYNC_VERSION_MAJOR    0
-#define HSYNC_VERSION_MINOR    9
-#define HSYNC_VERSION_RELEASE  4
+#define HSYNC_VERSION_MAJOR    1
+#define HSYNC_VERSION_MINOR    0
+#define HSYNC_VERSION_RELEASE  0
 
 #define _HSYNC_VERSION          HSYNC_VERSION_MAJOR.HSYNC_VERSION_MINOR.HSYNC_VERSION_RELEASE
 #define _HSYNC_QUOTE(str) #str

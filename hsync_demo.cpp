@@ -52,6 +52,15 @@
 #ifndef _IS_SYNC_PATCH_DEMO
 #   define  _IS_SYNC_PATCH_DEMO 1
 #endif
+#ifndef _IS_NEED_PRINT_LOG
+#   define _IS_NEED_PRINT_LOG   1
+#endif
+#if (_IS_NEED_PRINT_LOG)
+#   define  _log_info_utf8  hpatch_printPath_utf8
+#else
+#   define  printf(...)
+#   define  _log_info_utf8(...) do{}while(0)
+#endif
 
 typedef struct TSyncDownloadPlugin{
     //download range of file
@@ -594,8 +603,8 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
             _check3(hpatch_isPathNotExist(hsyni_file),kSyncClient_overwritePathError,
                     "file \"",hsyni_file,"\" already exists, overwrite");
         double dtime0=clock_s();
-        printf(    "download .hsyni: \""); hpatch_printPath_utf8(hsyni_file);
-        printf("\"\n       from URL: \""); hpatch_printPath_utf8(hsyni_file_url);
+        printf(    "download .hsyni: \""); _log_info_utf8(hsyni_file);
+        printf("\"\n       from URL: \""); _log_info_utf8(hsyni_file_url);
         printf("\"\n");
         int result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file,
                                            isUsedDownloadContinue!=0);
@@ -709,24 +718,28 @@ bool getFileSize(const char *path_utf8,hpatch_StreamPos_t* out_fileSize){
     return out_type==kPathType_file;
 }
 
-static bool printFileInfo(const char *path_utf8,const char *tag,bool isOutSize=true,hpatch_StreamPos_t* out_fileSize=0){
+static bool printFileInfo(const char *path_utf8,const char *tag,bool isOutSize=true){
+#if (_IS_NEED_PRINT_LOG)
     hpatch_StreamPos_t fileSize=0;
     if (!getFileSize(path_utf8,&fileSize)) return false;
     if (isOutSize)
         printf("%s: %" PRIu64 "   \"",tag,fileSize);
     else
         printf("%s: \"",tag);
-    hpatch_printPath_utf8(path_utf8); printf("\"\n");
-    if (out_fileSize) *out_fileSize=fileSize;
+    _log_info_utf8(path_utf8); printf("\"\n");
+#endif
     return true;
 }
 
+
+static const char* _kEmptyStr="";
 TSyncClient_resultType
    hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
                      const char* hsyni_file,IReadSyncDataListener* syncDataListener,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
                      size_t kMaxOpenFileNumber,int threadNum){
+    if (oldPath==0) oldPath=_kEmptyStr;
 #if (_IS_NEED_DIR_DIFF_PATCH)
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
 #endif
@@ -736,7 +749,6 @@ TSyncClient_resultType
     if (oldIsDir){
         _check3(getManifest(oldManifest,oldPath,oldIsDir,ignoreOldPathList),
                 kSyncClient_oldDirOpenError,"open oldPath \"",oldPath,"\"");
-        _oldPath=oldManifest.rootPath.c_str();
     }
 #endif
     printFileInfo(hsyni_file,                                          "info .hsyni ");
@@ -835,7 +847,7 @@ static const char* TDirSyncPatchListener_getOldPathByIndex(TDirSyncPatchListener
             if (!hpatch_setIsExecuteFile(executeFileName)){
                 result=hpatch_FALSE;
                 printf("WARNING: can't set Execute tag to new file \"");
-                hpatch_printPath_utf8(executeFileName); printf("\"\n");
+                _log_info_utf8(executeFileName); printf("\"\n");
             }
         }
         return result;
@@ -858,6 +870,7 @@ TSyncClient_resultType
                      const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
                      size_t kStepRangeNumber,size_t kMaxOpenFileNumber,int threadNum){
+    if (oldPath==0) oldPath=_kEmptyStr;
     std::string _outNewDir(outNewDir?outNewDir:"");
     if (outNewDir) { assignDirTag(_outNewDir); outNewDir=outNewDir?_outNewDir.c_str():0; }
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
@@ -867,7 +880,6 @@ TSyncClient_resultType
     {
         _check3(getManifest(oldManifest,oldPath,oldIsDir,ignoreOldPathList),
                 kSyncClient_oldDirOpenError,"open oldPath \"",oldPath,"\"");
-        _oldPath=oldManifest.rootPath.c_str();
     }
     
     printFileInfo(hsyni_file,                                          "info .hsyni");
