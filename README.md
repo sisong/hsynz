@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v1.0.0-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v1.0.1-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -119,7 +119,7 @@ options:
 download   : [options] -dl#hsyni_file_url hsyni_file
 local  diff: [options] oldPath hsyni_file hsynz_file_url -diff#outDiffFile
 local patch: [options] oldPath hsyni_file -patch#diffFile outNewPath
-sync  infos: [options] oldPath hsyni_file
+sync  infos: [options] oldPath hsyni_file [-diffi#cacheTempFile]
 sync  patch: [options] oldPath [-dl#hsyni_file_url] hsyni_file hsynz_file_url [-diffi#cacheTempFile] 
   oldPath can be file or directory(folder),
   if oldPath is empty input parameter ""

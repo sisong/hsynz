@@ -128,7 +128,7 @@ static void printUsage(){
            "download   : [options] -dl#hsyni_file_" _NOTE_TEXT_URL " hsyni_file\n"
            "local  diff: [options] oldPath hsyni_file hsynz_file_" _NOTE_TEXT_URL " -diff#outDiffFile\n"
            "local patch: [options] oldPath hsyni_file -patch#diffFile outNewPath\n"
-           "sync  infos: [options] oldPath hsyni_file\n"
+           "sync  infos: [options] oldPath hsyni_file [-diffi#cacheTempFile]\n"
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  oldPath can be file or directory(folder),\n"
 #endif
