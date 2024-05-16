@@ -20,7 +20,7 @@ public class hsynz{
         private long sumRangeCount;
         private long sumDataLen;
         private long cNeedRangesHandle;
-        protected final void nullRanges_MTSafe(){ //call this func when doSyncPatch() exit
+        protected final void nullRanges_MTSafe(){ //this func will be auto called when doSyncPatch() exit
             synchronized(this){
                 cNeedRangesHandle=0;
             }
@@ -33,6 +33,7 @@ public class hsynz{
 
         //return got range count
         //  note: 2 long values are a range; if range is (25,29) means need from file pos 25, download (29+1-25) length data;
+        //  if getNextRanges and doSyncPatch are not in the same thread, should changed to call getNextRanges_MTSafe.
         public final int getNextRanges(long[] dstRanges){
             if (cNeedRangesHandle==0) return 0;
             final int dstRangeBeginIndex=0;
