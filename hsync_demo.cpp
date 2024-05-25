@@ -92,6 +92,7 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #if (_IS_NEED_DEFAULT_CompressPlugin)
 //===== select needs decompress plugins or change to your plugin=====
 #   define _CompressPlugin_zlib
+#   define _CompressPlugin_ldef
 #   define _CompressPlugin_zstd
 #endif
 
@@ -248,6 +249,13 @@ int main(int argc,char* argv[]){
 static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,const char* compressType,size_t dictSize){
     if (compressType==0) return 0; //ok
     hsync_TDictDecompress* decompressPlugin=0;
+#ifdef  _CompressPlugin_ldef
+    if ((!decompressPlugin)&&ldefDictDecompressPlugin.base.is_can_open(compressType)){
+        static TDictDecompressPlugin_ldef _ldefDictDecompressPlugin=ldefDictDecompressPlugin;
+        _ldefDictDecompressPlugin.dict_bits=(hpatch_byte)_dictSizeToDictBits(dictSize);
+        decompressPlugin=&_ldefDictDecompressPlugin.base;
+    }
+#endif
 #ifdef  _CompressPlugin_zlib
     if ((!decompressPlugin)&&zlibDictDecompressPlugin.base.is_can_open(compressType)){
         static TDictDecompressPlugin_zlib _zlibDictDecompressPlugin=zlibDictDecompressPlugin;
@@ -320,9 +328,9 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
         printf("\n");
         if (nsi->localDiffDataSize>0){
             printf("\n  localDiffDataSize    : %" PRIu64 "\n",nsi->localDiffDataSize);
+            hpatch_StreamPos_t cdlSize=(nsi->needSyncSumSize>nsi->localDiffDataSize)?(nsi->needSyncSumSize-nsi->localDiffDataSize):0;
             printf(  "  continue downloadSize: %" PRIu64 ", /%" PRIu64 "=%.1f%%\n",
-                   nsi->needSyncSumSize-nsi->localDiffDataSize,downloadSize,
-                   100.0*(nsi->needSyncSumSize-nsi->localDiffDataSize)/downloadSize);
+                   cdlSize,downloadSize,100.0*cdlSize/downloadSize);
         }
     }
 //ISyncInfoListener::needSyncInfo

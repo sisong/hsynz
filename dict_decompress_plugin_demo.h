@@ -29,6 +29,8 @@
 #define dict_decompress_plugin_demo_h
 //dict decompress plugin demo:
 //  zlibDictDecompressPlugin
+//  ldefDictDecompressPlugin
+//  zstdDictDecompressPlugin
 
 #include "HDiffPatch/libhsync/sync_client/dict_decompress_plugin.h"
 #ifndef HPatch_decompress_plugin_demo_h
@@ -150,6 +152,102 @@ static int _dictSizeToDictBits(size_t dictSize){
         MAX_WBITS };
     
 #endif//_CompressPlugin_zlib
+
+
+#ifdef  _CompressPlugin_ldef
+#if (_IsNeedIncludeDefaultCompressHead)
+#   include "libdeflate.h" // https://github.com/ebiggers/libdeflate
+#endif
+    //ldefDictDecompressPlugin
+    typedef struct{
+        hsync_TDictDecompress base;
+        hpatch_byte           dict_bits;
+    } TDictDecompressPlugin_ldef;
+    typedef struct{
+        struct libdeflate_decompressor* d;
+        hpatch_BOOL           dict_isInReset;
+        _CacheBlockDict_t     cache;
+        hpatch_byte*          tempDecBufEnd; 
+    } _TDictDecompressPlugin_ldef_data;
+    
+    static hpatch_BOOL _ldef_dict_is_can_open(const char* compressType){
+        return (0==strcmp(compressType,"zlibD"))||(0==strcmp(compressType,"gzipD"));
+    }
+    static hsync_dictDecompressHandle _ldef_dictDecompressOpen(struct hsync_TDictDecompress* decompressPlugin,size_t blockCount,size_t blockSize,
+                                                               const hpatch_byte* in_info,const hpatch_byte* in_infoEnd){
+        const TDictDecompressPlugin_ldef*  plugin=(const TDictDecompressPlugin_ldef*)decompressPlugin;
+        const size_t dictSize=((size_t)1<<plugin->dict_bits);
+        size_t cacheDictSize=0;
+        _TDictDecompressPlugin_ldef_data* self=0;
+        if (plugin->dict_bits>MAX_WBITS) return 0; //error;
+        cacheDictSize=_getCacheBlockDictSize(dictSize,blockCount,blockSize);
+        self=(_TDictDecompressPlugin_ldef_data*)malloc(sizeof(_TDictDecompressPlugin_ldef_data)+cacheDictSize+blockSize);
+        if (self==0) return 0;
+        memset(self,0,sizeof(*self));
+        assert(in_info==in_infoEnd);
+        assert(blockCount>0);
+        //self->dict_isInReset=hpatch_FALSE;
+        self->tempDecBufEnd=((hpatch_byte*)self)+sizeof(*self) +cacheDictSize+blockSize;
+        _CacheBlockDict_init(&self->cache,((hpatch_byte*)self)+sizeof(*self),
+                             cacheDictSize,dictSize,blockCount,blockSize);
+        self->d=libdeflate_alloc_decompressor();
+        if (!self->d){
+            free(self);
+            return 0;// error
+        }
+        return self;
+    }
+    static void _ldef_dictDecompressClose(struct hsync_TDictDecompress* decompressPlugin,
+                                          hsync_dictDecompressHandle dictHandle){
+        _TDictDecompressPlugin_ldef_data* self=(_TDictDecompressPlugin_ldef_data*)dictHandle;
+        if (self!=0){
+            libdeflate_free_decompressor(self->d);
+            free(self);
+        }
+    }
+    
+    static void _ldef_dictUncompress(hpatch_decompressHandle dictHandle,size_t blockIndex,size_t lastCompressedBlockIndex,
+                                     const hpatch_byte* dataBegin,const hpatch_byte* dataEnd){
+        _TDictDecompressPlugin_ldef_data* self=(_TDictDecompressPlugin_ldef_data*)dictHandle;
+        _CacheBlockDict_dictUncompress(&self->cache,blockIndex,lastCompressedBlockIndex,dataBegin,dataEnd);
+    }
+
+    static hpatch_BOOL _ldef_dictDecompress(hpatch_decompressHandle dictHandle,size_t blockIndex,
+                                            const hpatch_byte* in_code,const hpatch_byte* in_codeEnd,
+                                            hpatch_byte* out_dataBegin,hpatch_byte* out_dataEnd){
+        _TDictDecompressPlugin_ldef_data* self=(_TDictDecompressPlugin_ldef_data*)dictHandle;
+        enum libdeflate_result ret;
+        const size_t dataSize=out_dataEnd-out_dataBegin;
+        hpatch_byte* dict;
+        size_t       dictSize;
+        hpatch_BOOL isHaveDict;
+        {//if (self->dict_isInReset||_CacheBlockDict_isMustResetDict(&self->cache,blockIndex)){ //reset dict
+            _CacheBlockDict_usedDict(&self->cache,blockIndex,&dict,&dictSize);
+            assert(dictSize==(uInt)dictSize);
+            isHaveDict=(dictSize>0);
+            if (isHaveDict){
+                if (dataSize>(size_t)(self->tempDecBufEnd-dict-dictSize))
+                    return hpatch_FALSE;//error
+            }
+            //libdeflate_deflate_decompress_block_reset(self->d);
+        }
+        
+        ret=libdeflate_deflate_decompress_block(self->d,in_code,in_codeEnd-in_code,
+				 isHaveDict?dict:out_dataBegin,dictSize,dataSize,0,0,
+                 LIBDEFLATE_STOP_BY_ANY_BLOCK_AND_FULL_OUTPUT_AND_IN_BYTE_ALIGN,0);
+        if (ret!=LIBDEFLATE_SUCCESS)
+            return hpatch_FALSE;//error
+        if (isHaveDict)
+            memcpy(out_dataBegin,dict+dictSize,dataSize);
+        return hpatch_TRUE;
+    }
+    
+    static const TDictDecompressPlugin_ldef ldefDictDecompressPlugin={
+        { _ldef_dict_is_can_open, _ldef_dictDecompressOpen,
+          _ldef_dictDecompressClose, _ldef_dictDecompress,_ldef_dictUncompress },
+        MAX_WBITS };
+    
+#endif//_CompressPlugin_ldef
 
 
 #ifdef  _CompressPlugin_zstd
