@@ -19,7 +19,7 @@ public class hsynz{
     public final static class TNeedDownloadRanges{
         private long sumRangeCount;
         private long sumDataLen;
-        private long cNeedRangesHandle;
+        private volatile long cNeedRangesHandle;
         protected final void nullRanges_MTSafe(){ //this func will be auto called when doSyncPatch() exit
             synchronized(this){
                 cNeedRangesHandle=0;
