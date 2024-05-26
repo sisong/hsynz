@@ -4,7 +4,7 @@
 //  Created by housisong on 2019-09-18.
 /*
  The MIT License (MIT)
- Copyright (c) 2019-2023 HouSisong
+ Copyright (c) 2019-2024 HouSisong
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
@@ -91,8 +91,8 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #endif
 #if (_IS_NEED_DEFAULT_CompressPlugin)
 //===== select needs decompress plugins or change to your plugin=====
-#   define _CompressPlugin_zlib
-#   define _CompressPlugin_ldef
+//#   define _CompressPlugin_zlib
+#   define _CompressPlugin_ldef  // compatible with zlib's deflate encoding
 #   define _CompressPlugin_zstd
 #endif
 
@@ -255,13 +255,14 @@ static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,
         _ldefDictDecompressPlugin.dict_bits=(hpatch_byte)_dictSizeToDictBits(dictSize);
         decompressPlugin=&_ldefDictDecompressPlugin.base;
     }
-#endif
-#ifdef  _CompressPlugin_zlib
-    if ((!decompressPlugin)&&zlibDictDecompressPlugin.base.is_can_open(compressType)){
-        static TDictDecompressPlugin_zlib _zlibDictDecompressPlugin=zlibDictDecompressPlugin;
-        _zlibDictDecompressPlugin.dict_bits=(hpatch_byte)_dictSizeToDictBits(dictSize);
-        decompressPlugin=&_zlibDictDecompressPlugin.base;
-    }
+#else
+    #ifdef  _CompressPlugin_zlib
+        if ((!decompressPlugin)&&zlibDictDecompressPlugin.base.is_can_open(compressType)){
+            static TDictDecompressPlugin_zlib _zlibDictDecompressPlugin=zlibDictDecompressPlugin;
+            _zlibDictDecompressPlugin.dict_bits=(hpatch_byte)_dictSizeToDictBits(dictSize);
+            decompressPlugin=&_zlibDictDecompressPlugin.base;
+        }
+    #endif
 #endif
 #ifdef  _CompressPlugin_zstd
     if ((!decompressPlugin)&&zstdDictDecompressPlugin.base.is_can_open(compressType)){

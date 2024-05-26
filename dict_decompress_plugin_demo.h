@@ -2,7 +2,7 @@
 //  dict decompress plugin demo for hsync_demo
 /*
  The MIT License (MIT)
- Copyright (c) 2022-2023 HouSisong
+ Copyright (c) 2022-2024 HouSisong
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
@@ -29,7 +29,7 @@
 #define dict_decompress_plugin_demo_h
 //dict decompress plugin demo:
 //  zlibDictDecompressPlugin
-//  ldefDictDecompressPlugin
+//  ldefDictDecompressPlugin        // compatible with zlib's deflate encoding
 //  zstdDictDecompressPlugin
 
 #include "HDiffPatch/libhsync/sync_client/dict_decompress_plugin.h"
@@ -158,6 +158,9 @@ static int _dictSizeToDictBits(size_t dictSize){
 #if (_IsNeedIncludeDefaultCompressHead)
 #   include "libdeflate.h" // https://github.com/ebiggers/libdeflate
 #endif
+    #ifndef MAX_WBITS
+    #   define MAX_WBITS 15
+    #endif
     //ldefDictDecompressPlugin
     typedef struct{
         hsync_TDictDecompress base;
@@ -165,7 +168,6 @@ static int _dictSizeToDictBits(size_t dictSize){
     } TDictDecompressPlugin_ldef;
     typedef struct{
         struct libdeflate_decompressor* d;
-        hpatch_BOOL           dict_isInReset;
         _CacheBlockDict_t     cache;
         hpatch_byte*          tempDecBufEnd; 
     } _TDictDecompressPlugin_ldef_data;
@@ -186,7 +188,6 @@ static int _dictSizeToDictBits(size_t dictSize){
         memset(self,0,sizeof(*self));
         assert(in_info==in_infoEnd);
         assert(blockCount>0);
-        //self->dict_isInReset=hpatch_FALSE;
         self->tempDecBufEnd=((hpatch_byte*)self)+sizeof(*self) +cacheDictSize+blockSize;
         _CacheBlockDict_init(&self->cache,((hpatch_byte*)self)+sizeof(*self),
                              cacheDictSize,dictSize,blockCount,blockSize);
@@ -220,8 +221,8 @@ static int _dictSizeToDictBits(size_t dictSize){
         const size_t dataSize=out_dataEnd-out_dataBegin;
         hpatch_byte* dict;
         size_t       dictSize;
-        hpatch_BOOL isHaveDict;
-        {//if (self->dict_isInReset||_CacheBlockDict_isMustResetDict(&self->cache,blockIndex)){ //reset dict
+        hpatch_BOOL  isHaveDict;
+        {//reset dict
             _CacheBlockDict_usedDict(&self->cache,blockIndex,&dict,&dictSize);
             assert(dictSize==(uInt)dictSize);
             isHaveDict=(dictSize>0);
@@ -229,12 +230,12 @@ static int _dictSizeToDictBits(size_t dictSize){
                 if (dataSize>(size_t)(self->tempDecBufEnd-dict-dictSize))
                     return hpatch_FALSE;//error
             }
-            //libdeflate_deflate_decompress_block_reset(self->d);
+            //not need: libdeflate_deflate_decompress_block_reset(self->d);
         }
         
         ret=libdeflate_deflate_decompress_block(self->d,in_code,in_codeEnd-in_code,
-				 isHaveDict?dict:out_dataBegin,dictSize,dataSize,0,0,
-                 LIBDEFLATE_STOP_BY_ANY_BLOCK_AND_FULL_OUTPUT_AND_IN_BYTE_ALIGN,0);
+			        isHaveDict?dict:out_dataBegin,dictSize,dataSize,0,0,
+                    LIBDEFLATE_STOP_BY_ANY_BLOCK_AND_FULL_OUTPUT_AND_IN_BYTE_ALIGN,0);
         if (ret!=LIBDEFLATE_SUCCESS)
             return hpatch_FALSE;//error
         if (isHaveDict)

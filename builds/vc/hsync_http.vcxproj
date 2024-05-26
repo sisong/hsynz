@@ -126,45 +126,45 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\obj\</IntDir>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\obj\</IntDir>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\obj\</IntDir>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Configuration)\$(Platform)\obj\</IntDir>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -322,6 +322,9 @@
     <ClInclude Include="..\..\client_download_http.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="libdeflate.vcxproj">
+      <Project>{4ffa1879-e1a6-4b99-b9d1-3265f48dae0d}</Project>
+    </ProjectReference>
     <ProjectReference Include="libhsyncclient.vcxproj">
       <Project>{ef87aac9-545b-4af6-a695-d7fc9d1670c2}</Project>
     </ProjectReference>

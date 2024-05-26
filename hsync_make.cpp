@@ -56,6 +56,7 @@
 #if (_IS_NEED_DEFAULT_CompressPlugin)
 //===== select needs decompress plugins or change to your plugin=====
 #   define _CompressPlugin_zlib
+#   define _CompressPlugin_ldef // compatible with zlib's deflate encoding
 #   define _CompressPlugin_zstd
 #endif
 
@@ -88,7 +89,7 @@ static void printUsage(){
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  newDataPath can be file or directory(folder),\n"
 #endif
-           "  if newDataPath is a file & no -c-... option, out_hsynz_file can empty. \n"
+           "  if newDataPath is a file & no -c-... option, out_hsynz_file can empty.\n"
            "options:\n"
            "  -s-matchBlockSize\n"
            "      matchBlockSize>=128, DEFAULT -s-2k, recommended 1024,4k,...\n"
@@ -108,7 +109,16 @@ static void printUsage(){
            "            dictBits can 9--15, DEFAULT 15.\n"
            "        -c-gzip[-{1..9}[-dictBits]]     DEFAULT level 9\n"
            "            dictBits can 9--15, DEFAULT 15.\n"
-           "            compress by zlib, but out_hsynz_file is .gz file format.\n"
+           "            compress by zlib, out_hsynz_file is .gz file format.\n"
+#endif
+#ifdef _CompressPlugin_ldef
+           "        -c-ldef[-{1..12}[-dictBits]]    DEFAULT level 12\n"
+           "            dictBits can 9--15, DEFAULT 15.\n"
+           "            compress by libdeflate, compatible with zlib's deflate encoding.\n"
+           "        -c-lgzip[-{1..12}[-dictBits]]   DEFAULT level 12\n"
+           "            dictBits can 9--15, DEFAULT 15.\n"
+           "            compress by libdeflate, out_hsynz_file is .gz file format.\n"
+#else
 #endif
 #ifdef _CompressPlugin_zstd
            "        -c-zstd[-{10..22}[-dictBits]]   DEFAULT level 21\n"
@@ -286,10 +296,24 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
                              const char* ptype,const char* ptypeEnd){
     const char* isMatchedType=0;
     size_t      compressLevel=0;
-#if (defined _CompressPlugin_zlib)||(defined _CompressPlugin_zstd)
+#if (defined _CompressPlugin_zlib)||(defined _CompressPlugin_ldef)||(defined _CompressPlugin_zstd)
     size_t       dictBits=0;
     const size_t defaultDictBits=20+4;    //16m
     const size_t defaultDictBits_zlib=15; //32k
+#endif
+#ifdef _CompressPlugin_ldef
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"ldef","ldefD",
+                                        &compressLevel,1,12,12, &dictBits,9,15,defaultDictBits_zlib),"-c-ldef-?"){
+        static TDictCompressPlugin_ldef _ldefCompressPlugin=ldefDictCompressPlugin;
+        _ldefCompressPlugin.compress_level=(hpatch_byte)compressLevel;
+        _ldefCompressPlugin.dict_bits=(hpatch_byte)dictBits;
+        *out_compressPlugin=&_ldefCompressPlugin.base; }}
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"lgzip","lgzipD",
+                                        &compressLevel,1,12,12, &dictBits,9,15,defaultDictBits_zlib),"-c-lgzip-?"){
+        static TDictCompressPlugin_lgzip _lgzipCompressPlugin=lgzipDictCompressPlugin;
+        _lgzipCompressPlugin.compress_level=(hpatch_byte)compressLevel;
+        _lgzipCompressPlugin.dict_bits=(hpatch_byte)dictBits;
+        *out_compressPlugin=&_lgzipCompressPlugin.base; }}
 #endif
 #ifdef _CompressPlugin_zlib
     __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zlib","zlibD",
@@ -570,7 +594,7 @@ int sync_make_cmd_line(int argc, const char * argv[]){
                   SYNC_MAKE_NEWPATH_ERROR,"%s must file","newDataPath");
 #endif
 
-#ifdef _CompressPlugin_zlib
+#if ((defined _CompressPlugin_zlib)||(defined _CompressPlugin_ldef))
     hsync_THsynz_gzip _hsynzPlugin_gzip;
     if (compressPlugin&&(0==strcmp(compressPlugin->compressType(),k_gzip_dictCompressType))){
         _options_check(!isUseDirSyncUpdate,"gzip compress plugin not support DirSyncUpdate");
@@ -589,7 +613,7 @@ int sync_make_cmd_line(int argc, const char * argv[]){
            isUseDirSyncUpdate?"_dir":"",strongChecksumPlugin->checksumType());
     if (compressPlugin){
         printf("create%s_sync_data run with compress plugin: \"%s\"\n",
-               isUseDirSyncUpdate?"_dir":"",compressPlugin->compressType());
+               isUseDirSyncUpdate?"_dir":"",compressPlugin->compressTypeForDisplay?compressPlugin->compressTypeForDisplay():compressPlugin->compressType());
     }
     double time0=clock_s();
     int result;

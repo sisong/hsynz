@@ -30,9 +30,20 @@
 #define hsynz_plugin_gzip_h
 #include "HDiffPatch/libhsync/sync_make/hsynz_plugin.h" //hsync_THsynz
 #include <assert.h>
-#ifdef  _CompressPlugin_zlib
+#if ((defined _CompressPlugin_zlib)||(defined _CompressPlugin_ldef))
 #if (_IsNeedIncludeDefaultCompressHead)
+# ifdef _CompressPlugin_ldef
+#   include "libdeflate.h" // https://github.com/ebiggers/libdeflate
+# else
 #   include "zlib.h" // http://zlib.net/  https://github.com/madler/zlib
+# endif
+#endif
+#ifdef _CompressPlugin_ldef
+#   define _crc32 libdeflate_crc32
+#else
+#   define _crc32 crc32
+#endif
+# ifdef _CompressPlugin_ldef
 #endif
 
     class hsync_THsynz_gzip:public hsync_THsynz{
@@ -47,7 +58,7 @@
     #if (_DEBUG)
         hpatch_StreamPos_t _newDataSize;
     #endif
-        uLong crc;
+        uint32_t crc;
         inline static void pushUInt32(hpatch_byte* buf,uint32_t v){
             buf[0]=v&0xFF;       buf[1]=(v>>8)&0xFF;
             buf[2]=(v>>16)&0xFF; buf[3]=(v>>24)&0xFF;
@@ -63,7 +74,7 @@
     #if (_DEBUG)
             self->_newDataSize=newDataSize;
     #endif
-            self->crc=crc32(0,0,0);
+            self->crc=(uint32_t)_crc32(0,0,0);
             buf[0]='\x1F'; buf[1]='\x8B'; buf[2]='\x08';
             buf[9]='\x03';
             checkv(out_stream->write(out_stream,curOutPos,&buf[0],&buf[0]+_kGzipHeadSize));
@@ -77,7 +88,7 @@
             assert(self->_newDataSize>=dataSize);
             self->_newDataSize-=dataSize;
     #endif
-            self->crc=crc32(self->crc,newData,(uInt)dataSize);       
+            self->crc=(uint32_t)_crc32(self->crc,newData,dataSize);       
         }
         static hpatch_StreamPos_t _write_foot(struct hsync_THsynz* zPlugin,
                                               const hpatch_TStreamOutput* out_stream,hpatch_StreamPos_t curOutPos,
@@ -96,5 +107,5 @@
 
     };
 
-#endif //_CompressPlugin_zlib
+#endif //_CompressPlugin_zlib||_CompressPlugin_ldef
 #endif // hsynz_plugin_gzip_h
