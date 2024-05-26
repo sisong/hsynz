@@ -118,7 +118,7 @@
 		<Unit filename="../../libdeflate/lib/x86/cpu_features.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="../../libdeflate/lib/zlib_decompress.c">
+		<Unit filename="../../libdeflate/lib/arm/cpu_features.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="../../minihttp/mbedtls/library/aes.c">

@@ -5,6 +5,7 @@ LOCAL_MODULE := hsynz
 
 MT    := 1
 ZSTD  := 1
+LDEF  := 1
 MD5   := 0
 SHA256:= 0
 SHA512:= 0
@@ -24,6 +25,17 @@ Zstd_Files := $(ZSTD_PATH)/decompress/zstd_decompress.c \
               $(ZSTD_PATH)/common/fse_decompress.c \
               $(ZSTD_PATH)/common/xxhash.c \
               $(ZSTD_PATH)/common/error_private.c
+endif
+
+LDEF_PATH := $(LOCAL_PATH)/../../libdeflate
+ifeq ($(LDEF),0)
+Ldef_Files :=
+else
+Ldef_Files := $(LDEF_PATH)/lib/crc32.c \
+              $(LDEF_PATH)/lib/deflate_decompress.c \
+              $(LDEF_PATH)/lib/utils.c \
+              $(LDEF_PATH)/lib/x86/cpu_features.c \
+              $(LDEF_PATH)/lib/arm/cpu_features.c
 endif
 
 HDP_PATH  := $(LOCAL_PATH)/../../HDiffPatch
@@ -61,9 +73,13 @@ endif
 Src_Files := $(jni_PATH)/hsynz_export.cpp \
              $(jni_PATH)/hsynz_jni.cpp
 
-LOCAL_SRC_FILES  := $(Src_Files) $(Sync_Files) $(Hdp_Files) $(Zstd_Files)
+LOCAL_SRC_FILES  := $(Src_Files) $(Sync_Files) $(Hdp_Files) $(Zstd_Files) $(Ldef_Files)
 
-LOCAL_LDLIBS     := -llog -lz
+LOCAL_LDLIBS     := -llog
+ifeq ($(LDEF),0)
+	LOCAL_LDLIBS += -lz
+else
+endif
 LOCAL_CFLAGS     := -Os -DANDROID_NDK -DNDEBUG -D_LARGEFILE_SOURCE \
 					-D_IS_NEED_DIR_DIFF_PATCH=0 \
 					-D_IS_NEED_DEFAULT_CompressPlugin=0 \
@@ -74,7 +90,11 @@ ifeq ($(MT),0)
 else
   LOCAL_CFLAGS   += -D_IS_USED_MULTITHREAD=1 -D_IS_USED_PTHREAD=1
 endif
-LOCAL_CFLAGS     += -D_CompressPlugin_zlib
+ifeq ($(LDEF),0)
+	LOCAL_CFLAGS     += -D_CompressPlugin_zlib
+else
+	LOCAL_CFLAGS     += -D_CompressPlugin_ldef -I$(LDEF_PATH)
+endif
 
 ifeq ($(ZSTD),0)
 else

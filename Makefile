@@ -14,9 +14,6 @@ M32      := 0
 # build for out min size
 MINS     := 0
 
-LDEF_ARM  := 0
-LDEF_RISCV:= 0
-
 HDP_OBJ := \
     HDiffPatch/file_for_patch.o \
     HDiffPatch/libHDiffPatch/HPatch/patch.o \
@@ -66,15 +63,9 @@ else
   # https://github.com/sisong/libdeflate
   LDEF_OBJ := $(LDEF_PATH)/lib/crc32.o \
   				$(LDEF_PATH)/lib/deflate_decompress.o \
-  				$(LDEF_PATH)/lib/utils.o
-  ifeq ($(LDEF_ARM),0)
-    ifeq ($(LDEF_RISCV),0)
-      LDEF_OBJ += $(LDEF_PATH)/lib/x86/cpu_features.o
-    else
-    endif
-  else
-    LDEF_OBJ += $(LDEF_PATH)/lib/arm/cpu_features.o
-  endif
+  				$(LDEF_PATH)/lib/utils.o \
+  				$(LDEF_PATH)/lib/x86/cpu_features.o \
+  				$(LDEF_PATH)/lib/arm/cpu_features.o
 
   CLIENT_OBJ += $(LDEF_OBJ)
   MAKE_OBJ   += $(LDEF_PATH)/lib/deflate_compress.o

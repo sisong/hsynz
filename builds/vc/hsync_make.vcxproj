@@ -126,33 +126,33 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\obj\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -162,7 +162,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
+    <IncludePath>..\..\libdeflate;..\..\zlib;..\..\zstd\lib;..\..\zstd\lib\common;..\..\zstd\lib\compress;..\..\zstd\lib\decompress;..\..\minihttp\mbedtls\include;..\..\minihttp\mbedtls\crypto\include;..\..\xxHash;$(IncludePath)</IncludePath>
     <OutDir>$(Configuration)\$(Platform)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\obj\</IntDir>
   </PropertyGroup>
