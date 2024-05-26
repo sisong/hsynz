@@ -35,16 +35,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\libdeflate\lib\adler32.c" />
     <ClCompile Include="..\..\libdeflate\lib\crc32.c" />
     <ClCompile Include="..\..\libdeflate\lib\deflate_compress.c" />
     <ClCompile Include="..\..\libdeflate\lib\deflate_decompress.c" />
-    <ClCompile Include="..\..\libdeflate\lib\gzip_compress.c" />
-    <ClCompile Include="..\..\libdeflate\lib\gzip_decompress.c" />
     <ClCompile Include="..\..\libdeflate\lib\utils.c" />
     <ClCompile Include="..\..\libdeflate\lib\x86\cpu_features.c" />
-    <ClCompile Include="..\..\libdeflate\lib\zlib_compress.c" />
-    <ClCompile Include="..\..\libdeflate\lib\zlib_decompress.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

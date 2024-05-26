@@ -106,6 +106,21 @@
 		<Unit filename="../../HDiffPatch/libhsync/sync_client/sync_client.cpp" />
 		<Unit filename="../../HDiffPatch/libhsync/sync_client/sync_diff_data.cpp" />
 		<Unit filename="../../HDiffPatch/libhsync/sync_client/sync_info_client.cpp" />
+		<Unit filename="../../libdeflate/lib/crc32.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../libdeflate/lib/deflate_decompress.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../libdeflate/lib/utils.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../libdeflate/lib/x86/cpu_features.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="../../libdeflate/lib/zlib_decompress.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="../../minihttp/mbedtls/library/aes.c">
 			<Option compilerVar="CC" />
 		</Unit>

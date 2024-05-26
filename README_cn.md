@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v1.0.2-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v1.1.0-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -9,7 +9,7 @@
  中文版 | [english](README.md)   
 
 hsynz 是一个用使用同步算法来进行增量更新的库，类似于 [zsync](http://zsync.moria.org.uk)。   
-通过http(s)实现rsync；在客户端实现同步算法，服务器端只需要提供http(s)的CDN。支持zstd和zlib压缩，支持大文件和目录(文件夹)，支持多线程。   
+通过http(s)实现rsync；在客户端实现同步算法，服务器端只需要提供http(s)的CDN。支持zstd、libdeflate和zlib压缩，支持大文件和目录(文件夹)，支持多线程。   
    
 
 适用的场景：旧版本数量非常多 或者 无法得到旧版本(没有保存或被修改等) 从而无法提前计算出全部的增量补丁，这时推荐使用hsynz同步分发技术。   
@@ -28,7 +28,7 @@ hsync_http提供了一个支持http(s)的下载客户端demo，支持从提供ht
 ---
 ## 特性和 [zsync](http://zsync.moria.org.uk) 对比
 * 除了支持源和目标为文件，还为文件夹(目录)提供了支持。
-* 除了支持zlib压缩发布包；还支持zstd压缩，提供更好的压缩率，即下载的补丁包更小。
+* 除了支持zlib压缩发布包；还支持libdeflate和zstd压缩，提供更好的压缩率，即下载的补丁包更小。
 * 服务端make时提供了多线程并行加速的支持。
 * 对客户端的diff速度进行了优化，并且提供了多线程并行加速的支持。
 
@@ -83,8 +83,14 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
             压缩字典比特数dictBits可以为9到15, 默认为15。
         -c-gzip[-{1..9}[-dictBits]]     默认级别 9
             压缩字典比特数dictBits可以为9到15, 默认为15。
-            也同样使用zlib算法来压缩, 但out_hsynz_file输出文件将是一个标准的.gz格式文件。
+            使用zlib算法来压缩, out_hsynz_file输出文件将是一个标准的.gz格式文件。
             （会比 -c-zlib 生成的文件稍大一点）
+        -c-ldef[-{1..12}[-dictBits]]    默认级别 12
+            压缩字典比特数dictBits可以为9到15, 默认为15。
+            使用libdeflate算法来压缩, 兼容zlib的deflate编码。
+        -c-lgzip[-{1..12}[-dictBits]]   默认级别 12
+            压缩字典比特数dictBits可以为9到15, 默认为15。
+            使用libdeflate算法来压缩, out_hsynz_file输出文件将是一个标准的.gz格式文件。
         -c-zstd[-{10..22}[-dictBits]]   默认级别 21
             压缩字典比特数dictBits 可以为15到30, 默认为24。
   -C-checksumType
@@ -205,11 +211,11 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
 客户端同步 diff&patch 时参数 `hsync_demo {old} {newi} {newz} {out_new}` (所有文件都在本地)   
 **hsynz p1** 运行 make 时没有压缩器，也没有压缩文件out_newz输出, 添加了参数 `-p-1`   
 **hsynz p8** 运行 make 时没有压缩器，也没有压缩文件out_newz输出, 添加了参数 `-p-8`   
-**hsynz p1 -zlib** 运行 make 时添加 `-p-1 -c-zlib-9` (运行 `hsync_demo` 时添加 `-p-1`) 
+**hsynz p1 -zlib** 运行 make 时添加 `-p-1 -c-zlib-9` (运行 `hsync_demo` 时添加 `-p-1`)   
 **hsynz p8 -zlib** 运行 make 时添加 `-p-8 -c-zlib-9` (运行 `hsync_demo` 时添加 `-p-8`)   
-**hsynz p1 -gzip** 运行 make 时添加 `-p-1 -c-gzip-9` (运行 `hsync_demo` 时添加 `-p-1`) 
+**hsynz p1 -gzip** 运行 make 时添加 `-p-1 -c-gzip-9` (运行 `hsync_demo` 时添加 `-p-1`)   
 **hsynz p8 -gzip** 运行 make 时添加 `-p-8 -c-gzip-9` (运行 `hsync_demo` 时添加 `-p-8`)   
-**hsynz p1 -zstd** 运行 make 时添加 `-p-1 -c-zstd-21-24` (运行 `hsync_demo` 时添加 `-p-1`) 
+**hsynz p1 -zstd** 运行 make 时添加 `-p-1 -c-zstd-21-24` (运行 `hsync_demo` 时添加 `-p-1`)   
 **hsynz p8 -zstd** 运行 make 时添加 `-p-8 -c-zstd-21-24` (运行 `hsync_demo` 时添加 `-p-8`)   
    
 **测试平均结果**:

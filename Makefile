@@ -2,6 +2,7 @@
 DIR_DIFF := 1
 MT       := 1
 ZLIB     := 1
+LDEF     := 1
 ZSTD     := 1
 HTTPS    := 1
 
@@ -12,6 +13,9 @@ CL  	 := 0
 M32      := 0
 # build for out min size
 MINS     := 0
+
+LDEF_ARM  := 0
+LDEF_RISCV:= 0
 
 HDP_OBJ := \
     HDiffPatch/file_for_patch.o \
@@ -56,18 +60,43 @@ else
     HDiffPatch/libhsync/sync_make/dir_sync_make.o
 endif
 
+LDEF_PATH := libdeflate
+ifeq ($(LDEF),0)
+else
+  # https://github.com/sisong/libdeflate
+  LDEF_OBJ := $(LDEF_PATH)/lib/crc32.o \
+  				$(LDEF_PATH)/lib/deflate_decompress.o \
+  				$(LDEF_PATH)/lib/utils.o
+  ifeq ($(LDEF_ARM),0)
+    ifeq ($(LDEF_RISCV),0)
+      LDEF_OBJ += $(LDEF_PATH)/lib/x86/cpu_features.o
+    else
+    endif
+  else
+    LDEF_OBJ += $(LDEF_PATH)/lib/arm/cpu_features.o
+  endif
+
+  CLIENT_OBJ += $(LDEF_OBJ)
+  MAKE_OBJ   += $(LDEF_PATH)/lib/deflate_compress.o
+endif
 
 ZLIB_PATH := zlib
 ifeq ($(ZLIB),0)
-else # http://zlib.net  https://github.com/sisong/zlib  
-  CLIENT_OBJ += $(ZLIB_PATH)/adler32.o \
+else
+  # http://zlib.net  https://github.com/sisong/zlib  
+  _ZLIB_OBJ := $(ZLIB_PATH)/adler32.o \
   				$(ZLIB_PATH)/crc32.o \
   				$(ZLIB_PATH)/inffast.o \
   				$(ZLIB_PATH)/inflate.o \
   				$(ZLIB_PATH)/inftrees.o \
   				$(ZLIB_PATH)/trees.o \
   				$(ZLIB_PATH)/zutil.o
-  MAKE_OBJ   += $(ZLIB_PATH)/deflate.o
+  ifeq ($(LDEF),0)
+    CLIENT_OBJ += $(_ZLIB_OBJ)
+  else
+    MAKE_OBJ   += $(_ZLIB_OBJ)
+  endif
+  MAKE_OBJ   += $(ZLIB_PATH)/deflate.o 
 endif
 
 ZSTD_PATH := zstd/lib
@@ -155,6 +184,13 @@ ifeq ($(ZLIB),0)
 else
   DEF_FLAGS += -D_CompressPlugin_zlib -I$(ZLIB_PATH)
   DEF_FLAGS += -D_ChecksumPlugin_crc32
+endif
+ifeq ($(LDEF),0)
+else
+  DEF_FLAGS += -D_CompressPlugin_ldef -I$(LDEF_PATH)
+  ifeq ($(ZLIB),0)
+    DEF_FLAGS += -D_ChecksumPlugin_crc32
+  endif
 endif
 ifeq ($(ZSTD),0)
 else

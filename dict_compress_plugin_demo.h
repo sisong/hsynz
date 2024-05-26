@@ -313,7 +313,6 @@ static const char* k_gzip_dictCompressType="gzipD";
         const hpatch_BOOL  isSetFinalTag=in_isEnd||(!self->is_gzip);
         { //reset dict
             _CacheBlockDict_usedDict(&self->cache,blockIndex,&dict,&dictSize);
-            assert(dictSize==(uInt)dictSize);
             isHaveDict=(dictSize>0);
             if (isHaveDict){
                 _checkCompress(dataSize<=(size_t)(self->tempDecBufEnd-dict-dictSize));

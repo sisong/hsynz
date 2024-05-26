@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v1.0.2-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v1.1.0-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -9,7 +9,7 @@
  english | [中文版](README_cn.md)   
 
 hsynz is a library for delta update using sync algorithm, like [zsync](http://zsync.moria.org.uk).   
-rsync over http(s); implement the sync algorithm on client side, and server side only need http(s) cdn. support compressor zstd & zlib, support large file & directory(folder), support muti-thread.   
+rsync over http(s); implement the sync algorithm on client side, and server side only need http(s) cdn. support compressor zstd & libdeflate & zlib, support large file & directory(folder), support muti-thread.   
    
 
 Recommended scenarios: Very large number of older versions or where older versions are not available (not saved or modified, etc.) so that all deltas cannot be calculated in advance.   
@@ -28,7 +28,7 @@ Tip: You can also customise other communication methods for sync.
 ---
 ## Compare with [zsync](http://zsync.moria.org.uk)
 * In addition to supporting source and target as files, support is also provided for directories(folders).
-* In addition to supporting compressed release package by zlib; also supported zstd compressor, providing better compression ratio, i.e. smaller downloaded patch package.
+* In addition to supporting compressed release package by zlib; also supported libdeflate & zstd compressor, providing better compression ratio, i.e. smaller downloaded patch package.
 * The server-side make support multi-threaded parallel acceleration.
 * The client-side diff speed has been optimized, and also support multi-threaded parallel acceleration.
 
@@ -82,7 +82,13 @@ options:
             dictBits can 9--15, DEFAULT 15.
         -c-gzip[-{1..9}[-dictBits]]     DEFAULT level 9
             dictBits can 9--15, DEFAULT 15.
-            compress by zlib, but out_hsynz_file is .gz file format.
+            compress by zlib, out_hsynz_file is .gz file format.
+        -c-ldef[-{1..12}[-dictBits]]    DEFAULT level 12
+            dictBits can 9--15, DEFAULT 15.
+            compress by libdeflate, compatible with zlib's deflate encoding.
+        -c-lgzip[-{1..12}[-dictBits]]   DEFAULT level 12
+            dictBits can 9--15, DEFAULT 15.
+            compress by libdeflate, out_hsynz_file is .gz file format.
         -c-zstd[-{10..22}[-dictBits]]   DEFAULT level 21
             dictBits can 15--30, DEFAULT 24.
   -C-checksumType

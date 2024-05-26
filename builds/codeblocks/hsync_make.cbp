@@ -71,6 +71,7 @@
 			<Add directory="../../zstd/lib/compress" />
 			<Add directory="../../zstd/lib/decompress" />
 			<Add directory="../../zstd/lib/" />
+			<Add directory="../../libdeflate" />
 		</Compiler>
 		<Linker>
 			<Add library="pthread" />
@@ -83,6 +84,9 @@
 		<Unit filename="../../client_download_demo.cpp" />
 		<Unit filename="../../hsync_import_patch.cpp" />
 		<Unit filename="../../hsync_make.cpp" />
+		<Unit filename="../../libdeflate/lib/deflate_compress.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Extensions>
 			<envvars />
 			<code_completion />

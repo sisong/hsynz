@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D0A72322B5A780F00D6E0D1 /* utils.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A722F2B5A780F00D6E0D1 /* utils.c */; };
+		0D0A72332B5A780F00D6E0D1 /* deflate_decompress.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72302B5A780F00D6E0D1 /* deflate_decompress.c */; };
+		0D0A72342B5A780F00D6E0D1 /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72312B5A780F00D6E0D1 /* crc32.c */; };
+		0D0A72362B5A790500D6E0D1 /* cpu_features.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72352B5A790500D6E0D1 /* cpu_features.c */; };
+		0D0A72382C0331E600D6E0D1 /* cpu_features.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72372C0331E600D6E0D1 /* cpu_features.c */; };
+		0D0A723A2C03326C00D6E0D1 /* deflate_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72392C03326C00D6E0D1 /* deflate_compress.c */; };
 		0DD689B729EFF67F000EFD20 /* sync_client_private.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DD689A929EFF67F000EFD20 /* sync_client_private.h */; };
 		0DD689B829EFF67F000EFD20 /* sync_info_client.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DD689AA29EFF67F000EFD20 /* sync_info_client.h */; };
 		0DD689B929EFF67F000EFD20 /* dir_sync_client.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DD689AB29EFF67F000EFD20 /* dir_sync_client.h */; };
@@ -102,6 +108,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0D0A722F2B5A780F00D6E0D1 /* utils.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = utils.c; path = ../../libdeflate/lib/utils.c; sourceTree = "<group>"; };
+		0D0A72302B5A780F00D6E0D1 /* deflate_decompress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = deflate_decompress.c; path = ../../libdeflate/lib/deflate_decompress.c; sourceTree = "<group>"; };
+		0D0A72312B5A780F00D6E0D1 /* crc32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = crc32.c; path = ../../libdeflate/lib/crc32.c; sourceTree = "<group>"; };
+		0D0A72352B5A790500D6E0D1 /* cpu_features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu_features.c; path = ../../libdeflate/lib/x86/cpu_features.c; sourceTree = "<group>"; };
+		0D0A72372C0331E600D6E0D1 /* cpu_features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu_features.c; path = ../../libdeflate/lib/arm/cpu_features.c; sourceTree = "<group>"; };
+		0D0A72392C03326C00D6E0D1 /* deflate_compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = deflate_compress.c; path = ../../libdeflate/lib/deflate_compress.c; sourceTree = "<group>"; };
 		0DD689A929EFF67F000EFD20 /* sync_client_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync_client_private.h; sourceTree = "<group>"; };
 		0DD689AA29EFF67F000EFD20 /* sync_info_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync_info_client.h; sourceTree = "<group>"; };
 		0DD689AB29EFF67F000EFD20 /* dir_sync_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dir_sync_client.h; sourceTree = "<group>"; };
@@ -208,6 +220,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0D0A722E2B5A77DB00D6E0D1 /* libdeflate */ = {
+			isa = PBXGroup;
+			children = (
+				0D0A72392C03326C00D6E0D1 /* deflate_compress.c */,
+				0D0A72352B5A790500D6E0D1 /* cpu_features.c */,
+				0D0A72372C0331E600D6E0D1 /* cpu_features.c */,
+				0D0A72312B5A780F00D6E0D1 /* crc32.c */,
+				0D0A72302B5A780F00D6E0D1 /* deflate_decompress.c */,
+				0D0A722F2B5A780F00D6E0D1 /* utils.c */,
+			);
+			name = libdeflate;
+			sourceTree = "<group>";
+		};
 		0DD689A829EFF67F000EFD20 /* sync_client */ = {
 			isa = PBXGroup;
 			children = (
@@ -340,6 +365,7 @@
 		D688CAC823E1D0BE006427D4 = {
 			isa = PBXGroup;
 			children = (
+				0D0A722E2B5A77DB00D6E0D1 /* libdeflate */,
 				0DD68AB629EFF960000EFD20 /* zstd */,
 				0DD689C529EFF6D8000EFD20 /* zlib */,
 				D688CB2823E1D4CA006427D4 /* HDiffPatch */,
@@ -468,7 +494,7 @@
 		D688CAC923E1D0BE006427D4 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1030;
+				LastUpgradeCheck = 1310;
 				ORGANIZATIONNAME = sisong;
 				TargetAttributes = {
 					D688CAD023E1D0BE006427D4 = {
@@ -482,6 +508,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = D688CAC823E1D0BE006427D4;
 			productRefGroup = D688CAD223E1D0BE006427D4 /* Products */;
@@ -498,6 +525,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D0A72332B5A780F00D6E0D1 /* deflate_decompress.c in Sources */,
 				0DD68B2529EFF983000EFD20 /* zstd_lazy.c in Sources */,
 				0DD68AFD29EFF983000EFD20 /* fse_decompress.c in Sources */,
 				D60DBC6B241C739500C5EE19 /* patch.c in Sources */,
@@ -513,11 +541,15 @@
 				0DD68AFA29EFF983000EFD20 /* entropy_common.c in Sources */,
 				0DD689CE29EFF735000EFD20 /* crc32.c in Sources */,
 				0DD689D529EFF735000EFD20 /* deflate.c in Sources */,
+				0D0A723A2C03326C00D6E0D1 /* deflate_compress.c in Sources */,
 				D68E3258241BC62F00C1C06F /* parallel_import.cpp in Sources */,
 				0DD68B1929EFF983000EFD20 /* zstdmt_compress.c in Sources */,
 				D60DBC6A241C739500C5EE19 /* adler_roll.c in Sources */,
 				0DD68B0729EFF983000EFD20 /* zstd_common.c in Sources */,
 				0DD68B0629EFF983000EFD20 /* threading.c in Sources */,
+				0D0A72382C0331E600D6E0D1 /* cpu_features.c in Sources */,
+				0D0A72342B5A780F00D6E0D1 /* crc32.c in Sources */,
+				0D0A72362B5A790500D6E0D1 /* cpu_features.c in Sources */,
 				D60DBC61241C728C00C5EE19 /* dir_manifest.cpp in Sources */,
 				0DD68B0F29EFF983000EFD20 /* zstd_decompress.c in Sources */,
 				0DD68B2329EFF983000EFD20 /* zstd_compress.c in Sources */,
@@ -531,6 +563,7 @@
 				0DD68AFE29EFF983000EFD20 /* debug.c in Sources */,
 				0DD68B0A29EFF983000EFD20 /* error_private.c in Sources */,
 				0DD689D129EFF735000EFD20 /* zutil.c in Sources */,
+				0D0A72322B5A780F00D6E0D1 /* utils.c in Sources */,
 				D60DBC60241C728C00C5EE19 /* new_stream.c in Sources */,
 				0DD689BC29EFF67F000EFD20 /* sync_diff_data.cpp in Sources */,
 				0DD68B0B29EFF983000EFD20 /* zstd_ddict.c in Sources */,
@@ -580,6 +613,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;
@@ -643,6 +677,7 @@
 				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
 				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
 				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
 				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
 				CLANG_WARN_STRICT_PROTOTYPES = YES;
 				CLANG_WARN_SUSPICIOUS_MOVE = YES;

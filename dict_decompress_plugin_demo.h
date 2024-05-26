@@ -224,7 +224,6 @@ static int _dictSizeToDictBits(size_t dictSize){
         hpatch_BOOL  isHaveDict;
         {//reset dict
             _CacheBlockDict_usedDict(&self->cache,blockIndex,&dict,&dictSize);
-            assert(dictSize==(uInt)dictSize);
             isHaveDict=(dictSize>0);
             if (isHaveDict){
                 if (dataSize>(size_t)(self->tempDecBufEnd-dict-dictSize))

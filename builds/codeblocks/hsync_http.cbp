@@ -68,6 +68,7 @@
 			<Add directory="../../xxHash/" />
 			<Add directory="../../minihttp/mbedtls/include" />
 			<Add directory="../../minihttp" />
+			<Add directory="../../libdeflate" />
 		</Compiler>
 		<Linker>
 			<Add library="pthread" />
