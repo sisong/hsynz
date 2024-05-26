@@ -328,9 +328,6 @@
     <ProjectReference Include="libhsyncclient.vcxproj">
       <Project>{ef87aac9-545b-4af6-a695-d7fc9d1670c2}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\HDiffPatch\builds\vc\zlib.vcxproj">
-      <Project>{35ed7715-6b17-4225-8171-c954968d8f8c}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\HDiffPatch\builds\vc\zstd.vcxproj">
       <Project>{16415855-b9f4-4a5d-a096-c3380cfc6008}</Project>
     </ProjectReference>

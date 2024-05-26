@@ -43,8 +43,6 @@
 #else
 #   define _crc32 crc32
 #endif
-# ifdef _CompressPlugin_ldef
-#endif
 
     class hsync_THsynz_gzip:public hsync_THsynz{
     public:
