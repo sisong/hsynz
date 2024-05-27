@@ -93,7 +93,7 @@ endif
 ifeq ($(LDEF),0)
 	LOCAL_CFLAGS     += -D_CompressPlugin_zlib
 else
-	LOCAL_CFLAGS     += -D_CompressPlugin_ldef -I$(LDEF_PATH)
+	LOCAL_CFLAGS     += -D_CompressPlugin_ldef -I$(LDEF_PATH) -DHAVE_PMULL_INTRIN=0 -DLIBDEFLATEAPI=
 endif
 
 ifeq ($(ZSTD),0)
