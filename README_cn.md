@@ -202,7 +202,7 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
    
 
 **测试PC**: Windows11, CPU R9-7945HX, SSD PCIe4.0x4 4T, DDR5 5200MHz 32Gx2   
-**参与测试的程序版本**: hsynz 0.9.3, zsync 0.6.2  (更多程序的测试结果见 [HDiffPatch](https://github.com/sisong/HDiffPatch))   
+**参与测试的程序版本**: hsynz 1.1.0, zsync 0.6.2  (更多程序的对比测试结果见 [HDiffPatch](https://github.com/sisong/HDiffPatch))   
 **程序测试参数**:   
 **zsync** 运行 make 参数 `zsyncmake -b 2048 -o {out_newi} {new}`,   
 客户端同步 diff&patch 时参数 `zsync -i {old} -o {out_new} {newi}` (所有文件都在本地)   
@@ -215,6 +215,10 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
 **hsynz p8 -zlib** 运行 make 时添加 `-p-8 -c-zlib-9` (运行 `hsync_demo` 时添加 `-p-8`)   
 **hsynz p1 -gzip** 运行 make 时添加 `-p-1 -c-gzip-9` (运行 `hsync_demo` 时添加 `-p-1`)   
 **hsynz p8 -gzip** 运行 make 时添加 `-p-8 -c-gzip-9` (运行 `hsync_demo` 时添加 `-p-8`)   
+**hsynz p1 -ldef** 运行 make 时添加 `-p-1 -c-ldef-12` (运行 `hsync_demo` 时添加 `-p-1`)   
+**hsynz p8 -ldef** 运行 make 时添加 `-p-8 -c-ldef-12` (运行 `hsync_demo` 时添加 `-p-8`)   
+**hsynz p1 -lgzip** 运行 make 时添加 `-p-1 -c-lgzip-12` (运行 `hsync_demo` 时添加 `-p-1`)   
+**hsynz p8 -lgzip** 运行 make 时添加 `-p-8 -c-lgzip-12` (运行 `hsync_demo` 时添加 `-p-8`)   
 **hsynz p1 -zstd** 运行 make 时添加 `-p-1 -c-zstd-21-24` (运行 `hsync_demo` 时添加 `-p-1`)   
 **hsynz p8 -zstd** 运行 make 时添加 `-p-8 -c-zstd-21-24` (运行 `hsync_demo` 时添加 `-p-8`)   
    
@@ -223,14 +227,18 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
 |:----|----:|----:|----:|----:|----:|----:|
 |zsync|52.94%|1M|353.9MB/s|7M|23M|34MB/s|
 |zsync -z|20.67%|1M|14.8MB/s|12M|37M|28MB/s|
-|hsynz p1|51.05%|5M|2219.3MB/s|5M|19M|191MB/s|
-|hsynz p8|51.05%|18M|4646.8MB/s|12M|27M|331MB/s|
-|hsynz p1 -zlib|20.05%|6M|17.7MB/s|6M|21M|160MB/s|
-|hsynz p8 -zlib|20.05%|30M|119.5MB/s|13M|29M|246MB/s|
-|hsynz p1 -gzip|20.12%|6M|17.6MB/s|6M|21M|160MB/s|
-|hsynz p8 -gzip|20.12%|30M|118.8MB/s|13M|29M|247MB/s|
-|hsynz p1 -zstd|14.97%|531M|1.9MB/s|24M|35M|173MB/s|
-|hsynz p8 -zstd|14.96%|3349M|10.2MB/s|24M|35M|278MB/s|
+|hsynz p1|51.05%|5M|2039.5MB/s|5M|19M|307MB/s|
+|hsynz p8|51.05%|21M|4311.9MB/s|12M|27M|533MB/s|
+|hsynz p1 zlib|20.05%|6M|17.3MB/s|6M|22M|273MB/s|
+|hsynz p8 zlib|20.05%|30M|115.1MB/s|13M|29M|435MB/s|
+|hsynz p1 gzip|20.12%|6M|17.3MB/s|6M|22M|268MB/s|
+|hsynz p8 gzip|20.12%|30M|115.0MB/s|13M|29M|427MB/s|
+|hsynz p1 ldef|19.58%|15M|1.0MB/s|6M|22M|272MB/s|
+|hsynz p8 ldef|19.58%|96M|7.2MB/s|13M|29M|431MB/s|
+|hsynz p1 lgzip|19.66%|15M|1.0MB/s|6M|22M|267MB/s|
+|hsynz p8 lgzip|19.66%|96M|7.2MB/s|13M|29M|419MB/s|
+|hsynz p1 zstd|14.96%|532M|1.9MB/s|24M|34M|264MB/s|
+|hsynz p8 zstd|14.95%|3349M|10.1MB/s|24M|34M|410MB/s|
     
 
 ## 输入Apk文件进行测试: 
@@ -280,14 +288,18 @@ case list:
 |:----|----:|----:|----:|----:|----:|----:|
 |zsync|62.80%|1M|329.8MB/s|6M|12M|76MB/s|
 |zsync -z|59.56%|1M|19.8MB/s|8M|19M|56MB/s|
-|hsynz p1|62.43%|4M|1647.6MB/s|4M|9M|152MB/s|
-|hsynz p8|62.43%|6M|2563.7MB/s|11M|18M|270MB/s|
-|hsynz p1 -zlib|58.67%|5M|23.7MB/s|4M|11M|151MB/s|
-|hsynz p8 -zlib|58.67%|29M|141.8MB/s|12M|19M|265MB/s|
-|hsynz p1 -gzip|58.95%|5M|23.5MB/s|4M|11M|148MB/s|
-|hsynz p8 -gzip|58.95%|29M|141.8MB/s|12M|19M|256MB/s|
-|hsynz p1 -zstd|57.74%|534M|2.7MB/s|24M|28M|151MB/s|
-|hsynz p8 -zstd|57.74%|3434M|13.2MB/s|24M|28M|265MB/s|
+|hsynz p1|62.43%|4M|1533.5MB/s|4M|10M|236MB/s|
+|hsynz p8|62.43%|18M|2336.4MB/s|12M|18M|394MB/s|
+|hsynz p1 zlib|58.67%|5M|22.7MB/s|4M|11M|243MB/s|
+|hsynz p8 zlib|58.67%|29M|138.6MB/s|12M|19M|410MB/s|
+|hsynz p1 gzip|58.95%|5M|22.6MB/s|4M|11M|242MB/s|
+|hsynz p8 gzip|58.95%|29M|138.9MB/s|12M|19M|407MB/s|
+|hsynz p1 ldef|58.62%|14M|1.9MB/s|4M|11M|242MB/s|
+|hsynz p8 ldef|58.62%|96M|11.3MB/s|12M|19M|413MB/s|
+|hsynz p1 lgzip|58.90%|14M|1.9MB/s|4M|11M|240MB/s|
+|hsynz p8 lgzip|58.90%|96M|11.3MB/s|12M|19M|405MB/s|
+|hsynz p1 zstd|57.74%|534M|2.7MB/s|24M|28M|234MB/s|
+|hsynz p8 zstd|57.74%|3434M|13.4MB/s|24M|28M|390MB/s|
    
 
 ---
