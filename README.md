@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v1.1.0-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v1.1.1-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -83,11 +83,9 @@ options:
         -c-gzip[-{1..9}[-dictBits]]     DEFAULT level 9
             dictBits can 9--15, DEFAULT 15.
             compress by zlib, out_hsynz_file is .gz file format.
-        -c-ldef[-{1..12}[-dictBits]]    DEFAULT level 12
-            dictBits can 9--15, DEFAULT 15.
+        -c-ldef[-{1..12}]           DEFAULT level 12 (dictBits always 15).
             compress by libdeflate, compatible with zlib's deflate encoding.
-        -c-lgzip[-{1..12}[-dictBits]]   DEFAULT level 12
-            dictBits can 9--15, DEFAULT 15.
+        -c-lgzip[-{1..12}]          DEFAULT level 12 (dictBits always 15)
             compress by libdeflate, out_hsynz_file is .gz file format.
         -c-zstd[-{10..22}[-dictBits]]   DEFAULT level 21
             dictBits can 15--30, DEFAULT 24.
@@ -206,7 +204,7 @@ case list([download from OneDrive](https://1drv.ms/u/s!Aj8ygMPeifoQgUIZxYac5_ufl
    
 
 **test PC**: Windows11, CPU R9-7945HX, SSD PCIe4.0x4 4T, DDR5 5200MHz 32Gx2   
-**Program version**: hsynz 1.1.0, zsync 0.6.2  (more programs's testing see [HDiffPatch](https://github.com/sisong/HDiffPatch))   
+**Program version**: hsynz 1.1.1, zsync 0.6.2  (more programs's testing see [HDiffPatch](https://github.com/sisong/HDiffPatch))   
 **test Program**:   
 **zsync** run make with `zsyncmake -b 2048 -o {out_newi} {new}`,   
 client sync diff&patch by `zsync -i {old} -o {out_new} {newi}` (all files are local)   
@@ -237,10 +235,10 @@ client sync diff&patch by `hsync_demo {old} {newi} {newz} {out_new}` (all files 
 |hsynz p8 zlib|20.05%|30M|115.1MB/s|13M|29M|435MB/s|
 |hsynz p1 gzip|20.12%|6M|17.3MB/s|6M|22M|268MB/s|
 |hsynz p8 gzip|20.12%|30M|115.0MB/s|13M|29M|427MB/s|
-|hsynz p1 ldef|19.58%|15M|1.0MB/s|6M|22M|272MB/s|
-|hsynz p8 ldef|19.58%|96M|7.2MB/s|13M|29M|431MB/s|
-|hsynz p1 lgzip|19.66%|15M|1.0MB/s|6M|22M|267MB/s|
-|hsynz p8 lgzip|19.66%|96M|7.2MB/s|13M|29M|419MB/s|
+|hsynz p1 ldef|19.57%|15M|7.8MB/s|6M|22M|272MB/s|
+|hsynz p8 ldef|19.57%|96M|57.0MB/s|13M|29M|431MB/s|
+|hsynz p1 lgzip|19.64%|15M|7.9MB/s|6M|22M|267MB/s|
+|hsynz p8 lgzip|19.64%|96M|56.9MB/s|13M|29M|419MB/s|
 |hsynz p1 zstd|14.96%|532M|1.9MB/s|24M|34M|264MB/s|
 |hsynz p8 zstd|14.95%|3349M|10.1MB/s|24M|34M|410MB/s|
     
@@ -298,10 +296,10 @@ case list:
 |hsynz p8 zlib|58.67%|29M|138.6MB/s|12M|19M|410MB/s|
 |hsynz p1 gzip|58.95%|5M|22.6MB/s|4M|11M|242MB/s|
 |hsynz p8 gzip|58.95%|29M|138.9MB/s|12M|19M|407MB/s|
-|hsynz p1 ldef|58.62%|14M|1.9MB/s|4M|11M|242MB/s|
-|hsynz p8 ldef|58.62%|96M|11.3MB/s|12M|19M|413MB/s|
-|hsynz p1 lgzip|58.90%|14M|1.9MB/s|4M|11M|240MB/s|
-|hsynz p8 lgzip|58.90%|96M|11.3MB/s|12M|19M|405MB/s|
+|hsynz p1 ldef|58.61%|14M|23.7MB/s|4M|11M|242MB/s|
+|hsynz p8 ldef|58.61%|96M|149.1MB/s|12M|19M|413MB/s|
+|hsynz p1 lgzip|58.90%|14M|23.6MB/s|4M|11M|240MB/s|
+|hsynz p8 lgzip|58.90%|96M|149.1MB/s|12M|19M|405MB/s|
 |hsynz p1 zstd|57.74%|534M|2.7MB/s|24M|28M|234MB/s|
 |hsynz p8 zstd|57.74%|3434M|13.4MB/s|24M|28M|390MB/s|
    

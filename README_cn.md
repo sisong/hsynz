@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v1.1.0-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v1.1.1-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -85,11 +85,11 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
             压缩字典比特数dictBits可以为9到15, 默认为15。
             使用zlib算法来压缩, out_hsynz_file输出文件将是一个标准的.gz格式文件。
             （会比 -c-zlib 生成的文件稍大一点）
-        -c-ldef[-{1..12}[-dictBits]]    默认级别 12
-            压缩字典比特数dictBits可以为9到15, 默认为15。
+        -c-ldef[-{1..12}]    默认级别 12
+            压缩字典比特数dictBits总是设置为15。
             使用libdeflate算法来压缩, 兼容zlib的deflate编码。
-        -c-lgzip[-{1..12}[-dictBits]]   默认级别 12
-            压缩字典比特数dictBits可以为9到15, 默认为15。
+        -c-lgzip[-{1..12}]   默认级别 12
+            压缩字典比特数dictBits总是设置为15。
             使用libdeflate算法来压缩, out_hsynz_file输出文件将是一个标准的.gz格式文件。
         -c-zstd[-{10..22}[-dictBits]]   默认级别 21
             压缩字典比特数dictBits 可以为15到30, 默认为24。
@@ -202,7 +202,7 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
    
 
 **测试PC**: Windows11, CPU R9-7945HX, SSD PCIe4.0x4 4T, DDR5 5200MHz 32Gx2   
-**参与测试的程序版本**: hsynz 1.1.0, zsync 0.6.2  (更多程序的对比测试结果见 [HDiffPatch](https://github.com/sisong/HDiffPatch))   
+**参与测试的程序版本**: hsynz 1.1.1, zsync 0.6.2  (更多程序的对比测试结果见 [HDiffPatch](https://github.com/sisong/HDiffPatch))   
 **程序测试参数**:   
 **zsync** 运行 make 参数 `zsyncmake -b 2048 -o {out_newi} {new}`,   
 客户端同步 diff&patch 时参数 `zsync -i {old} -o {out_new} {newi}` (所有文件都在本地)   
@@ -233,10 +233,10 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
 |hsynz p8 zlib|20.05%|30M|115.1MB/s|13M|29M|435MB/s|
 |hsynz p1 gzip|20.12%|6M|17.3MB/s|6M|22M|268MB/s|
 |hsynz p8 gzip|20.12%|30M|115.0MB/s|13M|29M|427MB/s|
-|hsynz p1 ldef|19.58%|15M|1.0MB/s|6M|22M|272MB/s|
-|hsynz p8 ldef|19.58%|96M|7.2MB/s|13M|29M|431MB/s|
-|hsynz p1 lgzip|19.66%|15M|1.0MB/s|6M|22M|267MB/s|
-|hsynz p8 lgzip|19.66%|96M|7.2MB/s|13M|29M|419MB/s|
+|hsynz p1 ldef|19.57%|15M|7.8MB/s|6M|22M|272MB/s|
+|hsynz p8 ldef|19.57%|96M|57.0MB/s|13M|29M|431MB/s|
+|hsynz p1 lgzip|19.64%|15M|7.9MB/s|6M|22M|267MB/s|
+|hsynz p8 lgzip|19.64%|96M|56.9MB/s|13M|29M|419MB/s|
 |hsynz p1 zstd|14.96%|532M|1.9MB/s|24M|34M|264MB/s|
 |hsynz p8 zstd|14.95%|3349M|10.1MB/s|24M|34M|410MB/s|
     
@@ -294,10 +294,10 @@ case list:
 |hsynz p8 zlib|58.67%|29M|138.6MB/s|12M|19M|410MB/s|
 |hsynz p1 gzip|58.95%|5M|22.6MB/s|4M|11M|242MB/s|
 |hsynz p8 gzip|58.95%|29M|138.9MB/s|12M|19M|407MB/s|
-|hsynz p1 ldef|58.62%|14M|1.9MB/s|4M|11M|242MB/s|
-|hsynz p8 ldef|58.62%|96M|11.3MB/s|12M|19M|413MB/s|
-|hsynz p1 lgzip|58.90%|14M|1.9MB/s|4M|11M|240MB/s|
-|hsynz p8 lgzip|58.90%|96M|11.3MB/s|12M|19M|405MB/s|
+|hsynz p1 ldef|58.61%|14M|23.7MB/s|4M|11M|242MB/s|
+|hsynz p8 ldef|58.61%|96M|149.1MB/s|12M|19M|413MB/s|
+|hsynz p1 lgzip|58.90%|14M|23.6MB/s|4M|11M|240MB/s|
+|hsynz p8 lgzip|58.90%|96M|149.1MB/s|12M|19M|405MB/s|
 |hsynz p1 zstd|57.74%|534M|2.7MB/s|24M|28M|234MB/s|
 |hsynz p8 zstd|57.74%|3434M|13.4MB/s|24M|28M|390MB/s|
    

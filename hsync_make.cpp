@@ -112,11 +112,9 @@ static void printUsage(){
            "            compress by zlib, out_hsynz_file is .gz file format.\n"
 #endif
 #ifdef _CompressPlugin_ldef
-           "        -c-ldef[-{1..12}[-dictBits]]    DEFAULT level 12\n"
-           "            dictBits can 9--15, DEFAULT 15.\n"
+           "        -c-ldef[-{1..12}]           DEFAULT level 12 (dictBits always 15).\n"
            "            compress by libdeflate, compatible with zlib's deflate encoding.\n"
-           "        -c-lgzip[-{1..12}[-dictBits]]   DEFAULT level 12\n"
-           "            dictBits can 9--15, DEFAULT 15.\n"
+           "        -c-lgzip[-{1..12}]          DEFAULT level 12 (dictBits always 15)\n"
            "            compress by libdeflate, out_hsynz_file is .gz file format.\n"
 #else
 #endif
@@ -303,13 +301,13 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
 #endif
 #ifdef _CompressPlugin_ldef
     __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"ldef","ldefD",
-                                        &compressLevel,1,12,12, &dictBits,9,15,defaultDictBits_zlib),"-c-ldef-?"){
+                                        &compressLevel,1,12,12, &dictBits,15,15,defaultDictBits_zlib),"-c-ldef-?"){
         static TDictCompressPlugin_ldef _ldefCompressPlugin=ldefDictCompressPlugin;
         _ldefCompressPlugin.compress_level=(hpatch_byte)compressLevel;
         _ldefCompressPlugin.dict_bits=(hpatch_byte)dictBits;
         *out_compressPlugin=&_ldefCompressPlugin.base; }}
     __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"lgzip","lgzipD",
-                                        &compressLevel,1,12,12, &dictBits,9,15,defaultDictBits_zlib),"-c-lgzip-?"){
+                                        &compressLevel,1,12,12, &dictBits,15,15,defaultDictBits_zlib),"-c-lgzip-?"){
         static TDictCompressPlugin_lgzip _lgzipCompressPlugin=lgzipDictCompressPlugin;
         _lgzipCompressPlugin.compress_level=(hpatch_byte)compressLevel;
         _lgzipCompressPlugin.dict_bits=(hpatch_byte)dictBits;

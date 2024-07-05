@@ -157,9 +157,8 @@ static const char* k_gzip_dictCompressType="gzipD";
 
     static size_t _zlib_dictCompress(hsync_dictCompressHandle dictHandle,size_t blockIndex,
                                      hpatch_byte* out_code,hpatch_byte* out_codeEnd,
-                                     const hpatch_byte* in_dataBegin,const hpatch_byte* in_dataEnd){
+                                     const hpatch_byte* in_dataBegin,size_t in_dataSize,size_t in_borderSize){
         _TDictCompressPlugin_zlib_data* self=(_TDictCompressPlugin_zlib_data*)dictHandle;
-        const size_t dataSize=in_dataEnd-in_dataBegin;
         const hpatch_BOOL in_isEnd=(blockIndex+1==self->cache.blockCount);
         size_t result;
         if (self->dict_isInReset){ //reset dict
@@ -172,8 +171,8 @@ static const char* k_gzip_dictCompressType="gzipD";
             self->dict_isInReset=hpatch_FALSE;
         }
         self->stream.next_in =(Bytef*)in_dataBegin;
-        self->stream.avail_in=(uInt)dataSize;
-        assert(self->stream.avail_in==dataSize);
+        self->stream.avail_in=(uInt)in_dataSize;
+        assert(self->stream.avail_in==in_dataSize);
         self->stream.next_out =out_code;
         self->stream.avail_out=(uInt)(out_codeEnd-out_code);
         assert(self->stream.avail_out==(size_t)(out_codeEnd-out_code));
@@ -200,7 +199,7 @@ static const char* k_gzip_dictCompressType="gzipD";
                 #else
                     //update dict & deflateSetDictionary every block (NOTE: deflateSetDictionary slow)
                     _CacheBlockDict_dictUncompress(&self->cache,blockIndex,blockIndex+1,
-                                                   in_dataBegin,in_dataEnd);
+                                                   in_dataBegin,in_dataBegin+in_dataSize);
                     self->dict_isInReset=hpatch_TRUE;
                 #endif
             }
@@ -208,7 +207,7 @@ static const char* k_gzip_dictCompressType="gzipD";
         result=self->stream.total_out;
         self->stream.total_out=0;
         assert(self->stream.avail_in==0);
-        if ((result>=dataSize)&&(!self->is_gzip))
+        if ((result>=in_dataSize)&&(!self->is_gzip))
             return kDictCompressCancel;// cancel compress
         return result;
     }
@@ -250,9 +249,13 @@ static const char* k_gzip_dictCompressType="gzipD";
         struct libdeflate_compressor* c;
         _CacheBlockDict_t   cache;
         hpatch_byte*        tempDecBufEnd; 
+        hpatch_BOOL         dict_isInReset;
         hpatch_BOOL         is_gzip;
     } _TDictCompressPlugin_ldef_data;
 
+    static size_t _ldef_getDictCompressBorder(){
+        return 258; //deflate max match length
+    }
     static size_t _ldef_getDictSize(struct hsync_TDictCompress* compressPlugin){
         TDictCompressPlugin_ldef*  plugin=(TDictCompressPlugin_ldef*)compressPlugin;
         const size_t dictSize=((size_t)1<<plugin->dict_bits);
@@ -271,10 +274,11 @@ static const char* k_gzip_dictCompressType="gzipD";
         const TDictCompressPlugin_ldef*  plugin=(const TDictCompressPlugin_ldef*)compressPlugin;
         const size_t dictSize=((size_t)1<<plugin->dict_bits);
         const size_t cacheDictSize=_getCacheBlockDictSize(dictSize,blockCount,blockSize);
-        _TDictCompressPlugin_ldef_data* self=(_TDictCompressPlugin_ldef_data*)malloc(sizeof(_TDictCompressPlugin_ldef_data)+cacheDictSize+blockSize);
+        const size_t memSize=sizeof(_TDictCompressPlugin_ldef_data)+cacheDictSize+blockSize+_ldef_getDictCompressBorder();
+        _TDictCompressPlugin_ldef_data* self=(_TDictCompressPlugin_ldef_data*)malloc(memSize);
         if (self==0) return 0;
         memset(self,0,sizeof(*self));
-        self->tempDecBufEnd=((hpatch_byte*)self)+sizeof(*self) +cacheDictSize+blockSize;
+        self->tempDecBufEnd=((hpatch_byte*)self)+memSize;
         _CacheBlockDict_init(&self->cache,((hpatch_byte*)self)+sizeof(*self),
                              cacheDictSize,dictSize,blockCount,blockSize);
         self->c=libdeflate_alloc_compressor(plugin->compress_level);
@@ -297,37 +301,43 @@ static const char* k_gzip_dictCompressType="gzipD";
     static hpatch_byte* _ldef_getResetDictBuffer(hsync_dictCompressHandle dictHandle,size_t blockIndex,
                                                  size_t* out_dictSize){
         _TDictCompressPlugin_ldef_data* self=(_TDictCompressPlugin_ldef_data*)dictHandle;
+        assert(!self->dict_isInReset);
+        self->dict_isInReset=hpatch_TRUE;
         return _CacheBlockDict_getResetDictBuffer(&self->cache,blockIndex,out_dictSize);
     }
 
     static size_t _ldef_dictCompress(hsync_dictCompressHandle dictHandle,size_t blockIndex,
                                      hpatch_byte* out_code,hpatch_byte* out_codeEnd,
-                                     const hpatch_byte* in_dataBegin,const hpatch_byte* in_dataEnd){
+                                     const hpatch_byte* in_dataBegin,size_t in_dataSize,size_t in_borderSize){
         _TDictCompressPlugin_ldef_data* self=(_TDictCompressPlugin_ldef_data*)dictHandle;
-        const size_t dataSize=in_dataEnd-in_dataBegin;
         const hpatch_BOOL in_isEnd=(blockIndex+1==self->cache.blockCount);
         size_t result;
         hpatch_byte* dict;
         size_t       dictSize;
         hpatch_BOOL  isHaveDict;
         const hpatch_BOOL  isSetFinalTag=in_isEnd||(!self->is_gzip);
-        { //reset dict
+        { //reset dict?
             _CacheBlockDict_usedDict(&self->cache,blockIndex,&dict,&dictSize);
             isHaveDict=(dictSize>0);
             if (isHaveDict){
-                _checkCompress(dataSize<=(size_t)(self->tempDecBufEnd-dict-dictSize));
-                memcpy(dict+dictSize,in_dataBegin,dataSize);
+                _checkCompress(in_dataSize+in_borderSize<=(size_t)(self->tempDecBufEnd-dict-dictSize));
+                memcpy(dict+dictSize,in_dataBegin,in_dataSize+in_borderSize);
+            }
+            if (self->dict_isInReset){
+                self->dict_isInReset=hpatch_FALSE;
+                libdeflate_deflate_compress_block_reset(self->c);
             }
         }
         
-        result=libdeflate_deflate_compress_block(self->c,
-                    isHaveDict?dict:in_dataBegin,dictSize,dataSize,isSetFinalTag,
-                    out_code,out_codeEnd-out_code,1);
+        //result=libdeflate_deflate_compress_block(self->c, isHaveDict?dict:in_dataBegin,
+        //            dictSize,in_dataSize,isSetFinalTag, out_code,out_codeEnd-out_code,1);
+        result=libdeflate_deflate_compress_block_continue(self->c, isHaveDict?dict:in_dataBegin,
+                    dictSize,in_dataSize,in_borderSize,isSetFinalTag, out_code,out_codeEnd-out_code,1);
         _checkCompress(result>0);
         if (!in_isEnd)
             _CacheBlockDict_dictUncompress(&self->cache,blockIndex,blockIndex+1,
-                                           in_dataBegin,in_dataEnd);
-        if ((result>=dataSize)&&(!self->is_gzip))
+                                           in_dataBegin,in_dataBegin+in_dataSize);
+        if ((result>=in_dataSize)&&(!self->is_gzip))
             return kDictCompressCancel;// cancel compress
         return result;
     }
@@ -339,7 +349,8 @@ static const char* k_gzip_dictCompressType="gzipD";
         {_ldef_dictCompressType,_default_maxCompressedSize,
             _ldef_limitDictSizeByData,_default_getBestWorkBlockCount,
             _ldef_getDictSize,_ldef_dictCompressOpen,_ldef_dictCompressClose,0,
-            _ldef_getResetDictBuffer,_ldef_dictCompress,_ldef_dictCompressTypeForDisplay},
+            _ldef_getResetDictBuffer,_ldef_dictCompress,
+            _ldef_dictCompressTypeForDisplay,_ldef_getDictCompressBorder},
         12,MAX_WBITS,hpatch_FALSE};
     _def_fun_compressType(_lgzip_dictCompressType,k_gzip_dictCompressType);
     _def_fun_compressType(_lgzip_dictCompressTypeForDisplay,"lgzipD (gzipD compatible)");
@@ -348,7 +359,8 @@ static const char* k_gzip_dictCompressType="gzipD";
         {_lgzip_dictCompressType,_default_maxCompressedSize,
             _ldef_limitDictSizeByData,_default_getBestWorkBlockCount,
             _ldef_getDictSize,_ldef_dictCompressOpen,_ldef_dictCompressClose,0,
-            _ldef_getResetDictBuffer,_ldef_dictCompress,_lgzip_dictCompressTypeForDisplay},
+            _ldef_getResetDictBuffer,_ldef_dictCompress,
+            _lgzip_dictCompressTypeForDisplay,_ldef_getDictCompressBorder},
         12,MAX_WBITS,hpatch_TRUE};
 
 #endif//_CompressPlugin_ldef
@@ -502,12 +514,11 @@ static const char* k_gzip_dictCompressType="gzipD";
 
     static size_t _zstd_dictCompress(hsync_dictCompressHandle dictHandle,size_t blockIndex,
                                      hpatch_byte* out_code,hpatch_byte* out_codeEnd,
-                                     const hpatch_byte* in_dataBegin,const hpatch_byte* in_dataEnd){
+                                     const hpatch_byte* in_dataBegin,size_t in_dataSize,size_t in_borderSize){
         _TDictCompressPlugin_zstd_data* self=(_TDictCompressPlugin_zstd_data*)dictHandle;
         ZSTD_CCtx* s=self->s;
         ZSTD_inBuffer       s_input;
         ZSTD_outBuffer      s_output;
-        const size_t dataSize=in_dataEnd-in_dataBegin;
         const hpatch_BOOL in_isEnd=blockIndex+1==self->cache.blockCount;
         if (_CacheBlockDict_isHaveDict(&self->cache)){ //reset dict
             _zstd_checkComp(ZSTD_CCtx_reset(s,ZSTD_reset_session_only));
@@ -525,7 +536,7 @@ static const char* k_gzip_dictCompressType="gzipD";
         }
 
         s_input.src=in_dataBegin;
-        s_input.size=dataSize;
+        s_input.size=in_dataSize;
         s_input.pos=0;
         s_output.dst=out_code;
         s_output.size=out_codeEnd-out_code;
@@ -534,10 +545,10 @@ static const char* k_gzip_dictCompressType="gzipD";
         assert(s_input.pos==s_input.size);
         if (!in_isEnd){//update cache & dict
             const hpatch_byte* lastUpdated=self->cache.uncompressCur;
-            _CacheBlockDict_dictUncompress(&self->cache,blockIndex,blockIndex+1,in_dataBegin,in_dataEnd);
+            _CacheBlockDict_dictUncompress(&self->cache,blockIndex,blockIndex+1,in_dataBegin,in_dataBegin+in_dataSize);
             if (self->isDeltaDict){
-                if ((self->d!=0)&&(lastUpdated+dataSize==self->cache.uncompressCur)){
-                    _zstd_checkComp(ZSTD_updateCDict_delta(self->d,dataSize));
+                if ((self->d!=0)&&(lastUpdated+in_dataSize==self->cache.uncompressCur)){
+                    _zstd_checkComp(ZSTD_updateCDict_delta(self->d,in_dataSize));
                 }else{
                     __zstd_reCreateCDict(self);
                     _checkCompress(self->d!=0);
