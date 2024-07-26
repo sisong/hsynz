@@ -60,6 +60,10 @@
 #   define _CompressPlugin_zstd
 #endif
 
+#ifdef _CompressPlugin_ldef
+#   define _IS_USED_LIBDEFLATE_CRC32    1
+#endif
+
 #include "dict_compress_plugin_demo.h"
 #include "hsynz_plugin_gzip.h"
 
