@@ -96,6 +96,10 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #   define _CompressPlugin_zstd
 #endif
 
+#ifdef _CompressPlugin_ldef
+#   define _IS_USED_LIBDEFLATE_CRC32    1
+#endif
+
 #include "dict_decompress_plugin_demo.h"
 
 #ifndef _IS_NEED_DEFAULT_ChecksumPlugin

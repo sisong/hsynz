@@ -29,9 +29,9 @@
 #define dict_compress_plugin_demo_h
 //dict compress plugin demo:
 //  zlibDictCompressPlugin
-//  gzipDictCompressPlugin
+//  gzipDictCompressPlugin      // compatible with gzip encoding
 //  ldefDictCompressPlugin      // compatible with zlib's deflate encoding
-//  lgzipDictCompressPlugin
+//  lgzipDictCompressPlugin     // compatible with gzip encoding
 //  zstdDictCompressPlugin
 
 #include "HDiffPatch/libhsync/sync_make/dict_compress_plugin.h"

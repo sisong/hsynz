@@ -72,7 +72,7 @@ jobs:
         run: |
           git submodule update --init --recursive
           cd ./builds/android_ndk_jni_mk
-          ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk APP_PLATFORM=android-16 APP_STL=c++_static
+          ndk-build NDK_PROJECT_PATH=. NDK_APPLICATION_MK=./Application.mk APP_PLATFORM=android-16 APP_STL=c++_static
 
   windows-ndk-build:
     runs-on: windows-latest
@@ -85,7 +85,7 @@ jobs:
         run: |
           git submodule update --init --recursive
           cd ./builds/android_ndk_jni_mk
-          ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk ZSTD=0 MT=0
+          ndk-build NDK_PROJECT_PATH=. NDK_APPLICATION_MK=./Application.mk ZSTD=0 MT=0
 
   ubuntu-ndk-build:
     runs-on: ubuntu-latest
@@ -99,4 +99,4 @@ jobs:
           sudo apt install libncurses5
           git submodule update --init --recursive
           cd ./builds/android_ndk_jni_mk
-          ndk-build NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk MD5=1 SHA256=1 SHA512=1
+          ndk-build NDK_PROJECT_PATH=. NDK_APPLICATION_MK=./Application.mk MD5=1 SHA256=1 SHA512=1
