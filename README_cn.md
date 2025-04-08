@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v1.1.2-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v1.1.3-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -127,7 +127,7 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
 创建本地补丁: [options] oldPath hsyni_file hsynz_file_url -diff#diffFile
 本地打补丁  : [options] oldPath hsyni_file -patch#diffFile outNewPath
 查询同步信息: [options] oldPath hsyni_file [-diffi#cacheTempFile]
-同步打补丁  : [options] oldPath [-dl#hsyni_file_url] hsyni_file hsynz_file_url outNewPath [-diffi#cacheTempFile] 
+同步打补丁  : [options] oldPath [-dl#hsyni_file_url] hsyni_file hsynz_file_url [-diffi#cacheTempFile] outNewPath
   oldPath可以是文件或文件夹；oldPath可以为空, 输入参数为 ""
 选项:
   -dl#hsyni_file_url
@@ -140,6 +140,9 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
     获得的同步信息保存到一个临时缓存文件cacheTempFile，同步打补丁的时候，就可以跳过同步信息的耗时计算过程;
   -cdl
     开启断点续传；默认关闭;
+  -rdl-retryDownloadNumber
+    设置在下载时网络断开后，自动重连的次数;
+    默认为 -rdl-0 不重连; 推荐 5,1k,1g,...
   -r-stepRangeNumber
     默认 -r-32, 推荐 16,20,...
     从.hsynz下载时,限制在单次请求步骤中的最大区域(range)数;

@@ -1,5 +1,5 @@
 # [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v1.1.2-blue.svg)](https://github.com/sisong/hsynz/releases) 
+[![release](https://img.shields.io/badge/release-v1.1.3-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -119,12 +119,12 @@ options:
 ```
 
 ## **hsync_http** command line usage:  
-```outNewPath
+```
 download   : [options] -dl#hsyni_file_url hsyni_file
 local  diff: [options] oldPath hsyni_file hsynz_file_url -diff#outDiffFile
 local patch: [options] oldPath hsyni_file -patch#diffFile outNewPath
 sync  infos: [options] oldPath hsyni_file [-diffi#cacheTempFile]
-sync  patch: [options] oldPath [-dl#hsyni_file_url] hsyni_file hsynz_file_url [-diffi#cacheTempFile] 
+sync  patch: [options] oldPath [-dl#hsyni_file_url] hsyni_file hsynz_file_url [-diffi#cacheTempFile] outNewPath
   oldPath can be file or directory(folder),
   if oldPath is empty input parameter ""
 options:
@@ -139,6 +139,9 @@ options:
   -cdl
     continue download data from breakpoint;
     DEFAULT continue download mode is closed;
+  -rdl-retryDownloadNumber
+    number of auto retry connection, when network disconnected while downloading;
+    DEFAULT -rdl-0 retry closed; recommended 5,1k,1g,...
   -r-stepRangeNumber
     DEFAULT -r-32, recommended 16,20,...
     limit the maximum number of .hsynz data ranges that can be downloaded

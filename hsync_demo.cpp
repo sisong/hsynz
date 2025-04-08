@@ -152,7 +152,7 @@ static void printUsage(){
            "    DEFAULT continue download mode is closed;\n"
            "  -rdl-retryDownloadNumber\n"
            "    number of auto retry connection, when network disconnected while downloading;\n"
-           "    DEFAULT -rdl-0 retry closed; recommended 5,1g....\n"
+           "    DEFAULT -rdl-0 retry closed; recommended 5,1k,1g,...\n"
            "  -r-stepRangeNumber\n"
            "    DEFAULT -r-32, recommended 16,20,...\n"
            "    limit the maximum number of .hsynz data ranges that can be downloaded \n"
