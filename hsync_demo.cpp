@@ -4,7 +4,7 @@
 //  Created by housisong on 2019-09-18.
 /*
  The MIT License (MIT)
- Copyright (c) 2019-2024 HouSisong
+ Copyright (c) 2019-2025 HouSisong
  
  Permission is hereby granted, free of charge, to any person
  obtaining a copy of this software and associated documentation
@@ -150,6 +150,9 @@ static void printUsage(){
            "  -cdl\n"
            "    continue download data from breakpoint;\n"
            "    DEFAULT continue download mode is closed;\n"
+           "  -rdl-retryDownloadNumber\n"
+           "    number of auto retry connection, when network disconnected while downloading;\n"
+           "    DEFAULT -rdl-0 retry closed; recommended 5,1g....\n"
            "  -r-stepRangeNumber\n"
            "    DEFAULT -r-32, recommended 16,20,...\n"
            "    limit the maximum number of .hsynz data ranges that can be downloaded \n"
@@ -386,6 +389,18 @@ int isSwapToPatchMode(int argc,const char* argv[]){
     return hpatch_FALSE;
 }
 
+#define _RETRY_DOWNLOAD_DO()        \
+                size_t retryDownloadNumber=kRetryDownloadNumber; \
+                do{
+#define _RETRY_DOWNLOAD_WHILE(condition)    \
+                    if ((retryDownloadNumber>0)&&(condition)){  \
+                        LOG_ERR("\ndownload break ERROR! retry again(%" PRIu64 ") ...\n",(hpatch_uint64_t)retryDownloadNumber); \
+                        --retryDownloadNumber;                  \
+                        continue;   \
+                    }else{ break; } \
+                }while (1);
+
+
 //return TSyncClient_resultType
 int sync_client_cmd_line(int argc, const char * argv[]) {
     size_t      threadNum=_THREAD_NUMBER_NULL;
@@ -395,6 +410,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     hpatch_BOOL isOldPathInputEmpty=_kNULL_VALUE;
     hpatch_BOOL isUsedDownloadContinue=_kNULL_VALUE;
     size_t      kStepRangeNumber=_kNULL_SIZE;
+    size_t      kRetryDownloadNumber=_kNULL_SIZE;
     TSyncDiffType diffType=_kNULL_diffType;
     const char* hsyni_file_url=0;
     const char* diff_to_diff_file=0;
@@ -454,9 +470,17 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                 }
             } break;
             case 'r':{
-                const char* pnum=op+3;
-                _options_check((kStepRangeNumber==_kNULL_SIZE)&&(op[2]=='-'),"-r-?");
-                _options_check(kmg_to_size(pnum,strlen(pnum),&kStepRangeNumber),"-r-?");
+                if (strstr(op,"-rdl-")==op){
+                    const char* pnum=op+5;
+                    _options_check((kRetryDownloadNumber==_kNULL_SIZE),"-rdl-?");
+                    _options_check(kmg_to_size(pnum,strlen(pnum),&kRetryDownloadNumber),"-rdl-?");
+                }else if (strstr(op,"-r-")==op){
+                    const char* pnum=op+3;
+                    _options_check((kStepRangeNumber==_kNULL_SIZE),"-r-?");
+                    _options_check(kmg_to_size(pnum,strlen(pnum),&kStepRangeNumber),"-r-?");
+                }else{
+                    _options_check(false,"-r-? or -rdl-?");
+                }
             } break;
             case 'd':{
                 if (strstr(op,"-diff")==op){
@@ -529,6 +553,12 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         kStepRangeNumber=kStepRangeNumber_default;
     else if (kStepRangeNumber<1)
         kStepRangeNumber=1;
+#if (_IS_SYNC_PATCH_DEMO)
+    kRetryDownloadNumber=0;
+#else
+    if (kRetryDownloadNumber==_kNULL_SIZE)
+        kRetryDownloadNumber=0;
+#endif
 #if (_IS_USED_MULTITHREAD)
     if (threadNum==_THREAD_NUMBER_NULL)
         threadNum=_THREAD_NUMBER_DEFUALT;
@@ -619,8 +649,11 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         printf(    "download .hsyni: \""); _log_info_utf8(hsyni_file);
         printf("\"\n       from URL: \""); _log_info_utf8(hsyni_file_url);
         printf("\"\n");
-        int result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file,
-                                           isUsedDownloadContinue!=0);
+        int result;
+        _RETRY_DOWNLOAD_DO();
+        result=downloadNewSyncInfoFile(&downloadPlugin,hsyni_file_url,hsyni_file,
+                                       isUsedDownloadContinue!=0);
+        _RETRY_DOWNLOAD_WHILE(result==kSyncClient_newSyncInfoDownloadError);
         _check3(result==kSyncClient_ok,result,"download from url: \"",hsyni_file_url,"\"");
         double dtime1=clock_s();
         printf(    "  download time: %.3f s\n\n",(dtime1-dtime0));
@@ -677,6 +710,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         _check3(!hpatch_getIsDirName(outNewPath),kSyncClient_pathTypeError,
                 "outNewPath \"",outNewPath,"\" must file, type");
     printf("\n");
+    _RETRY_DOWNLOAD_DO();
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (newIsDir)
         result=hsync_patch_2dir(outNewPath,oldPath,oldIsDir,ignoreOldPathList,
@@ -689,6 +723,9 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                                  hsyni_file,&downloadPlugin,hsynz_file_url,
                                  localDiffFile,diffType,isUsedDownloadContinue,
                                  kStepRangeNumber,kMaxOpenFileNumber,(int)threadNum);
+    _RETRY_DOWNLOAD_WHILE((result==kSyncClient_syncDataDownloadError)
+                        ||(result==kSyncClient_readSyncDataBeginError)
+                        ||(result==kSyncClient_readSyncDataError));
     double time1=clock_s();
     printf("\nsync_patch_%s2%s time: %.3f s\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
     if (result==kSyncClient_ok) printf("run ok.\n"); else printf("\nERROR!\n\n");
