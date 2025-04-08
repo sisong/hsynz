@@ -406,6 +406,9 @@
 		<Unit filename="../../zstd/lib/compress/zstd_compress_superblock.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="../../zstd/lib/compress/zstd_preSplit.c">
+            <Option compilerVar="CC" />
+        </Unit>
 		<Unit filename="../../zstd/lib/compress/zstd_double_fast.c">
 			<Option compilerVar="CC" />
 		</Unit>

@@ -13,6 +13,7 @@
 		0D0A72362B5A790500D6E0D1 /* cpu_features.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72352B5A790500D6E0D1 /* cpu_features.c */; };
 		0D0A72382C0331E600D6E0D1 /* cpu_features.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72372C0331E600D6E0D1 /* cpu_features.c */; };
 		0D0A723A2C03326C00D6E0D1 /* deflate_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72392C03326C00D6E0D1 /* deflate_compress.c */; };
+		0D624D612DA53650002B9861 /* zstd_preSplit.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D624D602DA53650002B9861 /* zstd_preSplit.c */; };
 		0DD689B729EFF67F000EFD20 /* sync_client_private.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DD689A929EFF67F000EFD20 /* sync_client_private.h */; };
 		0DD689B829EFF67F000EFD20 /* sync_info_client.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DD689AA29EFF67F000EFD20 /* sync_info_client.h */; };
 		0DD689B929EFF67F000EFD20 /* dir_sync_client.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DD689AB29EFF67F000EFD20 /* dir_sync_client.h */; };
@@ -114,6 +115,7 @@
 		0D0A72352B5A790500D6E0D1 /* cpu_features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu_features.c; path = ../../libdeflate/lib/x86/cpu_features.c; sourceTree = "<group>"; };
 		0D0A72372C0331E600D6E0D1 /* cpu_features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu_features.c; path = ../../libdeflate/lib/arm/cpu_features.c; sourceTree = "<group>"; };
 		0D0A72392C03326C00D6E0D1 /* deflate_compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = deflate_compress.c; path = ../../libdeflate/lib/deflate_compress.c; sourceTree = "<group>"; };
+		0D624D602DA53650002B9861 /* zstd_preSplit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zstd_preSplit.c; sourceTree = "<group>"; };
 		0DD689A929EFF67F000EFD20 /* sync_client_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync_client_private.h; sourceTree = "<group>"; };
 		0DD689AA29EFF67F000EFD20 /* sync_info_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync_info_client.h; sourceTree = "<group>"; };
 		0DD689AB29EFF67F000EFD20 /* dir_sync_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dir_sync_client.h; sourceTree = "<group>"; };
@@ -330,6 +332,7 @@
 		0DD68AD829EFF983000EFD20 /* compress */ = {
 			isa = PBXGroup;
 			children = (
+				0D624D602DA53650002B9861 /* zstd_preSplit.c */,
 				0DD68AD929EFF983000EFD20 /* zstd_compress_internal.h */,
 				0DD68ADA29EFF983000EFD20 /* hist.h */,
 				0DD68ADB29EFF983000EFD20 /* zstd_ldm.h */,
@@ -536,6 +539,7 @@
 				0DD68B1A29EFF983000EFD20 /* zstd_double_fast.c in Sources */,
 				0DD689D429EFF735000EFD20 /* trees.c in Sources */,
 				0DD68B0229EFF983000EFD20 /* pool.c in Sources */,
+				0D624D612DA53650002B9861 /* zstd_preSplit.c in Sources */,
 				0DD68B2929EFF983000EFD20 /* huf_compress.c in Sources */,
 				0DD68B2129EFF983000EFD20 /* zstd_ldm.c in Sources */,
 				0DD68AFA29EFF983000EFD20 /* entropy_common.c in Sources */,
