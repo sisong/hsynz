@@ -7,6 +7,7 @@ ZSTD     := 1
 HTTPS    := 1
 
 STATIC_CPP := 0
+STATIC_C := 0
 # used clang?
 CL  	 := 0
 # build with -m32?
@@ -231,6 +232,10 @@ endif
 ifeq ($(CL),1)
   CXX := clang++
   CC  := clang
+endif
+ifeq ($(STATIC_C),0)
+else
+  DIFF_LINK += -static
 endif
 ifeq ($(STATIC_CPP),0)
   DIFF_LINK += -lstdc++
