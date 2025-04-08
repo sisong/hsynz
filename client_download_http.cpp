@@ -64,20 +64,20 @@ static bool doInitNetwork(){
 
 static const size_t kBestBufSize = hpatch_kFileIOBestMaxSize>>4;
 static const size_t kBestRangesCacheSize=hpatch_kFileIOBestMaxSize;
-static const int    kTimeout_s=10;
+static const int    kKeepAliveTimeout_s=10;
 static const hpatch_StreamPos_t kEmptyEndPos=kNullRangePos;
 static const char*  kHttpUserAgent="hsynz/" HSYNC_VERSION_STRING;
 
 struct THttpDownload:public HttpSocket{
     explicit THttpDownload(const hpatch_TStreamOutput* out_stream=0,hpatch_StreamPos_t curOutPos=0)
-    :requestSumSize(0),requestCount(0),is_write_error(false),
+    :requestSumSize(0),requestCount(0),is_write_error(false),is_read_error(false),
      _out_stream(out_stream),_cur_pos(curOutPos){
         if (!doInitNetwork()){ throw std::runtime_error("InitNetwork error!"); }
         this->SetBufsizeIn(kBestBufSize);
         this->SetNonBlocking(false);
         this->SetFollowRedirect(true);
         this->SetAlwaysHandle(false);
-        this->SetKeepAlive(kTimeout_s);
+        this->SetKeepAlive(kKeepAliveTimeout_s);
         this->SetUserAgent(kHttpUserAgent);
     }
 
@@ -85,7 +85,8 @@ struct THttpDownload:public HttpSocket{
         return IsSuccess() && (requestCount==0) && (!is_write_error)
                &&((requestSumSize==0)||(requestSumSize==kEmptyEndPos)); }
     inline bool isNeedUpdate(){
-        return (isOpen() || HasPendingTask())&&(!is_write_error)&&(requestCount>0);
+        return (isOpen() || HasPendingTask())
+               &&(!is_write_error)&&(!is_read_error)&&(requestCount>0);
     }
     bool doDownload(const std::string& file_url){
         const hpatch_StreamPos_t requestSumSize_back=requestSumSize;
@@ -125,6 +126,7 @@ protected:
     volatile hpatch_StreamPos_t requestSumSize;
     volatile size_t requestCount;
     volatile bool   is_write_error;
+    volatile bool   is_read_error;
     
     const hpatch_TStreamOutput* _out_stream;
     hpatch_StreamPos_t          _cur_pos;
@@ -133,6 +135,9 @@ protected:
         if (requestCount<1)
             is_write_error=true;
         --requestCount;
+    }
+    virtual void _OnReadError(){
+        is_read_error=true;
     }
     inline void _OnRecvSize(unsigned size){
         if (requestSumSize!=kEmptyEndPos){
