@@ -147,9 +147,9 @@ static void printUsage(){
            "    saving diffInfo to cache file for optimize speed when continue sync patch;\n"
            "  -patch#diffFile\n"
            "    local patch(oldPath+diffFile) to outNewPath;\n"
-           "  -cdl\n"
+           "  -cdl-{0|1}        or  -cdl-{off|on}\n"
            "    continue download data from breakpoint;\n"
-           "    DEFAULT continue download mode is closed;\n"
+           "    DEFAULT -cdl-1 opened, need set -cdl-0 or -cdl-off to close continue mode;\n"
            "  -rdl-retryDownloadNumber\n"
            "    number of auto retry connection, when network disconnected while downloading;\n"
            "    DEFAULT -rdl-0 retry closed; recommended 5,1k,1g,...\n"
@@ -459,10 +459,12 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                 }
             } break;
             case 'c':{
-                if ((strcmp(op,"-cdl")==0)||(strcmp(op,"-cdl-on")==0)||(strcmp(op,"-cdl-opened")==0)){
+                if ((strcmp(op,"-cdl")==0)||(strcmp(op,"-cdl-1")==0)||(strcmp(op,"-cdl-on")==0)
+                  ||(strcmp(op,"-cdl-open")==0)||(strcmp(op,"-cdl-opened")==0)){
                     _options_check(isUsedDownloadContinue==_kNULL_VALUE,"-cdl?");
                     isUsedDownloadContinue=hpatch_TRUE;
-                }else if ((strcmp(op,"-cdl-off")==0)||(strcmp(op,"-cdl-closed")==0)){
+                }else if ((strcmp(op,"-cdl-0")==0)||(strcmp(op,"-cdl-off")==0)
+                  ||(strcmp(op,"-cdl-close")==0)||(strcmp(op,"-cdl-closed")==0)){
                     _options_check(isUsedDownloadContinue==_kNULL_VALUE,"-cdl?");
                     isUsedDownloadContinue=hpatch_FALSE;
                 }else{
@@ -577,7 +579,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     if (isOldPathInputEmpty==_kNULL_VALUE)
         isOldPathInputEmpty=hpatch_FALSE;
     if (isUsedDownloadContinue==_kNULL_VALUE)
-        isUsedDownloadContinue=hpatch_FALSE;
+        isUsedDownloadContinue=hpatch_TRUE;
 
     if (diffType==_kNULL_diffType)
         diffType=kSyncDiff_default;

@@ -136,9 +136,9 @@ options:
     saving diffInfo to cache file for optimize speed when continue sync patch;
   -patch#diffFile
     local patch(oldPath+diffFile) to outNewPath;
-  -cdl
+  -cdl-{0|1}        or  -cdl-{off|on}
     continue download data from breakpoint;
-    DEFAULT continue download mode is closed;
+    DEFAULT -cdl-1 opened, need set -cdl-0 or -cdl-off to close continue mode;
   -rdl-retryDownloadNumber
     number of auto retry connection, when network disconnected while downloading;
     DEFAULT -rdl-0 retry closed; recommended 5,1k,1g,...

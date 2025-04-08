@@ -138,8 +138,9 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
     对oldPath应用diffFile补丁文件后得到outNewPath;
   -diffi#cacheTempFile
     获得的同步信息保存到一个临时缓存文件cacheTempFile，同步打补丁的时候，就可以跳过同步信息的耗时计算过程;
-  -cdl
-    开启断点续传；默认关闭;
+  -cdl-{0|1}        或  -cdl-{off|on}
+    是否开启断点续传;
+    默认 -cdl-1 开启, 需要设置 -cdl-0 或 -cdl-off 来关闭续传模式;
   -rdl-retryDownloadNumber
     设置在下载时网络断开后，自动重连的次数;
     默认为 -rdl-0 不重连; 推荐 5,1k,1g,...
