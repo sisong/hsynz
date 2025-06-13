@@ -40,7 +40,6 @@
     </TargetFrameworkVersion>
     <Keyword>ManagedCProj</Keyword>
     <RootNamespace>hsync_demo</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

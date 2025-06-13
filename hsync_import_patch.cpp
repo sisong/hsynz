@@ -1,4 +1,4 @@
-//hsync_import_patch.c
+//hsync_import_patch.cpp
 // import hsync_make cmd line to hsync_demo
 //  Created by housisong on 2022-12-08.
 /*

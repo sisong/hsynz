@@ -1,5 +1,5 @@
 //  hsync_make.cpp
-//  hsync_make:  create sync files
+//  hsync_make: create newData's .hsyni file
 //      like zsync : http://zsync.moria.org.uk/
 //  Created by housisong on 2019-09-17.
 /*
@@ -609,7 +609,7 @@ int sync_make_cmd_line(int argc, const char * argv[]){
         printf("NOTE: out_hsynz_file's data is same as newDataPath file!\n\n");
     
     if (makeSets.threadNum>1)
-        printf("muti-thread parallel: opened, threadNum: %d\n",(uint32_t)makeSets.threadNum);
+        printf("multi-thread parallel: opened, threadNum: %d\n",(uint32_t)makeSets.threadNum);
 
     printf("create%s_sync_data run with strongChecksum plugin: \"%s\"\n",
            isUseDirSyncUpdate?"_dir":"",strongChecksumPlugin->checksumType());

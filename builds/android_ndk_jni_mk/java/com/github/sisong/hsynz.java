@@ -41,7 +41,7 @@ public class hsynz{
             //if (dstRangeBeginIndex>=dstRangeEndIndex) return 0;
             return nativeGetNextRanges(cNeedRangesHandle,dstRanges,dstRangeBeginIndex,dstRangeEndIndex-dstRangeBeginIndex);
         }
-        //same as getNextRanges(), but muti-thread safe
+        //same as getNextRanges(), but multi-thread safe
         public final int getNextRanges_MTSafe(long[] dstRanges){
             synchronized(this){
                 return getNextRanges(dstRanges);

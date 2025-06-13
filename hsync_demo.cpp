@@ -157,7 +157,7 @@ static void printUsage(){
            "    DEFAULT -r-32, recommended 16,20,...\n"
            "    limit the maximum number of .hsynz data ranges that can be downloaded \n"
            "    in a single request step; \n"
-           "    if http(s) server not support muti-ranges request, must set -r-1\n"
+           "    if http(s) server not support multi-ranges request, must set -r-1\n"
 #if (_IS_USED_MULTITHREAD)
            "  -p-parallelThreadNumber\n"
            "    DEFAULT -p-4; \n"
@@ -593,7 +593,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
             return kSyncClient_ok; //ok
     }
     if (threadNum>1)
-        printf("muti-thread parallel: opened, threadNum: %d\n",(int)threadNum);
+        printf("multi-thread parallel: opened, threadNum: %d\n",(int)threadNum);
     printf("continue download: %s\n",isUsedDownloadContinue?"opened":"closed");
 
     _options_check((hsyni_file_url?1:0)+(patch_by_diff_file?1:0)<=1

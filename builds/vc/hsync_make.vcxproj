@@ -39,7 +39,6 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{17df6980-e3db-4137-bb3f-6b745f2d5c33}</ProjectGuid>
     <RootNamespace>hsyncmake</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

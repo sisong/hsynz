@@ -147,7 +147,7 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
   -r-stepRangeNumber
     默认 -r-32, 推荐 16,20,...
     从.hsynz下载时,限制在单次请求步骤中的最大区域(range)数;
-    如果http(s)服务器不支持多区域(muti-ranges)请求, 必须设置为 -r-1
+    如果http(s)服务器不支持多区域(multi-ranges)请求, 必须设置为 -r-1
   -p-parallelThreadNumber
     设置线程数parallelThreadNumber>1时,开启多线程并行模式;
     默认为4;

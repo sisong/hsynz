@@ -9,7 +9,7 @@
  english | [中文版](README_cn.md)   
 
 hsynz is a library for delta update using sync algorithm, like [zsync](http://zsync.moria.org.uk).   
-rsync over http(s); implement the sync algorithm on client side, and server side only need http(s) cdn. support compressor zstd & libdeflate & zlib, support large file & directory(folder), support muti-thread.   
+rsync over http(s); implement the sync algorithm on client side, and server side only need http(s) cdn. support compressor zstd & libdeflate & zlib, support large file & directory(folder), support multi-thread.   
    
 
 Recommended scenarios: Very large number of older versions or where older versions are not available (not saved or modified, etc.) so that all deltas cannot be calculated in advance.   
@@ -22,7 +22,7 @@ The client first downloads the hsyni file from the server or another user's shar
    
 
 hsync_demo provides a test client demo for local file testing.   
-hsync_http provides a download client demo with http(s) support for sync update from a server that provides an http(s) file download service(e.g CDN, support HTTP/1.1 muti range Requests).   
+hsync_http provides a download client demo with http(s) support for sync update from a server that provides an http(s) file download service(e.g CDN, support HTTP/1.1 multi range Requests).   
 Tip: You can also customise other communication methods for sync.   
     
 ---
@@ -146,7 +146,7 @@ options:
     DEFAULT -r-32, recommended 16,20,...
     limit the maximum number of .hsynz data ranges that can be downloaded
     in a single request step;
-    if http(s) server not support muti-ranges request, must set -r-1
+    if http(s) server not support multi-ranges request, must set -r-1
   -p-parallelThreadNumber
     DEFAULT -p-4;
     if parallelThreadNumber>1 then open multi-thread Parallel mode;
