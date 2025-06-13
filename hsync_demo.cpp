@@ -282,7 +282,7 @@ static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,
         printf("  hsync patch can't decompress type: \"%s\"\n",compressType);
         return 0; //unsupport error
     }else{
-        printf("  hsync patch run with decompress plugin: \"%s\"\n",compressType);
+        printf("  hsync patch run with decompress type: \"%s\"\n",compressType);
         return decompressPlugin; //ok
     }
 }
