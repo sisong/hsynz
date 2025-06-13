@@ -113,6 +113,8 @@ struct THttpDownload:public HttpSocket{
             return false;
         while(isNeedUpdate()){
             if (!update()){
+                if (!isOpen())
+                    return false;
 #if (_IS_USED_MULTITHREAD)
                 this_thread_yield();
 #else
@@ -236,6 +238,8 @@ protected:
 
             while(isNeedUpdate()&&(_emptySize()>GetBufSize())){
                 if (!update()){
+                    if (!isOpen())
+                        return hpatch_FALSE;
     #if (_IS_USED_MULTITHREAD)
                     this_thread_yield();
     #else
