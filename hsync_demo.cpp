@@ -279,10 +279,10 @@ static hsync_TDictDecompress* _findDecompressPlugin(ISyncInfoListener* listener,
     }
 #endif
     if (decompressPlugin==0){
-        printf("  sync_patch can't decompress type: \"%s\"\n",compressType);
+        printf("  hsync patch can't decompress type: \"%s\"\n",compressType);
         return 0; //unsupport error
     }else{
-        printf("  sync_patch run with decompress plugin: \"%s\"\n",compressType);
+        printf("  hsync patch run with decompress plugin: \"%s\"\n",compressType);
         return decompressPlugin; //ok
     }
 }
@@ -311,10 +311,10 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
         strongChecksumPlugin=&crc32ChecksumPlugin;
 #endif
     if (strongChecksumPlugin==0){
-        printf("  sync_patch can't found checksum type: \"%s\"\n",strongChecksumType);
+        printf("  hsync patch can't found checksum type: \"%s\"\n",strongChecksumType);
         return 0; //unsupport error
     }else{
-        printf("  sync_patch run with strongChecksum plugin: \"%s\"\n",strongChecksumType);
+        printf("  hsync patch run with strongChecksum plugin: \"%s\"\n",strongChecksumType);
         return strongChecksumPlugin; //ok
     }
 }
@@ -729,7 +729,7 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                         ||(result==kSyncClient_readSyncDataBeginError)
                         ||(result==kSyncClient_readSyncDataError));
     double time1=clock_s();
-    printf("\nsync_patch_%s2%s time: %.3f s\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
+    printf("\nhsync patch %s2%s time: %.3f s\n",oldIsDir?"dir":"file",newIsDir?"dir":"file",(time1-time0));
     if (result==kSyncClient_ok) printf("run ok.\n"); else printf("\nERROR!\n\n");
     return result;
 }

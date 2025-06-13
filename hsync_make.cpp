@@ -631,10 +631,10 @@ int sync_make_cmd_line(int argc, const char * argv[]){
     double time1=clock_s();
     if (result==SYNC_MAKE_SUCCESS){
         _return_check(printFileInfo(out_hsyni_file,"out .hsyni"),
-                      SYNC_MAKE_OUTFILE_ERROR,"run printFileInfo(%s,)",out_hsyni_file);
+                      SYNC_MAKE_OUTFILE_ERROR,"run printFileInfo(\"%s\")",out_hsyni_file);
         if (out_hsynz_file){
             _return_check(printFileInfo(out_hsynz_file,"out .hsynz"),
-                          SYNC_MAKE_OUTFILE_ERROR,"run printFileInfo(%s,)",out_hsynz_file);
+                          SYNC_MAKE_OUTFILE_ERROR,"run printFileInfo(\"%s\")",out_hsynz_file);
         }
     }
     printf("\ncreate%s_sync_data time: %.3f s\n",isUseDirSyncUpdate?"_dir":"",(time1-time0));
@@ -679,7 +679,7 @@ int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_fil
                                const THSyncMakeSets& makeSets){
     hpatch_StreamPos_t newDataSize=0;
     _return_check(printFileInfo(newDataFile,"\nin new file",&newDataSize),
-                  SYNC_MAKE_NEWPATH_ERROR,"run printFileInfo(%s,)",newDataFile);
+                  SYNC_MAKE_NEWPATH_ERROR,"run printFileInfo(\"%s\")",newDataFile);
     bool isSafeHashClash=getStrongForHashClash(makeSets.kSafeHashClashBit,newDataSize,(uint32_t)makeSets.kSyncBlockSize,
                                                strongChecksumPlugin->checksumByteSize()*8);
     _return_check2(isSafeHashClash,SYNC_MAKE_BLOCKSIZE_OR_SAFE_BITS_ERROR,
