@@ -85,23 +85,23 @@ static void printVersion(){
 static void printUsage(){
     printVersion();
     printf("hsign_diff: [options] old_hsyni_file newFile outDiffFile\n"
-           "  create outDiffFile compatible with hpatchz;\n"
-           "  NOTE: must use $hpatchz when patching, old must a file & not compressed .hsynz file.\n"
+           "  create outDiffFile compatible with hpatchz; .hsyni file create by $hsync_make; \n"
+           "  NOTE: outDiffFile patching by $hpatchz, old must a file & not compressed .hsynz file.\n"
            "options:\n"
            "  -c-compressType[-compressLevel]\n"
            "      set outDiffFile Compress type & level, DEFAULT uncompress;\n"
            "      support compress type & level:\n"
 #ifdef _CompressPlugin_zlib
-           "        -c-zlib[-{1..9}]                DEFAULT level 6\n"
+           "        -c-zlib[-{1..9}]                DEFAULT level 9\n"
 #endif
 #ifdef _CompressPlugin_ldef
-           "        -c-ldef[-{1..12}]               DEFAULT level 9\n"
+           "        -c-ldef[-{1..12}]               DEFAULT level 12\n"
            "            compress by libdeflate, compatible with -c-zlib, \n"
            "            faster or better compress than zlib;\n"
 #else
 #endif
 #ifdef _CompressPlugin_zstd
-           "        -c-zstd[-{0..22}[-dictBits]]    DEFAULT level 15\n"
+           "        -c-zstd[-{0..22}[-dictBits]]    DEFAULT level 20\n"
            "            dictBits can 15--30, DEFAULT 25.\n"
 #endif
            "  -SD[-stepSize]\n"
@@ -225,7 +225,7 @@ static int _checkSetCompress(hdiff_TCompress** out_compressPlugin,
 #endif
 #ifdef _CompressPlugin_zlib
     __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zlib","pzlib",
-                                        &compressLevel,1,9,6, &dictBits,9,15,defaultDictBits_zlib),"-c-zlib-?"){
+                                        &compressLevel,1,9,9, &dictBits,9,15,defaultDictBits_zlib),"-c-zlib-?"){
 #   if (!_IS_USED_MULTITHREAD)
         static TCompressPlugin_zlib _zlibCompressPlugin=zlibCompressPlugin;
         _zlibCompressPlugin.compress_level=(int)compressLevel;
@@ -240,7 +240,7 @@ static int _checkSetCompress(hdiff_TCompress** out_compressPlugin,
 #endif
 #ifdef _CompressPlugin_ldef
     __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"ldef","pldef",
-                                        &compressLevel,1,12,9, &dictBits,15,15,defaultDictBits_zlib),"-c-ldef-?"){
+                                        &compressLevel,1,12,12, &dictBits,15,15,defaultDictBits_zlib),"-c-ldef-?"){
 #   if (!_IS_USED_MULTITHREAD)
         static TCompressPlugin_ldef _ldefCompressPlugin=ldefCompressPlugin;
         _ldefCompressPlugin.compress_level=(int)compressLevel;
@@ -253,7 +253,7 @@ static int _checkSetCompress(hdiff_TCompress** out_compressPlugin,
 #endif
 #ifdef _CompressPlugin_zstd
     __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zstd",0,
-                                        &compressLevel,0,22,15, &dictBits,10,
+                                        &compressLevel,0,22,20, &dictBits,10,
                                         _ZSTD_WINDOWLOG_MAX,defaultDictBits),"-c-zstd-?"){
         static TCompressPlugin_zstd _zstdCompressPlugin=zstdCompressPlugin;
         _zstdCompressPlugin.compress_level=(int)compressLevel;

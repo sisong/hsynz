@@ -37,6 +37,20 @@ else
     HDiffPatch/libParallel/parallel_channel.o
 endif
 
+HSD_OBJ := \
+    HDiffPatch/compress_parallel.o \
+    HDiffPatch/libHDiffPatch/HPatchLite/hpatch_lite.o \
+    HDiffPatch/libHDiffPatch/HDiff/diff.o \
+    HDiffPatch/libHDiffPatch/HDiff/private_diff/limit_mem_diff/digest_matcher.o \
+    HDiffPatch/libHDiffPatch/HDiff/private_diff/limit_mem_diff/stream_serialize.o \
+    HDiffPatch/libHDiffPatch/HDiff/private_diff/libdivsufsort/divsufsort.o \
+    HDiffPatch/libHDiffPatch/HDiff/private_diff/libdivsufsort/divsufsort64.o \
+    HDiffPatch/libHDiffPatch/HDiff/private_diff/bytes_rle.o \
+    HDiffPatch/libHDiffPatch/HDiff/private_diff/compress_detect.o \
+    HDiffPatch/libHDiffPatch/HDiff/private_diff/suffix_string.o \
+    HDiffPatch/libhsync/sign_diff/_match_in_old_sign.o \
+    HDiffPatch/libhsync/sign_diff/sign_diff.o
+
 CLIENT_OBJ := \
     HDiffPatch/libhsync/sync_client/sync_client.o \
     HDiffPatch/libhsync/sync_client/sync_info_client.o \
@@ -246,10 +260,10 @@ endif
 
 .PHONY: all clean
 
-all: libhsync.a hsync_demo hsync_make hsync_http
+all: libhsync.a hsync_demo hsync_make hsync_http hsign_diff
 
 
-libhsync.a: $(MAKE_OBJ) $(HTTP_OBJ) 
+libhsync.a: $(MAKE_OBJ) $(HTTP_OBJ) $(HSD_OBJ)
 	$(AR) rcs $@ $^
 
 hsync_demo: libhsync.a
@@ -261,10 +275,13 @@ hsync_make: libhsync.a
 hsync_http: libhsync.a
 	$(CXX)	hsync_http.cpp client_download_http.cpp \
 		$(CLIENT_OBJ) $(HTTP_OBJ) $(CXXFLAGS) $(DIFF_LINK) -o hsync_http
+hsign_diff: libhsync.a
+	$(CXX)	hsign_diff.cpp \
+		$(HSD_OBJ) $(MAKE_OBJ) $(CXXFLAGS) $(DIFF_LINK) -o hsign_diff
 
 
 RM := rm -f
 clean:
-	$(RM)	libhsync.a hsync_make hsync_demo hsync_http \
+	$(RM)	libhsync.a hsync_make hsync_demo hsync_http hsign_diff \
 		client_download_demo.o hsync_import_patch.o client_download_http.o \
-		$(MAKE_OBJ) $(HTTP_OBJ)
+		$(MAKE_OBJ) $(HTTP_OBJ) $(HSD_OBJ)
