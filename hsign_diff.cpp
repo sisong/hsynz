@@ -1,6 +1,7 @@
 //  hsign_diff.cpp
 //  hsign_diff: create diffFile between oldData & newData, only used oldData's hsyni_file & newData, not need oldData;
 //              hsyni_file is hash signature file created by hsync_make cmdline for oldData;
+//              NOTE: apply diffFile used hpatchz cmdline, newData=hpatchz(oldData,diffFile);
 //  Created by housisong on 2025-04-10.
 /*
  The MIT License (MIT)
