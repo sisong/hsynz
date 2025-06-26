@@ -4,6 +4,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := hsynz
 
 MT    := 1
+ATOMIC:= 1
 ZSTD  := 1
 LDEF  := 1
 MD5   := 0
@@ -89,6 +90,11 @@ ifeq ($(MT),0)
   LOCAL_CFLAGS   += -D_IS_USED_MULTITHREAD=0
 else
   LOCAL_CFLAGS   += -D_IS_USED_MULTITHREAD=1 -D_IS_USED_PTHREAD=1
+endif
+ifeq ($(ATOMIC),0)
+  LOCAL_CFLAGS   += -D_IS_USED_CPP_ATOMIC=0
+else
+  LOCAL_CFLAGS   += -D_IS_USED_CPP_ATOMIC=1
 endif
 ifeq ($(LDEF),0)
 	LOCAL_CFLAGS     += -D_CompressPlugin_zlib
