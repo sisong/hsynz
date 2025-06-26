@@ -22,6 +22,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libHttps", "libHttps.vcxpro
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libdeflate", "libdeflate.vcxproj", "{4FFA1879-E1A6-4B99-B9D1-3265F48DAE0D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hsign_diff", "hsign_diff.vcxproj", "{53888831-0CA5-4B9C-81AA-BCE9FA973B53}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -128,6 +130,18 @@ Global
 		{4FFA1879-E1A6-4B99-B9D1-3265F48DAE0D}.Release|x64.Build.0 = Release|x64
 		{4FFA1879-E1A6-4B99-B9D1-3265F48DAE0D}.Release|x86.ActiveCfg = Release|Win32
 		{4FFA1879-E1A6-4B99-B9D1-3265F48DAE0D}.Release|x86.Build.0 = Release|Win32
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Debug|ARM64.Build.0 = Debug|ARM64
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Debug|x64.ActiveCfg = Debug|x64
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Debug|x64.Build.0 = Debug|x64
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Debug|x86.ActiveCfg = Debug|Win32
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Debug|x86.Build.0 = Debug|Win32
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Release|ARM64.ActiveCfg = Release|ARM64
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Release|ARM64.Build.0 = Release|ARM64
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Release|x64.ActiveCfg = Release|x64
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Release|x64.Build.0 = Release|x64
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Release|x86.ActiveCfg = Release|Win32
+		{53888831-0CA5-4B9C-81AA-BCE9FA973B53}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
