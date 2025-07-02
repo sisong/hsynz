@@ -242,6 +242,8 @@
     <ClCompile Include="..\..\HDiffPatch\libhsync\sync_client\sync_client.cpp" />
     <ClCompile Include="..\..\HDiffPatch\libhsync\sync_client\sync_diff_data.cpp" />
     <ClCompile Include="..\..\HDiffPatch\libhsync\sync_client\sync_info_client.cpp" />
+    <ClCompile Include="..\..\HDiffPatch\libhsync\zsync_client_wrapper\zsync_client_wrapper.cpp" />
+    <ClCompile Include="..\..\HDiffPatch\libhsync\zsync_client_wrapper\zsync_info_client.cpp" />
     <ClCompile Include="..\..\HDiffPatch\libParallel\parallel_channel.cpp" />
     <ClCompile Include="..\..\HDiffPatch\libParallel\parallel_import.cpp" />
   </ItemGroup>

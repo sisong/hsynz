@@ -507,7 +507,7 @@ int hsign_diff_by_file(const char* old_hsyni_file,const char* newFileName,const 
     TOldDataSyncInfo         oldSyncInfo;
     hpatch_TFileStreamInput  newData;
     hpatch_TFileStreamOutput diffData_out;
-    sync_private::TNewDataSyncInfo_init(&oldSyncInfo);
+    TNewDataSyncInfo_init(&oldSyncInfo);
     hpatch_TFileStreamInput_init(&newData);
     hpatch_TFileStreamOutput_init(&diffData_out);
     
