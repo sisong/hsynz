@@ -14,6 +14,14 @@
 		0D0A72382C0331E600D6E0D1 /* cpu_features.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72372C0331E600D6E0D1 /* cpu_features.c */; };
 		0D0A723A2C03326C00D6E0D1 /* deflate_compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D0A72392C03326C00D6E0D1 /* deflate_compress.c */; };
 		0D624D612DA53650002B9861 /* zstd_preSplit.c in Sources */ = {isa = PBXBuildFile; fileRef = 0D624D602DA53650002B9861 /* zstd_preSplit.c */; };
+		0DA686242E20F281002A6651 /* zsync_client_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA6861C2E20F281002A6651 /* zsync_client_wrapper.cpp */; };
+		0DA686252E20F281002A6651 /* zsync_client_type_private.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DA6861D2E20F281002A6651 /* zsync_client_type_private.h */; };
+		0DA686262E20F281002A6651 /* zsync_info_client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA6861E2E20F281002A6651 /* zsync_info_client.cpp */; };
+		0DA686272E20F281002A6651 /* zsync_match_in_old.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA6861F2E20F281002A6651 /* zsync_match_in_old.cpp */; };
+		0DA686282E20F281002A6651 /* zsync_match_in_old.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DA686202E20F281002A6651 /* zsync_match_in_old.h */; };
+		0DA686292E20F281002A6651 /* zsync_client_wrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DA686212E20F281002A6651 /* zsync_client_wrapper.h */; };
+		0DA6862A2E20F281002A6651 /* zsync_client_type.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DA686222E20F281002A6651 /* zsync_client_type.h */; };
+		0DA6862B2E20F281002A6651 /* zsync_info_client.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DA686232E20F281002A6651 /* zsync_info_client.h */; };
 		0DD689B729EFF67F000EFD20 /* sync_client_private.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DD689A929EFF67F000EFD20 /* sync_client_private.h */; };
 		0DD689B829EFF67F000EFD20 /* sync_info_client.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DD689AA29EFF67F000EFD20 /* sync_info_client.h */; };
 		0DD689B929EFF67F000EFD20 /* dir_sync_client.h in Headers */ = {isa = PBXBuildFile; fileRef = 0DD689AB29EFF67F000EFD20 /* dir_sync_client.h */; };
@@ -116,6 +124,14 @@
 		0D0A72372C0331E600D6E0D1 /* cpu_features.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cpu_features.c; path = ../../libdeflate/lib/arm/cpu_features.c; sourceTree = "<group>"; };
 		0D0A72392C03326C00D6E0D1 /* deflate_compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = deflate_compress.c; path = ../../libdeflate/lib/deflate_compress.c; sourceTree = "<group>"; };
 		0D624D602DA53650002B9861 /* zstd_preSplit.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zstd_preSplit.c; sourceTree = "<group>"; };
+		0DA6861C2E20F281002A6651 /* zsync_client_wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zsync_client_wrapper.cpp; sourceTree = "<group>"; };
+		0DA6861D2E20F281002A6651 /* zsync_client_type_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zsync_client_type_private.h; sourceTree = "<group>"; };
+		0DA6861E2E20F281002A6651 /* zsync_info_client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zsync_info_client.cpp; sourceTree = "<group>"; };
+		0DA6861F2E20F281002A6651 /* zsync_match_in_old.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = zsync_match_in_old.cpp; sourceTree = "<group>"; };
+		0DA686202E20F281002A6651 /* zsync_match_in_old.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zsync_match_in_old.h; sourceTree = "<group>"; };
+		0DA686212E20F281002A6651 /* zsync_client_wrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zsync_client_wrapper.h; sourceTree = "<group>"; };
+		0DA686222E20F281002A6651 /* zsync_client_type.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zsync_client_type.h; sourceTree = "<group>"; };
+		0DA686232E20F281002A6651 /* zsync_info_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zsync_info_client.h; sourceTree = "<group>"; };
 		0DD689A929EFF67F000EFD20 /* sync_client_private.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync_client_private.h; sourceTree = "<group>"; };
 		0DD689AA29EFF67F000EFD20 /* sync_info_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = sync_info_client.h; sourceTree = "<group>"; };
 		0DD689AB29EFF67F000EFD20 /* dir_sync_client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = dir_sync_client.h; sourceTree = "<group>"; };
@@ -233,6 +249,22 @@
 				0D0A722F2B5A780F00D6E0D1 /* utils.c */,
 			);
 			name = libdeflate;
+			sourceTree = "<group>";
+		};
+		0DA6861B2E20F281002A6651 /* zsync_client_wrapper */ = {
+			isa = PBXGroup;
+			children = (
+				0DA6861C2E20F281002A6651 /* zsync_client_wrapper.cpp */,
+				0DA6861D2E20F281002A6651 /* zsync_client_type_private.h */,
+				0DA6861E2E20F281002A6651 /* zsync_info_client.cpp */,
+				0DA6861F2E20F281002A6651 /* zsync_match_in_old.cpp */,
+				0DA686202E20F281002A6651 /* zsync_match_in_old.h */,
+				0DA686212E20F281002A6651 /* zsync_client_wrapper.h */,
+				0DA686222E20F281002A6651 /* zsync_client_type.h */,
+				0DA686232E20F281002A6651 /* zsync_info_client.h */,
+			);
+			name = zsync_client_wrapper;
+			path = ../../HDiffPatch/libhsync/zsync_client_wrapper;
 			sourceTree = "<group>";
 		};
 		0DD689A829EFF67F000EFD20 /* sync_client */ = {
@@ -388,6 +420,7 @@
 			isa = PBXGroup;
 			children = (
 				0DD689A829EFF67F000EFD20 /* sync_client */,
+				0DA6861B2E20F281002A6651 /* zsync_client_wrapper */,
 				D60DBC67241C739500C5EE19 /* adler_roll.c */,
 				D60DBC69241C739500C5EE19 /* file_for_patch.c */,
 				D60DBC68241C739500C5EE19 /* patch.c */,
@@ -455,17 +488,22 @@
 				0DD68B0029EFF983000EFD20 /* bitstream.h in Headers */,
 				0DD68B0829EFF983000EFD20 /* fse.h in Headers */,
 				0DD689B729EFF67F000EFD20 /* sync_client_private.h in Headers */,
+				0DA686282E20F281002A6651 /* zsync_match_in_old.h in Headers */,
 				0DD68B0129EFF983000EFD20 /* cpu.h in Headers */,
 				0DD68B2429EFF983000EFD20 /* zstd_double_fast.h in Headers */,
+				0DA6862B2E20F281002A6651 /* zsync_info_client.h in Headers */,
 				0DD68AF429EFF983000EFD20 /* zstd_trace.h in Headers */,
 				0DD68B1C29EFF983000EFD20 /* zstd_opt.h in Headers */,
 				0DD68B2D29EFF983000EFD20 /* zstd_fast.h in Headers */,
 				0DD689BD29EFF67F000EFD20 /* sync_client.h in Headers */,
 				0DD689BF29EFF67F000EFD20 /* match_in_old.h in Headers */,
+				0DA686252E20F281002A6651 /* zsync_client_type_private.h in Headers */,
+				0DA686292E20F281002A6651 /* zsync_client_wrapper.h in Headers */,
 				0DD68AF529EFF983000EFD20 /* xxhash.h in Headers */,
 				0DD68B1429EFF983000EFD20 /* hist.h in Headers */,
 				0DD68B1F29EFF983000EFD20 /* clevels.h in Headers */,
 				0DD689B929EFF67F000EFD20 /* dir_sync_client.h in Headers */,
+				0DA6862A2E20F281002A6651 /* zsync_client_type.h in Headers */,
 				0DD689BE29EFF67F000EFD20 /* sync_diff_data.h in Headers */,
 				0DD68B0E29EFF983000EFD20 /* zstd_decompress_internal.h in Headers */,
 			);
@@ -557,18 +595,21 @@
 				D60DBC61241C728C00C5EE19 /* dir_manifest.cpp in Sources */,
 				0DD68B0F29EFF983000EFD20 /* zstd_decompress.c in Sources */,
 				0DD68B2329EFF983000EFD20 /* zstd_compress.c in Sources */,
+				0DA686242E20F281002A6651 /* zsync_client_wrapper.cpp in Sources */,
 				0DD689C029EFF67F000EFD20 /* match_in_old.cpp in Sources */,
 				0DD68B1229EFF983000EFD20 /* zstd_decompress_block.c in Sources */,
 				0DD68B1129EFF983000EFD20 /* huf_decompress_amd64.S in Sources */,
 				0DD689D329EFF735000EFD20 /* inffast.c in Sources */,
 				D60DBC65241C728C00C5EE19 /* dir_diff_tools.cpp in Sources */,
 				0DD68B1E29EFF983000EFD20 /* zstd_compress_sequences.c in Sources */,
+				0DA686272E20F281002A6651 /* zsync_match_in_old.cpp in Sources */,
 				0DD689D229EFF735000EFD20 /* inftrees.c in Sources */,
 				0DD68AFE29EFF983000EFD20 /* debug.c in Sources */,
 				0DD68B0A29EFF983000EFD20 /* error_private.c in Sources */,
 				0DD689D129EFF735000EFD20 /* zutil.c in Sources */,
 				0D0A72322B5A780F00D6E0D1 /* utils.c in Sources */,
 				D60DBC60241C728C00C5EE19 /* new_stream.c in Sources */,
+				0DA686262E20F281002A6651 /* zsync_info_client.cpp in Sources */,
 				0DD689BC29EFF67F000EFD20 /* sync_diff_data.cpp in Sources */,
 				0DD68B0B29EFF983000EFD20 /* zstd_ddict.c in Sources */,
 				0DD68B1729EFF983000EFD20 /* zstd_compress_superblock.c in Sources */,

@@ -64,7 +64,7 @@
         static hpatch_StreamPos_t _write_head(struct hsync_THsynz* zPlugin,
                                               const hpatch_TStreamOutput* out_stream,hpatch_StreamPos_t curOutPos,
                                               bool isDirSync,hpatch_StreamPos_t newDataSize,uint32_t kSyncBlockSize,
-                                              hpatch_TChecksum* strongChecksumPlugin,hsync_TDictCompress* compressPlugin){
+                                              hpatch_TChecksum* fileChecksumPlugin,hsync_TDictCompress* compressPlugin){
             hsync_THsynz_gzip* self=(hsync_THsynz_gzip*)zPlugin;
             const size_t _kGzipHeadSize=4+4+2;
             hpatch_byte buf[_kGzipHeadSize]={0};
@@ -90,7 +90,7 @@
         }
         static hpatch_StreamPos_t _write_foot(struct hsync_THsynz* zPlugin,
                                               const hpatch_TStreamOutput* out_stream,hpatch_StreamPos_t curOutPos,
-                                              const hpatch_byte* newDataCheckChecksum,size_t checksumSize){
+                                              const hpatch_byte* fileChecksum,size_t checksumSize){
             hsync_THsynz_gzip* self=(hsync_THsynz_gzip*)zPlugin;
             const size_t _kGzipFootSize=4+4;
             hpatch_byte buf[_kGzipFootSize]={0};

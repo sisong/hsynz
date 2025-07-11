@@ -5,6 +5,7 @@ ZLIB     := 1
 LDEF     := 1
 ZSTD     := 1
 HTTPS    := 1
+ZSYNC    := 1
 
 STATIC_CPP := 0
 STATIC_C := 0
@@ -70,6 +71,14 @@ ifeq ($(DIR_DIFF),0)
 else
   MAKE_OBJ += \
     HDiffPatch/libhsync/sync_make/dir_sync_make.o
+endif
+
+ifeq ($(ZSYNC),0)
+else
+  CLIENT_OBJ += \
+    HDiffPatch/libhsync/zsync_client_wrapper/zsync_client_wrapper.o \
+    HDiffPatch/libhsync/zsync_client_wrapper/zsync_info_client.o \
+    HDiffPatch/libhsync/zsync_client_wrapper/zsync_match_in_old.o
 endif
 
 LDEF_PATH := libdeflate
@@ -178,6 +187,12 @@ ifeq ($(DIR_DIFF),0)
 else
   DEF_FLAGS += -D_IS_NEED_DIR_DIFF_PATCH=1
 endif
+ifeq ($(ZSYNC),0)
+  DEF_FLAGS += -D_IS_NEED_ZSYNC=0
+else
+  DEF_FLAGS += -D_IS_NEED_ZSYNC=1
+endif
+  
 ifeq ($(MT),0)
   DEF_FLAGS += \
     -D_IS_USED_MULTITHREAD=0 

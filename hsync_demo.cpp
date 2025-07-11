@@ -119,6 +119,10 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #   define _ChecksumPlugin_mbedtls_sha512
 #   define _ChecksumPlugin_mbedtls_sha256
 #   define _ChecksumPlugin_crc32
+#  if (_IS_NEED_ZSYNC)
+#   define _ChecksumPlugin_mbedtls_md4
+#   define _ChecksumPlugin_mbedtls_sha1
+#  endif
 #endif
 #include "HDiffPatch/checksum_plugin_demo.h"
 
@@ -305,6 +309,10 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,md5ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&md5ChecksumPlugin;
 #endif
+#ifdef  _ChecksumPlugin_mbedtls_md4
+    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,md4ChecksumPlugin.checksumType())))
+        strongChecksumPlugin=&md4ChecksumPlugin;
+#endif
 #ifdef  _ChecksumPlugin_mbedtls_sha512
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,sha512ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&sha512ChecksumPlugin;
@@ -312,6 +320,10 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
 #ifdef  _ChecksumPlugin_mbedtls_sha256
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,sha256ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&sha256ChecksumPlugin;
+#endif
+#ifdef  _ChecksumPlugin_mbedtls_sha1
+    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,sha1ChecksumPlugin.checksumType())))
+        strongChecksumPlugin=&sha1ChecksumPlugin;
 #endif
 #ifdef  _ChecksumPlugin_crc32
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,crc32ChecksumPlugin.checksumType())))
@@ -329,9 +341,10 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
     static void printMatchResult(const TNeedSyncInfos* nsi) {
         const uint32_t kBlockCount=nsi->blockCount;
         const hpatch_StreamPos_t localDataSize=nsi->newDataSize-(nsi->kSyncBlockSize*(hpatch_StreamPos_t)nsi->needSyncBlockCount);
-        printf("  syncBlockCount: %d, /%d=%.1f%%\n  localDataSize : %" PRIu64 "\n  syncDataSize  : %" PRIu64 "\n",
-               nsi->needSyncBlockCount,kBlockCount,100.0*nsi->needSyncBlockCount/kBlockCount,
-               localDataSize,nsi->needSyncSumSize);
+        printf("  syncBlockSize : %d\n  syncBlockCount: %d, /%d=%.1f%%\n"
+               "  localDataSize : %" PRIu64 "\n  syncDataSize  : %" PRIu64 "\n",
+               nsi->kSyncBlockSize,nsi->needSyncBlockCount,kBlockCount,
+               100.0*nsi->needSyncBlockCount/kBlockCount,localDataSize,nsi->needSyncSumSize);
         hpatch_StreamPos_t downloadSize=nsi->newSyncInfoSize+nsi->needSyncSumSize;
         printf("  downloadSize  : %" PRIu64 "+%" PRIu64 "= %" PRIu64 ", /%" PRIu64 "=%.1f%%",
                nsi->newSyncInfoSize,nsi->needSyncSumSize,downloadSize,
@@ -715,10 +728,11 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     hpatch_BOOL newIsDir=hpatch_FALSE;
     result=checkNewSyncInfoType_by_file(hsyni_file,&newIsDir);
 #if (_IS_NEED_ZSYNC)
-    if (result!=kSyncClient_ok){//try check hsyni_file as zsync file
+    if (result==kSyncClient_newSyncInfoTypeError){//try check hsyni_file as zsync file
         newIsDir=hpatch_FALSE;
-        result=checkNewZsyncInfoType_by_file(hsyni_file);
-        if (result==kSyncClient_ok){
+        TSyncClient_resultType ret=checkNewZsyncInfoType_by_file(hsyni_file);
+        if (ret==kSyncClient_ok){
+            result=kSyncClient_ok;
             isZsyncType=hpatch_TRUE;
             _check3(!oldIsDir,kSyncClient_pathTypeError,
                     "now zsync patch unsupport oldPath \"",oldPath,"\" is dir, type");

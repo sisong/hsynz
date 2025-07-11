@@ -9,6 +9,7 @@
 #define  _IS_SYNC_PATCH_DEMO        0
 #define  _IS_NEED_DIR_DIFF_PATCH    0
 #define  _IS_NEED_PRINT_LOG         0
+#define  _IS_NEED_ZSYNC             0
 
 #include "../../hsync_demo.cpp"
 
