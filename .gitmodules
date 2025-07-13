@@ -6,7 +6,7 @@
 	url = https://github.com/sisong/zstd.git
 [submodule "zlib"]
 	path = zlib
-	url = https://github.com/madler/zlib.git
+	url = https://github.com/sisong/zlib.git
 [submodule "minihttp"]
 	path = minihttp
 	url = https://github.com/sisong/minihttp.git

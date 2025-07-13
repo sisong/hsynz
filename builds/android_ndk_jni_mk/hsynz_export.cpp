@@ -19,5 +19,5 @@ int hsynz_patch(const char* outNewFile,const char* oldFile,const char* hsyni_fil
                 IReadSyncDataListener* syncDataListener,const char* localDiffFile,
                 TSyncDiffType diffType,hpatch_BOOL isContinue,int threadNum){
     return hsync_patch_2file(outNewFile,oldFile,false,_emptyIgnore,hsyni_file,syncDataListener,
-                             localDiffFile,diffType,isContinue,-1,threadNum);
+                             localDiffFile,diffType,isContinue,-1,hpatch_FALSE,threadNum);
 }

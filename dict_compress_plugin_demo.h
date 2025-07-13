@@ -49,9 +49,8 @@ static const char*  _fun_name(void){            \
     return kCompressType;                       \
 }
 
-hpatch_inline static
-hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
-    hpatch_StreamPos_t result=dataSize+(dataSize>>3)+64;
+static hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
+    hpatch_StreamPos_t result=dataSize+(dataSize>>3)+256;
     assert(result>dataSize);
     return result;
 }
