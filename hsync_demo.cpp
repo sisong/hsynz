@@ -28,6 +28,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <vector>
+#include <math.h> //for floor
 #include "HDiffPatch/_clock_for_demo.h"
 #include "HDiffPatch/_atosize.h"
 #include "HDiffPatch/libParallel/parallel_import.h"
@@ -338,32 +339,56 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
     }
 }
 
+    static inline double _to100r(hpatch_StreamPos_t haveSize,hpatch_StreamPos_t allSize){
+        return 100.0*haveSize/allSize;
+    }
+    static inline double _to100f(hpatch_StreamPos_t haveSize,hpatch_StreamPos_t allSize){
+        return floor(1000.0*haveSize/allSize)*0.1;
+    }
     static void printMatchResult(const TNeedSyncInfos* nsi) {
         const uint32_t kBlockCount=nsi->blockCount;
         const hpatch_StreamPos_t localDataSize=nsi->newDataSize-(nsi->kSyncBlockSize*(hpatch_StreamPos_t)nsi->needSyncBlockCount);
+        printf("  newDataSize   : %" PRIu64 "\n",nsi->newDataSize);
         printf("  syncBlockSize : %d\n  syncBlockCount: %d, /%d=%.1f%%\n"
                "  localDataSize : %" PRIu64 "\n  syncDataSize  : %" PRIu64 "\n",
                nsi->kSyncBlockSize,nsi->needSyncBlockCount,kBlockCount,
-               100.0*nsi->needSyncBlockCount/kBlockCount,localDataSize,nsi->needSyncSumSize);
+               _to100r(nsi->needSyncBlockCount,kBlockCount),localDataSize,nsi->needSyncSumSize);
         hpatch_StreamPos_t downloadSize=nsi->newSyncInfoSize+nsi->needSyncSumSize;
         printf("  downloadSize  : %" PRIu64 "+%" PRIu64 "= %" PRIu64 ", /%" PRIu64 "=%.1f%%",
                nsi->newSyncInfoSize,nsi->needSyncSumSize,downloadSize,
-               nsi->newDataSize,100.0*downloadSize/nsi->newDataSize);
+               nsi->newDataSize,_to100r(downloadSize,nsi->newDataSize));
         if ((nsi->newSyncDataSize>0)&&(nsi->newSyncDataSize<nsi->newDataSize)){
             hpatch_StreamPos_t maxDownloadSize=nsi->newSyncInfoSize+nsi->newSyncDataSize;
-            printf(" (/%" PRIu64 "=%.1f%%)",maxDownloadSize,100.0*downloadSize/maxDownloadSize);
+            printf(" (/%" PRIu64 "=%.1f%%)",maxDownloadSize,_to100r(downloadSize,maxDownloadSize));
         }
         printf("\n");
+        bool isLB=false;
         if (nsi->localDiffDataSize>0){
-            printf("\n  localDiffDataSize    : %" PRIu64 "\n",nsi->localDiffDataSize);
-            hpatch_StreamPos_t cdlSize=(nsi->needSyncSumSize>nsi->localDiffDataSize)?(nsi->needSyncSumSize-nsi->localDiffDataSize):0;
-            printf(  "  continue downloadSize: %" PRIu64 ", /%" PRIu64 "=%.1f%%\n",
-                   cdlSize,downloadSize,100.0*cdlSize/downloadSize);
+            if (!isLB) { isLB=true; printf("\n");}
+            hpatch_StreamPos_t haveSize=(nsi->localDiffDataSize<nsi->needSyncSumSize)?nsi->localDiffDataSize:nsi->needSyncSumSize;
+            haveSize+=nsi->newSyncInfoSize;
+            printf("  downloaded data size: %" PRIu64 "\n",haveSize);
+            hpatch_StreamPos_t cdlSize=downloadSize-haveSize;
+            printf("  need continue download size: %" PRIu64 ", /%" PRIu64 "=%.1f%%\n",
+                            cdlSize,downloadSize,_to100f(cdlSize,downloadSize));
+        }
+        if ((nsi->localNewDataSize>0)&&(nsi->newDataSize>0)){
+            if (!isLB) { isLB=true; printf("\n");}
+            hpatch_StreamPos_t haveSize=(nsi->localNewDataSize<nsi->newDataSize)?nsi->localNewDataSize:nsi->newDataSize;
+            printf("  download continue at new file pos: %" PRIu64 ", /%" PRIu64 "=%.1f%%\n",
+                            haveSize,nsi->newDataSize,_to100f(haveSize,nsi->newDataSize));
         }
     }
 //ISyncInfoListener::needSyncInfo
 static void _onNeedSyncInfo(ISyncInfoListener* listener,const TNeedSyncInfos* needSyncInfo){
     printMatchResult(needSyncInfo);
+}
+
+static void _onLoadedNewSyncInfo(ISyncInfoListener* listener,TNewDataSyncInfo* newSyncInfo){
+    if (newSyncInfo->fileChecksumPlugin==0){
+        printf("\nWANING: no file checksum info was found in sync infos,"
+               " and the created new's data can't be checksum for correctness!\n\n");
+    }
 }
 
 
@@ -806,9 +831,9 @@ bool getFileSize(const char *path_utf8,hpatch_StreamPos_t* out_fileSize){
 static bool printFileInfo(const char *path_utf8,const char *tag,bool isOutSize=true){
 #if (_IS_NEED_PRINT_LOG)
     hpatch_StreamPos_t fileSize=0;
-    if (!getFileSize(path_utf8,&fileSize)) return false;
+    isOutSize=isOutSize&&getFileSize(path_utf8,&fileSize);
     if (isOutSize)
-        printf("%s: %" PRIu64 "   \"",tag,fileSize);
+        printf("%s: %" PRIu64 "  \"",tag,fileSize);
     else
         printf("%s: \"",tag);
     _log_info_utf8(path_utf8); printf("\"\n");
@@ -841,16 +866,17 @@ TSyncClient_resultType
     if (isZsyncType) printf("  hsync patch used .zsync file as .hsyni\n");
   #endif
     if (localDiffFile){
-        if      (diffType==kSyncDiff_info) printFileInfo(localDiffFile,"diff  info  ",false);
-        else if (diffType==kSyncDiff_data) printFileInfo(localDiffFile,"diff  data  ",false);
+        if      (diffType==kSyncDiff_info) printFileInfo(localDiffFile,"diff  info  ");
+        else if (diffType==kSyncDiff_data) printFileInfo(localDiffFile,"diff  data  ");
         else                               printFileInfo(localDiffFile,"diff  file  ");
     }
-    if (outNewFile) printFileInfo(outNewFile,                          "out new file",false);
+    if (outNewFile) printFileInfo(outNewFile,                          "out new file",isUsedDownloadContinue);
 
     ISyncInfoListener listener; memset(&listener,0,sizeof(listener));
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.onNeedSyncInfo=_onNeedSyncInfo;
+    listener.onLoadedNewSyncInfo=_onLoadedNewSyncInfo;
     TSyncClient_resultType result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (oldIsDir){
@@ -987,10 +1013,10 @@ TSyncClient_resultType
     }
     
     printFileInfo(hsyni_file,                                          "info .hsyni");
-    if (hsynz_file_url) printFileInfo(hsynz_file_url,                  "sync  url  ",false);
+    if (hsynz_file_url) printFileInfo(hsynz_file_url,                  "sync  url  ",_IS_SYNC_PATCH_DEMO);
     if (localDiffFile){
-        if      (diffType==kSyncDiff_info) printFileInfo(localDiffFile,"diff  info ",false);
-        else if (diffType==kSyncDiff_data) printFileInfo(localDiffFile,"diff  data ",false);
+        if      (diffType==kSyncDiff_info) printFileInfo(localDiffFile,"diff  info ");
+        else if (diffType==kSyncDiff_data) printFileInfo(localDiffFile,"diff  data ");
         else                               printFileInfo(localDiffFile,"diff  file ");
     }
     if (outNewDir) printFileInfo(outNewDir,                            "out new dir",false);
@@ -1001,6 +1027,7 @@ TSyncClient_resultType
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.onNeedSyncInfo=_onNeedSyncInfo;
+    listener.onLoadedNewSyncInfo=_onLoadedNewSyncInfo;
     
     listener.patchImport=&listener;
     listener.newDirRoot=outNewDir?&_outNewDir:0;

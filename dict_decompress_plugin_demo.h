@@ -37,6 +37,14 @@
 #ifndef _IsNeedIncludeDefaultCompressHead
 #   define _IsNeedIncludeDefaultCompressHead 1
 #endif
+#ifndef __DEF_default_maxCompressedSize
+#define __DEF_default_maxCompressedSize
+static hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
+    hpatch_StreamPos_t result=dataSize+(dataSize>>3)+256;
+    assert(result>dataSize);
+    return result;
+}
+#endif 
 #endif
 #ifdef __cplusplus
 extern "C" {
@@ -51,13 +59,7 @@ static int _dictSizeToDictBits(size_t dictSize){
     return bits;
 }
 
-static hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
-    hpatch_StreamPos_t result=dataSize+(dataSize>>3)+256;
-    assert(result>dataSize);
-    return result;
-}
-
-static size_t _deflate_needFillAlignCode(hpatch_byte* last_code,hpatch_byte lastByteHalfBits){
+static size_t _deflate_fillUncompressBlockForAlignCode(hpatch_byte* last_code,hpatch_byte lastByteHalfBits){
     if (last_code){
         hpatch_byte* last_code0=last_code;
         hpatch_byte bitvalue=(*last_code)&((1<<lastByteHalfBits)-1);
@@ -177,7 +179,7 @@ static size_t _deflate_needFillAlignCode(hpatch_byte* last_code,hpatch_byte last
     
     static const TDictDecompressPlugin_zlib zlibDictDecompressPlugin={
         { _zlib_dict_is_can_open,_default_maxCompressedSize, _zlib_dictDecompressOpen,
-          _zlib_dictDecompressClose, _zlib_dictDecompress,_zlib_dictUncompress,_deflate_needFillAlignCode },
+          _zlib_dictDecompressClose, _zlib_dictDecompress,_zlib_dictUncompress,_deflate_fillUncompressBlockForAlignCode },
         MAX_WBITS };
     
 #endif//_CompressPlugin_zlib
@@ -279,7 +281,7 @@ static size_t _deflate_needFillAlignCode(hpatch_byte* last_code,hpatch_byte last
     
     static const TDictDecompressPlugin_ldef ldefDictDecompressPlugin={
         { _ldef_dict_is_can_open,_default_maxCompressedSize, _ldef_dictDecompressOpen,
-          _ldef_dictDecompressClose, _ldef_dictDecompress,_ldef_dictUncompress,_deflate_needFillAlignCode },
+          _ldef_dictDecompressClose, _ldef_dictDecompress,_ldef_dictUncompress,_deflate_fillUncompressBlockForAlignCode },
         MAX_WBITS };
     
 #endif//_CompressPlugin_ldef
