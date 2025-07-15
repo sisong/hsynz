@@ -135,6 +135,13 @@ static size_t _deflate_fillUncompressBlockForAlignCode(hpatch_byte* last_code,hp
         _CacheBlockDict_dictUncompress(&self->cache,blockIndex,lastCompressedBlockIndex,dataBegin,dataEnd);
     }
 
+    static inline unsigned int __zlib_avail_in_bits(z_streamp stream){
+        unsigned long shift_v;
+        unsigned int shift_bit;
+        zlib_inflate_shift_value(stream,&shift_v,&shift_bit);
+        return shift_bit;
+    }
+
     static hpatch_BOOL _zlib_dictDecompress(hsync_dictDecompressHandle dictHandle,size_t blockIndex,
                                             const hpatch_byte* in_code,const hpatch_byte* in_codeEnd,
                                             hpatch_byte* out_dataBegin,hpatch_byte* out_dataEnd,hpatch_byte skipBitsInFirstCodeByte){
@@ -156,7 +163,8 @@ static size_t _deflate_fillUncompressBlockForAlignCode(hpatch_byte* last_code,hp
             if (in_code>=in_codeEnd) return hpatch_FALSE;//error
             const unsigned short state=(*in_code++)>>skipBitsInFirstCodeByte;
             zlib_inflate_set_shift_value(&self->stream,state,8-skipBitsInFirstCodeByte);
-        }
+        }else
+            zlib_inflate_set_shift_value(&self->stream,0,0);
 
         self->stream.next_in =(Bytef*)in_code;
         self->stream.avail_in=(uInt)(in_codeEnd-in_code);
@@ -169,11 +177,10 @@ static size_t _deflate_fillUncompressBlockForAlignCode(hpatch_byte* last_code,hp
             self->dict_isInReset=hpatch_TRUE;
         else if (z_ret!=Z_OK)
             return hpatch_FALSE;//error
-        //if (self->stream.avail_in!=0)
-        //    return hpatch_FALSE;//error
-        if (self->stream.total_out!=dataSize)
+        if (self->stream.avail_out)
             return hpatch_FALSE;//error
-        self->stream.total_out=0;
+        if ((self->stream.avail_in)||(__zlib_avail_in_bits(&self->stream)))
+            self->dict_isInReset=hpatch_TRUE;
         return hpatch_TRUE;
     }
     
@@ -260,7 +267,6 @@ static size_t _deflate_fillUncompressBlockForAlignCode(hpatch_byte* last_code,hp
                 if (dataSize>(size_t)(self->tempDecBufEnd-dict-dictSize))
                     return hpatch_FALSE;//error
             }
-            //not need: libdeflate_deflate_decompress_block_reset(self->d);
         }
         if (skipBitsInFirstCodeByte>0){
             if (in_code>=in_codeEnd) return hpatch_FALSE;//error
@@ -271,7 +277,7 @@ static size_t _deflate_fillUncompressBlockForAlignCode(hpatch_byte* last_code,hp
 
         ret=libdeflate_deflate_decompress_block(self->d,in_code,in_codeEnd-in_code,
 			        isHaveDict?dict:out_dataBegin,dictSize,dataSize,0,0,
-                    LIBDEFLATE_STOP_BY_ANY_BLOCK_AND_FULL_OUTPUT_AND_IN_BYTE_ALIGN,0);
+                    LIBDEFLATE_STOP_BY_ANY_BLOCK_AND_FULL_OUTPUT,0);
         if (ret!=LIBDEFLATE_SUCCESS)
             return hpatch_FALSE;//error
         if (isHaveDict)
@@ -281,7 +287,7 @@ static size_t _deflate_fillUncompressBlockForAlignCode(hpatch_byte* last_code,hp
     
     static const TDictDecompressPlugin_ldef ldefDictDecompressPlugin={
         { _ldef_dict_is_can_open,_default_maxCompressedSize, _ldef_dictDecompressOpen,
-          _ldef_dictDecompressClose, _ldef_dictDecompress,_ldef_dictUncompress,_deflate_fillUncompressBlockForAlignCode },
+          _ldef_dictDecompressClose, _ldef_dictDecompress,_ldef_dictUncompress,0 },
         MAX_WBITS };
     
 #endif//_CompressPlugin_ldef
