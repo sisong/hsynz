@@ -44,10 +44,18 @@
 #include "HDiffPatch/dirDiffPatch/dir_diff/dir_diff.h"
 #include "HDiffPatch/libhsync/sync_make/dir_sync_make.h"
 #endif
+#ifndef _IS_NEED_ZSYNC
+#   define _IS_NEED_ZSYNC   1
+#endif
+#if (_IS_NEED_ZSYNC)
+#   include "HDiffPatch/libhsync/zsync_make_wrapper/zsync_info_make.h"
+#   include "HDiffPatch/libhsync/zsync_make_wrapper/zsync_make_wrapper.h"
+#endif
+
 #include "hsync_import_patch.h"
 
 #ifndef _IS_NEED_MAIN
-#   define  _IS_NEED_MAIN 1
+#   define  _IS_NEED_MAIN   1
 #endif
 
 #ifndef _IS_NEED_DEFAULT_CompressPlugin
@@ -78,6 +86,10 @@
 #   define _ChecksumPlugin_mbedtls_sha512
 #   define _ChecksumPlugin_mbedtls_sha256
 #   define _ChecksumPlugin_crc32
+#  if (_IS_NEED_ZSYNC)
+#   define _ChecksumPlugin_mbedtls_md4
+#   define _ChecksumPlugin_mbedtls_sha1
+#  endif
 #endif
 
 #include "HDiffPatch/checksum_plugin_demo.h"
@@ -158,6 +170,15 @@ static void printUsage(){
            "        -C-crc32\n"
            "            WARNING: crc32 is not strong & secure enough!\n"
 #endif
+#if (_IS_NEED_ZSYNC)
+           "  -zsync[#KeY#=...#ValuE#=...[#KeY#=...#ValuE#=...]]\n"
+           "      create out_hsyni_file(.zsync file format) or out_hsynz_file(.gz file\n"
+           "         format) compatible with zsync.\n"
+           "      -s-matchBlockSize size must 2^N; checksum default used sha1 & md4. \n"
+           "      key-value string pairs will be write in out_hsyni_file; if needed,\n"
+           "         you can set Filename,Z-Filename,URL,Z-URL,MTime,Recompress,... \n"
+           "      zsync project https://zsync.moria.org.uk\n"
+#endif
 #if (_IS_NEED_DIR_DIFF_PATCH)
            "  -n-maxOpenFileNumber\n"
            "      limit Number of open files at same time when newDataPath is directory;\n"
@@ -199,6 +220,11 @@ struct THSyncMakeSets{
     size_t      kSyncBlockSize;
     size_t      kSafeHashClashBit;
     size_t      threadNum;
+#if (_IS_NEED_ZSYNC)
+    hpatch_BOOL              isZsync;
+    hpatch_TChecksum*        zsyncFileChecksumPlugin;
+    std::vector<std::string> zsyncKeyValues;
+#endif
 };
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
@@ -240,14 +266,16 @@ int main(int argc,char* argv[]){
 
 
 static bool _tryGetCompressSet(const char** isMatchedType,const char* ptype,const char* ptypeEnd,
-                               const char* cmpType,const char* cmpType2=0,
+                               const char* cmpType,const char* cmpType2=0,const char* cmpType3=0,
                                size_t* compressLevel=0,size_t levelMin=0,size_t levelMax=0,size_t levelDefault=0,
                                size_t* dictSize=0,size_t dictSizeMin=0,size_t dictSizeMax=0,size_t dictSizeDefault=0){
     assert (0==(*isMatchedType));
     const size_t ctypeLen=strlen(cmpType);
     const size_t ctype2Len=(cmpType2!=0)?strlen(cmpType2):0;
+    const size_t ctype3Len=(cmpType3!=0)?strlen(cmpType3):0;
     if ( ((ctypeLen==(size_t)(ptypeEnd-ptype))&&(0==strncmp(ptype,cmpType,ctypeLen)))
-        || ((cmpType2!=0)&&(ctype2Len==(size_t)(ptypeEnd-ptype))&&(0==strncmp(ptype,cmpType2,ctype2Len))) )
+        || ((cmpType2!=0)&&(ctype2Len==(size_t)(ptypeEnd-ptype))&&(0==strncmp(ptype,cmpType2,ctype2Len)))
+        || ((cmpType3!=0)&&(ctype3Len==(size_t)(ptypeEnd-ptype))&&(0==strncmp(ptype,cmpType3,ctype3Len))) )
         *isMatchedType=cmpType; //ok
     else
         return true;//type mismatch
@@ -304,13 +332,13 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
     const size_t defaultDictBits_zlib=15; //32k
 #endif
 #ifdef _CompressPlugin_ldef
-    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"ldef","ldefD",
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"ldef","ldefD",0,
                                         &compressLevel,1,12,12, &dictBits,15,15,defaultDictBits_zlib),"-c-ldef-?"){
         static TDictCompressPlugin_ldef _ldefCompressPlugin=ldefDictCompressPlugin;
         _ldefCompressPlugin.compress_level=(hpatch_byte)compressLevel;
         _ldefCompressPlugin.dict_bits=(hpatch_byte)dictBits;
         *out_compressPlugin=&_ldefCompressPlugin.base; }}
-    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"lgzip","lgzipD",
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"lgzip","lgzipD","lgz",
                                         &compressLevel,1,12,12, &dictBits,15,15,defaultDictBits_zlib),"-c-lgzip-?"){
         static TDictCompressPlugin_lgzip _lgzipCompressPlugin=lgzipDictCompressPlugin;
         _lgzipCompressPlugin.compress_level=(hpatch_byte)compressLevel;
@@ -318,13 +346,13 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
         *out_compressPlugin=&_lgzipCompressPlugin.base; }}
 #endif
 #ifdef _CompressPlugin_zlib
-    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zlib","zlibD",
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zlib","zlibD",0,
                                         &compressLevel,1,9,9, &dictBits,9,15,defaultDictBits_zlib),"-c-zlib-?"){
         static TDictCompressPlugin_zlib _zlibCompressPlugin=zlibDictCompressPlugin;
         _zlibCompressPlugin.compress_level=(hpatch_byte)compressLevel;
         _zlibCompressPlugin.dict_bits=(hpatch_byte)dictBits;
         *out_compressPlugin=&_zlibCompressPlugin.base; }}
-    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"gzip","gzipD",
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"gzip","gzipD","gz",
                                         &compressLevel,1,9,9, &dictBits,9,15,defaultDictBits_zlib),"-c-gzip-?"){
         static TDictCompressPlugin_gzip _gzipCompressPlugin=gzipDictCompressPlugin;
         _gzipCompressPlugin.compress_level=(hpatch_byte)compressLevel;
@@ -332,7 +360,7 @@ static int _checkSetCompress(hsync_TDictCompress** out_compressPlugin,
         *out_compressPlugin=&_gzipCompressPlugin.base; }}
 #endif
 #ifdef _CompressPlugin_zstd
-    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zstd","zstdD",
+    __getCompressSet(_tryGetCompressSet(&isMatchedType,ptype,ptypeEnd,"zstd","zstdD",0,
                                         &compressLevel,10,22,21, &dictBits,15,
                                         30,defaultDictBits),"-c-zstd-?"){
         static TDictCompressPlugin_zstd _zstdCompressPlugin=zstdDictCompressPlugin;
@@ -420,6 +448,33 @@ static void printCreateSyncInfo(size_t kSafeHashClashBit,hpatch_StreamPos_t newD
         printf("  sync_patch memory size: ~ %.0f KB\n",patchMemSize/(1<<10)+1);
 }
 
+
+#if (_IS_NEED_ZSYNC)
+    #define __nullToEndStr(pstr) { pstr=(pstr!=0)?pstr:kvstr_end; }
+    static bool _parseKVs(std::vector<std::string>& out_KVs,const char* kv_str){
+        const char* kKeyTag="#KeY#=";
+        const char* kValueTag="#ValuE#=";
+        const char* kvstr_end=kv_str+strlen(kv_str);
+        const char* next_val_str=0;
+        kv_str=strstr(kv_str,kKeyTag); __nullToEndStr(kv_str);
+        const size_t _KVsSize_back=out_KVs.size();
+        while (kv_str<kvstr_end){
+            kv_str+=strlen(kKeyTag);
+            const char* val_str=next_val_str?next_val_str:strstr(kv_str,kValueTag); __nullToEndStr(val_str);
+            next_val_str=val_str;
+            const char* next_kvstr=strstr(kv_str,kKeyTag); __nullToEndStr(next_kvstr);
+            val_str=(val_str<next_kvstr)?val_str:next_kvstr;
+            if (kv_str>=val_str) return false;
+            out_KVs.push_back(std::string(kv_str,val_str));
+            out_KVs.push_back((val_str<next_kvstr)?std::string(val_str+strlen(kValueTag),next_kvstr):std::string());
+            kv_str=next_kvstr;
+            next_val_str=(next_val_str>next_kvstr)?next_val_str:0;
+        }
+        return out_KVs.size()>_KVsSize_back;
+    }
+    #undef __nullToEndStr
+#endif
+
 #define _kNULL_VALUE    ((hpatch_BOOL)(-1))
 #define _kNULL_SIZE     (~(size_t)0)
 
@@ -439,6 +494,10 @@ int sync_make_cmd_line(int argc, const char * argv[]){
     makeSets.kSyncBlockSize=_kNULL_SIZE;
     makeSets.kSafeHashClashBit=_kNULL_SIZE;
     makeSets.threadNum = _THREAD_NUMBER_NULL;
+#if (_IS_NEED_ZSYNC)
+    makeSets.isZsync=_kNULL_VALUE;
+    makeSets.zsyncFileChecksumPlugin=&sha1ChecksumPlugin;
+#endif
     std::vector<const char *> arg_values;
 #if (_IS_NEED_DIR_DIFF_PATCH)
     size_t                      kMaxOpenFileNumber=_kNULL_SIZE; //only used in newDataPath is dir
@@ -514,6 +573,16 @@ int sync_make_cmd_line(int argc, const char * argv[]){
                 }
             } break;
 #endif
+#if (_IS_NEED_ZSYNC)
+            case 'z':{
+                _options_check((makeSets.isZsync==_kNULL_VALUE)
+                               &&(op[2]=='s')&&(op[3]=='y')&&(op[4]=='n')&&(op[5]=='c')
+                               &&((op[6]=='\0')||(op[6]=='#')),"-zsync?");
+                makeSets.isZsync=hpatch_TRUE;
+                if (op[6]!='\0')
+                    _options_check(_parseKVs(makeSets.zsyncKeyValues,&op[6]),"-zsync#KeY#=?");
+            } break;
+#endif
             default: {
                 _options_check(hpatch_FALSE,"-?");
             } break;
@@ -530,8 +599,18 @@ int sync_make_cmd_line(int argc, const char * argv[]){
         makeSets.kSyncBlockSize=kSyncBlockSize_default;
     if (makeSets.kSafeHashClashBit==_kNULL_SIZE)
         makeSets.kSafeHashClashBit=kSafeHashClashBit_default;
-    if (strongChecksumPlugin==0)
-        strongChecksumPlugin=getDefaultStrongChecksum();
+#if (_IS_NEED_ZSYNC)
+    if (makeSets.isZsync==_kNULL_VALUE)
+        makeSets.isZsync=hpatch_FALSE;
+#endif
+    if (strongChecksumPlugin==0){
+    #if (_IS_NEED_ZSYNC)
+        if (makeSets.isZsync)
+            strongChecksumPlugin=&md4ChecksumPlugin;
+        else
+    #endif
+            strongChecksumPlugin=getDefaultStrongChecksum();
+    }
     _options_check(strongChecksumPlugin!=0,"-C-?");
 #if (_IS_USED_MULTITHREAD)
     if (makeSets.threadNum==_THREAD_NUMBER_NULL)
@@ -587,11 +666,11 @@ int sync_make_cmd_line(int argc, const char * argv[]){
     _return_check((newType!=kPathType_notExist),
                   SYNC_MAKE_NEWPATH_ERROR,"%s not exist","newDataPath");
 #if (_IS_NEED_DIR_DIFF_PATCH)
-    hpatch_BOOL isUseDirSyncUpdate=(kPathType_dir==newType);
+    const hpatch_BOOL isUseDirSyncUpdate=(kPathType_dir==newType);
     if (isUseDirSyncUpdate)
         _options_check(out_hsynz_file!=0,"used DirSyncUpdate need out_hsynz_file");
 #else
-    hpatch_BOOL isUseDirSyncUpdate=false;
+    const hpatch_BOOL isUseDirSyncUpdate=false;
     _return_check(kPathType_dir!=newType,
                   SYNC_MAKE_NEWPATH_ERROR,"%s must file","newDataPath");
 #endif
@@ -611,12 +690,27 @@ int sync_make_cmd_line(int argc, const char * argv[]){
     if (makeSets.threadNum>1)
         printf("multi-thread parallel: opened, threadNum: %d\n",(uint32_t)makeSets.threadNum);
 
-    printf("create%s_sync_data run with strongChecksum plugin: \"%s\"\n",
-           isUseDirSyncUpdate?"_dir":"",strongChecksumPlugin->checksumType());
+#if (_IS_NEED_ZSYNC)
+    if (makeSets.isZsync){
+        assert((makeSets.zsyncKeyValues.size()&1)==0);
+        _options_check(!isUseDirSyncUpdate,"-zsync mode not support DirSyncUpdate");
+        _options_check((compressPlugin==0)||(0==strcmp(compressPlugin->compressType(),k_gzip_dictCompressType)),
+                       "if need compress plugin, -zsync mode must used -c-gzip or -c-lgzip");
+        _options_check(strongChecksumPlugin==&md4ChecksumPlugin,
+                       "-zsync mode default used md4, not support other strongChecksum plugin, cant't set -C");
+
+        printf("create_sync_data run with -zsync mode, used strongChecksum plugin: \"%s\" & \"md4\"\n",
+                        makeSets.zsyncFileChecksumPlugin->checksumType());
+    }else
+#endif
+        printf("create%s_sync_data run with strongChecksum plugin: \"%s\"\n",
+            isUseDirSyncUpdate?"_dir":"",strongChecksumPlugin->checksumType());
     if (compressPlugin){
         printf("create%s_sync_data run with compress plugin: \"%s\"\n",
                isUseDirSyncUpdate?"_dir":"",compressPlugin->compressTypeForDisplay?compressPlugin->compressTypeForDisplay():compressPlugin->compressType());
     }
+
+
     double time0=clock_s();
     int result;
 #if (_IS_NEED_DIR_DIFF_PATCH)
@@ -645,10 +739,11 @@ int sync_make_cmd_line(int argc, const char * argv[]){
 
 void create_sync_data_by_file(const char* newDataFile,
                               const char* out_hsyni_file,
-                              const char* out_hsynz_file,
+                              const char* out_hsynz_file, //can null
                               hpatch_TChecksum*    strongChecksumPlugin,
-                              hsync_TDictCompress* compressPlugin,hsync_THsynz* hsynzPlugin,
-                              uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum){
+                              hsync_TDictCompress* compressPlugin, //can null
+                              hsync_THsynz* hsynzPlugin, //can null
+                              const THSyncMakeSets& makeSets){
     hdiff_private::CFileStreamInput  newData(newDataFile);
     hdiff_private::CFileStreamOutput out_newSyncInfo(out_hsyni_file,~(hpatch_StreamPos_t)0);
     hdiff_private::CFileStreamOutput out_newSyncData;
@@ -657,21 +752,18 @@ void create_sync_data_by_file(const char* newDataFile,
         out_newSyncData.open(out_hsynz_file,~(hpatch_StreamPos_t)0);
         newDataStream=&out_newSyncData.base;
     }
-    
-    create_sync_data(&newData.base,&out_newSyncInfo.base,newDataStream,
-                     strongChecksumPlugin,compressPlugin,hsynzPlugin,
-                     kSyncBlockSize,kSafeHashClashBit,threadNum);
-}
 
-void create_sync_data_by_file(const char* newDataFile,
-                              const char* out_hsyni_file,
-                              hpatch_TChecksum*      strongChecksumPlugin,
-                              hsync_TDictCompress* compressPlugin,
-                              uint32_t kSyncBlockSize,size_t kSafeHashClashBit,size_t threadNum){
-    create_sync_data_by_file(newDataFile,out_hsyni_file,0,strongChecksumPlugin,compressPlugin,0,
-                             kSyncBlockSize,kSafeHashClashBit,threadNum);
+#if (_IS_NEED_ZSYNC)
+    if (makeSets.isZsync)
+        create_zsync_data(&newData.base,&out_newSyncInfo.base,newDataStream,
+                          makeSets.zsyncFileChecksumPlugin,strongChecksumPlugin,compressPlugin,hsynzPlugin,
+                          makeSets.zsyncKeyValues, makeSets.kSyncBlockSize,makeSets.kSafeHashClashBit,makeSets.threadNum);
+    else
+#endif
+        create_sync_data(&newData.base,&out_newSyncInfo.base,newDataStream,
+                         strongChecksumPlugin,compressPlugin,hsynzPlugin,
+                         makeSets.kSyncBlockSize,makeSets.kSafeHashClashBit,makeSets.threadNum);
 }
-
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
                                const char* out_hsynz_file,hpatch_TChecksum* strongChecksumPlugin,
@@ -680,8 +772,15 @@ int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_fil
     hpatch_StreamPos_t newDataSize=0;
     _return_check(printFileInfo(newDataFile,"\nin new file",&newDataSize),
                   SYNC_MAKE_NEWPATH_ERROR,"run printFileInfo(\"%s\")",newDataFile);
-    bool isSafeHashClash=getStrongForHashClash(makeSets.kSafeHashClashBit,newDataSize,(uint32_t)makeSets.kSyncBlockSize,
-                                               strongChecksumPlugin->checksumByteSize()*8);
+    bool isSafeHashClash;
+#if (_IS_NEED_ZSYNC)
+    if (makeSets.isZsync)
+        isSafeHashClash=z_getStrongForHashClash(makeSets.kSafeHashClashBit,newDataSize,
+                          (uint32_t)makeSets.kSyncBlockSize,strongChecksumPlugin->checksumByteSize()*8);
+    else
+#endif
+        isSafeHashClash = getStrongForHashClash(makeSets.kSafeHashClashBit,newDataSize,
+                          (uint32_t)makeSets.kSyncBlockSize,strongChecksumPlugin->checksumByteSize()*8);
     _return_check2(isSafeHashClash,SYNC_MAKE_BLOCKSIZE_OR_SAFE_BITS_ERROR,
                    "hash clash error! matchBlockSize(%d) too small or safeHashClashBit(%d) too large",
                    (uint32_t)makeSets.kSyncBlockSize,(uint32_t)makeSets.kSafeHashClashBit);
@@ -690,8 +789,7 @@ int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_fil
     
     try {
         create_sync_data_by_file(newDataFile,out_hsyni_file,out_hsynz_file,
-                                 strongChecksumPlugin,compressPlugin,hsynzPlugin,
-                                 (uint32_t)makeSets.kSyncBlockSize,makeSets.kSafeHashClashBit,makeSets.threadNum);
+                                 strongChecksumPlugin,compressPlugin,hsynzPlugin,makeSets);
     } catch (const std::exception& e){
         _return_check(false,SYNC_MAKE_CREATE_SYNC_DATA_ERROR,
                       "run create_sync_data with \"%s\"",e.what());
@@ -739,6 +837,9 @@ int create_sync_files_for_dir(const char* newDataDir,const char* out_hsyni_file,
                               hpatch_TChecksum* strongChecksumPlugin,hsync_TDictCompress* compressPlugin,
                               hsync_THsynz* hsynzPlugin,const std::vector<std::string>& ignoreNewPathList,
                               const THSyncMakeSets& makeSets){
+#if (_IS_NEED_ZSYNC)
+    assert(!makeSets.isZsync);
+#endif
     std::string newDir(newDataDir);
     assignDirTag(newDir);
     printf("\nin new dir: \""); hpatch_printPath_utf8(newDir.c_str()); printf("\"\n");

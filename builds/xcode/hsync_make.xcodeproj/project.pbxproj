@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0DA686322E20F281002A6651 /* zsync_make_wrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA6862F2E20F281002A6651 /* zsync_make_wrapper.cpp */; };
+		0DA686332E20F281002A6651 /* zsync_info_make.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DA686312E20F281002A6651 /* zsync_info_make.cpp */; };
 		0DD68AB529EFF932000EFD20 /* libMiniHttps.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 0DD68AB429EFF932000EFD20 /* libMiniHttps.a */; };
 		0DD68B3229F01783000EFD20 /* hsync_import_patch.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD68B3029F01783000EFD20 /* hsync_import_patch.cpp */; };
 		0DD68B3329F01783000EFD20 /* client_download_demo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0DD68B3129F01783000EFD20 /* client_download_demo.cpp */; };
@@ -31,6 +33,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0DA6862E2E20F281002A6651 /* zsync_info_make.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zsync_info_make.h; path = ../../HDiffPatch/libhsync/zsync_make_wrapper/zsync_info_make.h; sourceTree = "<group>"; };
+		0DA6862F2E20F281002A6651 /* zsync_make_wrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zsync_make_wrapper.cpp; path = ../../HDiffPatch/libhsync/zsync_make_wrapper/zsync_make_wrapper.cpp; sourceTree = "<group>"; };
+		0DA686302E20F281002A6651 /* zsync_make_wrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = zsync_make_wrapper.h; path = ../../HDiffPatch/libhsync/zsync_make_wrapper/zsync_make_wrapper.h; sourceTree = "<group>"; };
+		0DA686312E20F281002A6651 /* zsync_info_make.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = zsync_info_make.cpp; path = ../../HDiffPatch/libhsync/zsync_make_wrapper/zsync_info_make.cpp; sourceTree = "<group>"; };
 		0DD68AB429EFF932000EFD20 /* libMiniHttps.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libMiniHttps.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		0DD68B3029F01783000EFD20 /* hsync_import_patch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hsync_import_patch.cpp; path = ../../hsync_import_patch.cpp; sourceTree = "<group>"; };
 		0DD68B3129F01783000EFD20 /* client_download_demo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = client_download_demo.cpp; path = ../../client_download_demo.cpp; sourceTree = "<group>"; };
@@ -64,6 +70,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0DA6862D2E20F281002A6651 /* zsync_make_wrapper */ = {
+			isa = PBXGroup;
+			children = (
+				0DA686312E20F281002A6651 /* zsync_info_make.cpp */,
+				0DA6862E2E20F281002A6651 /* zsync_info_make.h */,
+				0DA6862F2E20F281002A6651 /* zsync_make_wrapper.cpp */,
+				0DA686302E20F281002A6651 /* zsync_make_wrapper.h */,
+			);
+			name = zsync_make_wrapper;
+			sourceTree = "<group>";
+		};
 		0DD68B3429F0179C000EFD20 /* sync_make */ = {
 			isa = PBXGroup;
 			children = (
@@ -96,6 +113,7 @@
 		D65C6A482330A3C700A3C89C = {
 			isa = PBXGroup;
 			children = (
+				0DA6862D2E20F281002A6651 /* zsync_make_wrapper */,
 				0DD68B3429F0179C000EFD20 /* sync_make */,
 				0DD68B3129F01783000EFD20 /* client_download_demo.cpp */,
 				0DD68B3029F01783000EFD20 /* hsync_import_patch.cpp */,
@@ -173,10 +191,12 @@
 				0DD68B4329F0179C000EFD20 /* dir_sync_make.cpp in Sources */,
 				0DD68B4229F0179C000EFD20 /* sync_info_make.cpp in Sources */,
 				0DD68B4129F0179C000EFD20 /* sync_make.cpp in Sources */,
+				0DA686322E20F281002A6651 /* zsync_make_wrapper.cpp in Sources */,
 				D68E3226241BC59A00C1C06F /* hsync_make.cpp in Sources */,
 				0DD68B4029F0179C000EFD20 /* match_in_new.cpp in Sources */,
 				0DD68B3229F01783000EFD20 /* hsync_import_patch.cpp in Sources */,
 				0DD68B3329F01783000EFD20 /* client_download_demo.cpp in Sources */,
+				0DA686332E20F281002A6651 /* zsync_info_make.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
