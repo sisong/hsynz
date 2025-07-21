@@ -174,7 +174,9 @@ static void printUsage(){
            "  -zsync[#KeY#=...#ValuE#=...[#KeY#=...#ValuE#=...]]\n"
            "      create out_hsyni_file(.zsync file format) or out_hsynz_file(.gz file\n"
            "         format) compatible with zsync.\n"
-           "      -s-matchBlockSize size must 2^N; checksum default used sha1 & md4. \n"
+           "      checksum default used sha1 & md4, not need set -C\n"
+           "      -s-matchBlockSize size must 2^N; if used -c-gzip or -c-lgzip (out \n"
+           "         .gz file), recommend set 4k at most, >=8k may fail.\n"
            "      key-value string pairs will be write in out_hsyni_file; if needed,\n"
            "         you can set Filename,Z-Filename,URL,Z-URL,MTime,Recompress,... \n"
            "      zsync project https://zsync.moria.org.uk\n"
@@ -695,7 +697,13 @@ int sync_make_cmd_line(int argc, const char * argv[]){
         assert((makeSets.zsyncKeyValues.size()&1)==0);
         _options_check(!isUseDirSyncUpdate,"-zsync mode not support DirSyncUpdate");
         _options_check((compressPlugin==0)||(0==strcmp(compressPlugin->compressType(),k_gzip_dictCompressType)),
-                       "if need compress plugin, -zsync mode must used -c-gzip or -c-lgzip");
+                       "if need compress plugin, -zsync mode must set -c-gzip or -c-lgzip");
+        _options_check((0==(makeSets.kSyncBlockSize&(makeSets.kSyncBlockSize-1))),
+                            "-zsync mode block size must 2^N, like 512,1k,2k... ,");
+        if (compressPlugin)
+            _return_check(makeSets.kSyncBlockSize==(makeSets.kSyncBlockSize&((1<<15)-1)),SYNC_MAKE_OPTIONS_ERROR,
+                            "-zsync gzip mode block size recommend set 4k at most, >=8k may fail;"
+                            " %" PRIu64 " is too large",(hpatch_StreamPos_t)makeSets.kSyncBlockSize);
         _options_check(strongChecksumPlugin==&md4ChecksumPlugin,
                        "-zsync mode default used md4, not support other strongChecksum plugin, cant't set -C");
 
@@ -757,12 +765,12 @@ void create_sync_data_by_file(const char* newDataFile,
     if (makeSets.isZsync)
         create_zsync_data(&newData.base,&out_newSyncInfo.base,newDataStream,
                           makeSets.zsyncFileChecksumPlugin,strongChecksumPlugin,compressPlugin,hsynzPlugin,
-                          makeSets.zsyncKeyValues, makeSets.kSyncBlockSize,makeSets.kSafeHashClashBit,makeSets.threadNum);
+                          makeSets.zsyncKeyValues,(uint32_t)makeSets.kSyncBlockSize,makeSets.kSafeHashClashBit,makeSets.threadNum);
     else
 #endif
         create_sync_data(&newData.base,&out_newSyncInfo.base,newDataStream,
                          strongChecksumPlugin,compressPlugin,hsynzPlugin,
-                         makeSets.kSyncBlockSize,makeSets.kSafeHashClashBit,makeSets.threadNum);
+                         (uint32_t)makeSets.kSyncBlockSize,makeSets.kSafeHashClashBit,makeSets.threadNum);
 }
 
 int create_sync_files_for_file(const char* newDataFile,const char* out_hsyni_file,
