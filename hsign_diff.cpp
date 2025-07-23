@@ -516,7 +516,8 @@ int hsign_diff_by_file(const char* old_hsyni_file,const char* newFileName,const 
         printf("hsign_diff run with compress plugin: \"%s\"\n",
                compressPlugin->compressTypeForDisplay?compressPlugin->compressTypeForDisplay():compressPlugin->compressType());
     }
-    result=TNewDataSyncInfo_open_by_file(&oldSyncInfo,old_hsyni_file,listener);
+    const hpatch_BOOL isIgnoreCompressInfo=hpatch_FALSE;
+    result=TNewDataSyncInfo_open_by_file(&oldSyncInfo,old_hsyni_file,isIgnoreCompressInfo,listener);
     check(result==kSignDiff_ok,result,"open old_hsyni_file");
     printSyncInfo(&oldSyncInfo);
 
