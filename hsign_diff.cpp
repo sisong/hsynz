@@ -43,7 +43,7 @@
 #include "hsync_import_patch.h" //for HSYNC_VERSION_STRING
 
 #ifndef _IS_NEED_MAIN
-#   define  _IS_NEED_MAIN 1
+#   define  _IS_NEED_MAIN   1
 #endif
 
 #ifndef _IS_NEED_DEFAULT_CompressPlugin
@@ -485,12 +485,8 @@ int sign_diff_cmd_line(int argc, const char * argv[]){
 
 
     static void printSyncInfo(const TOldDataSyncInfo* oldSyncInfo) {
-        printf("  old .hsynz file checksum type: \"%s\"\n",oldSyncInfo->strongChecksumType);
+        printf("  old .hsyni strong checksum type: \"%s\"\n",oldSyncInfo->strongChecksumType);
         printf("  old uncompress size: %" PRIu64 "\n",oldSyncInfo->newDataSize);
-        if (oldSyncInfo->_decompressPlugin!=0){
-            printf("  old .hsynz file size: %" PRIu64 "\n",oldSyncInfo->newSyncDataSize);
-            printf("  old .hsynz file compressed type: \"%s\"\n",oldSyncInfo->compressType);
-        }
         printf("  kSyncBlockSize: %" PRIu64 "\n",(hpatch_uint64_t)oldSyncInfo->kSyncBlockSize);
     }
 
@@ -516,7 +512,7 @@ int hsign_diff_by_file(const char* old_hsyni_file,const char* newFileName,const 
         printf("hsign_diff run with compress plugin: \"%s\"\n",
                compressPlugin->compressTypeForDisplay?compressPlugin->compressTypeForDisplay():compressPlugin->compressType());
     }
-    const hpatch_BOOL isIgnoreCompressInfo=hpatch_FALSE;
+    const hpatch_BOOL isIgnoreCompressInfo=hpatch_TRUE;
     result=TNewDataSyncInfo_open_by_file(&oldSyncInfo,old_hsyni_file,isIgnoreCompressInfo,listener);
     check(result==kSignDiff_ok,result,"open old_hsyni_file");
     printSyncInfo(&oldSyncInfo);

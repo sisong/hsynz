@@ -1,5 +1,5 @@
-# [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v1.2.0-blue.svg)](https://github.com/sisong/hsynz/releases) 
+# [hsynz]
+[![release](https://img.shields.io/badge/release-v1.3.0-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
@@ -7,9 +7,13 @@
 
  english | [中文版](README_cn.md)   
 
-hsynz is a library for delta update using sync algorithm, like [zsync](http://zsync.moria.org.uk).   
+[hsynz] is a library for delta update using sync algorithm, like [zsync].   
 rsync over http(s); implement the sync algorithm on client side, and server side only need http(s) cdn. support compressor zstd & libdeflate & zlib, support large file & directory(folder), support multi-thread.   
    
+[hsynz] defines its own file format (.hsyni and .hsynz files), and this library is also compatible with the file format of [zsync] (including apply and create .zsync and their .gz files).   
+
+[zsync]: http://zsync.moria.org.uk
+[hsynz]: https://github.com/sisong/hsynz
 
 Recommended scenarios: Very large number of older versions or where older versions are not available (not saved or modified, etc.) so that all deltas cannot be calculated in advance.   
    
@@ -24,8 +28,11 @@ hsync_demo provides a test client demo for local file testing.
 hsync_http provides a download client demo with http(s) support for sync update from a server that provides an http(s) file download service(e.g CDN, support HTTP/1.1 multi range Requests).   
 Tip: You can also customise other communication methods for sync.   
     
+additional, if you have the new file locally & not the old file, but can get a hash certificate file(.hsyni) of the old file,
+you can also create a hpatchz format patch file(usage scenario like [rsync]); see the demo cmdline **hsign_diff**.   
+   
 ---
-## Compare with [zsync](http://zsync.moria.org.uk)
+## Compare with [zsync]
 * In addition to supporting source and target as files, support is also provided for directories(folders).
 * In addition to supporting compressed release package by zlib; also supported libdeflate & zstd compressor, providing better compression ratio, i.e. smaller downloaded patch package.
 * The server-side make support multi-threaded parallel acceleration.
@@ -97,6 +104,15 @@ options:
         -C-sha256
         -C-crc32
             WARNING: crc32 is not strong & secure enough!
+  -zsync[#KeY#=...#ValuE#=...[#KeY#=...#ValuE#=...]]
+      create out_hsyni_file(.zsync file format) or out_hsynz_file(.gz file
+         format) compatible with zsync.
+      checksum default used sha1 & md4, not need set -C
+      -s-matchBlockSize size must 2^N; if used -c-gzip or -c-lgzip (out
+         .gz file), recommend set 4k at most, >=8k may fail.
+      key-value string pairs will be write in out_hsyni_file; if needed,
+         you can set Filename,Z-Filename,URL,Z-URL,MTime,Recompress,...
+      zsync project https://zsync.moria.org.uk
   -n-maxOpenFileNumber
       limit Number of open files at same time when newDataPath is directory;
       maxOpenFileNumber>=8, DEFAULT -n-48, the best limit value by different
@@ -135,6 +151,10 @@ options:
     saving diffInfo to cache file for optimize speed when continue sync patch;
   -patch#diffFile
     local patch(oldPath+diffFile) to outNewPath;
+  -U
+    set hsynz_file_url is the original file before compress, please ignore the
+      compress info in hsyni_file and directly access the data of hsynz file
+      without decompress.
   -cdl-{0|1}        or  -cdl-{off|on}
     continue download data from breakpoint;
     DEFAULT -cdl-1 opened, need set -cdl-0 or -cdl-off to close continue mode;
@@ -179,7 +199,7 @@ options:
 This cmdline is used for local sync tests, replacing the actual URL remote file with local file, see the hsync_http usage.
 
 ---
-## hsynz vs [zsync](http://zsync.moria.org.uk):
+## [hsynz] vs [zsync]:
 case list([download from OneDrive](https://1drv.ms/u/s!Aj8ygMPeifoQgUIZxYac5_uflNoN)):   
 | |newFile <-- oldFile|newSize|oldSize|
 |----:|:----|----:|----:|
@@ -206,43 +226,67 @@ case list([download from OneDrive](https://1drv.ms/u/s!Aj8ygMPeifoQgUIZxYac5_ufl
    
 
 **test PC**: Windows11, CPU R9-7945HX, SSD PCIe4.0x4 4T, DDR5 5200MHz 32Gx2   
-**Program version**: hsynz 1.1.1, zsync 0.6.2  (more programs's testing see [HDiffPatch](https://github.com/sisong/HDiffPatch))   
+**Program version**: hsynz 1.3.0, zsync 0.6.3   
 **test Program**:   
 **zsync** run make with `zsyncmake -b 2048 -o {out_newi} {new}`,   
 client sync diff&patch by `zsync -i {old} -o {out_new} {newi}` (all files are local)   
 **zsync -z** run make with `zsyncmake -b 2048 -z -u {new.gz} -o {out_newi} {new}`   
 **hsynz** run make with `hsync_make -s-2k {new} {out_newi} [{-c-?} {out_newz}]`,    
+run make with `-zsync` means create compatible zsync's file format,
 client sync diff&patch by `hsync_demo {old} {newi} {newz} {out_new}` (all files are local)   
 **hsynz p1** run make without compressor & out_newz , add `-p-1`   
 **hsynz p8** run make without compressor & out_newz , add `-p-8`   
-**hsynz p1 -zlib** run make with `-p-1 -c-zlib-9` (run `hsync_demo` with `-p-1`)   
-**hsynz p8 -zlib** run make with `-p-8 -c-zlib-9` (run `hsync_demo` with `-p-8`)   
-**hsynz p1 -gzip** run make with `-p-1 -c-gzip-9` (run `hsync_demo` with `-p-1`)   
-**hsynz p8 -gzip** run make with `-p-8 -c-gzip-9` (run `hsync_demo` with `-p-8`)   
-**hsynz p1 -ldef** run make with `-p-1 -c-ldef-12` (run `hsync_demo` with `-p-1`)   
-**hsynz p8 -ldef** run make with `-p-8 -c-ldef-12` (run `hsync_demo` with `-p-8`)   
-**hsynz p1 -lgzip** run make with `-p-1 -c-lgzip-12` (run `hsync_demo` with `-p-1`)   
-**hsynz p8 -lgzip** run make with `-p-8 -c-lgzip-12` (run `hsync_demo` with `-p-8`)   
-**hsynz p1 -zstd** run make with `-p-1 -c-zstd-21-24` (run `hsync_demo` with `-p-1`)   
-**hsynz p8 -zstd** run make with `-p-8 -c-zstd-21-24` (run `hsync_demo` with `-p-8`)   
+**hsynz p1 zlib** run make with `-p-1 -c-zlib-9` (run `hsync_demo` with `-p-1`)   
+**hsynz p8 zlib** run make with `-p-8 -c-zlib-9` (run `hsync_demo` with `-p-8`)   
+**hsynz p1 gz** run make with `-p-1 -c-gzip-9` (run `hsync_demo` with `-p-1`)   
+**hsynz p8 gz** run make with `-p-8 -c-gzip-9` (run `hsync_demo` with `-p-8`)   
+**hsynz p1 ldef** run make with `-p-1 -c-ldef-12` (run `hsync_demo` with `-p-1`)   
+**hsynz p8 ldef** run make with `-p-8 -c-ldef-12` (run `hsync_demo` with `-p-8`)   
+**hsynz p1 lgz** run make with `-p-1 -c-lgzip-12` (run `hsync_demo` with `-p-1`)   
+**hsynz p8 lgz** run make with `-p-8 -c-lgzip-12` (run `hsync_demo` with `-p-8`)   
+**hsynz p1 zstd** run make with `-p-1 -c-zstd-21-24` (run `hsync_demo` with `-p-1`)   
+**hsynz p8 zstd** run make with `-p-8 -c-zstd-21-24` (run `hsync_demo` with `-p-8`)   
+additional tests added **hsign_diff**, which can create hpatchz-compatible patch files using only old data's .hsyni file and the new data.
    
 **test result average**:
-|Program|compress|make mem|speed|sync mem|max mem|speed|
-|:----|----:|----:|----:|----:|----:|----:|
-|zsync|52.94%|1M|353.9MB/s|7M|23M|34MB/s|
-|zsync -z|20.67%|1M|14.8MB/s|12M|37M|28MB/s|
-|hsynz p1|51.05%|5M|2039.5MB/s|5M|19M|307MB/s|
-|hsynz p8|51.05%|21M|4311.9MB/s|12M|27M|533MB/s|
-|hsynz p1 zlib|20.05%|6M|17.3MB/s|6M|22M|273MB/s|
-|hsynz p8 zlib|20.05%|30M|115.1MB/s|13M|29M|435MB/s|
-|hsynz p1 gzip|20.12%|6M|17.3MB/s|6M|22M|268MB/s|
-|hsynz p8 gzip|20.12%|30M|115.0MB/s|13M|29M|427MB/s|
-|hsynz p1 ldef|19.57%|15M|7.8MB/s|6M|22M|272MB/s|
-|hsynz p8 ldef|19.57%|96M|57.0MB/s|13M|29M|431MB/s|
-|hsynz p1 lgzip|19.64%|15M|7.9MB/s|6M|22M|267MB/s|
-|hsynz p8 lgzip|19.64%|96M|56.9MB/s|13M|29M|419MB/s|
-|hsynz p1 zstd|14.96%|532M|1.9MB/s|24M|34M|264MB/s|
-|hsynz p8 zstd|14.95%|3349M|10.1MB/s|24M|34M|410MB/s|
+|make|mem|speed|patch|compress|mem|max mem|speed|
+|:----|----:|----:|:----|----:|----:|----:|----:|
+|zsyncmake|1M|381.6MB/s|hsynz p1|45.74%|6M|18M|181MB/s|
+|zsyncmake|1M|381.6MB/s|hsynz p8|45.74%|13M|27M|276MB/s|
+|zsyncmake|1M|383.4MB/s|`zsync`|45.75%|9M|38M|122MB/s|
+|zsyncmake -z|1M|14.8MB/s|hsynz p1|16.56%|6M|21M|169MB/s|
+|zsyncmake -z|1M|14.8MB/s|hsynz p8|16.56%|13M|29M|245MB/s|
+|zsyncmake -z|1M|14.9MB/s|`zsync`|16.58%|13M|52M|71MB/s|
+|hsync_make p1 -zsync|4M|430.9MB/s|hsynz p1|45.39%|6M|19M|187MB/s|
+|hsync_make p8 -zsync|14M|591.0MB/s|hsynz p8|45.39%|13M|27M|275MB/s|
+|hsync_make p8 -zsync|14M|590.9MB/s|`zsync`|45.39%|9M|37M|119MB/s|
+|hsync_make p1 gz -zsync|6M|16.9MB/s|hsynz p1|16.59%|6M|21M|174MB/s|
+|hsync_make p8 gz -zsync|29M|101.8MB/s|hsynz p8|16.59%|13M|29M|252MB/s|
+|hsync_make p8 gz -zsync|29M|101.8MB/s|`zsync`|16.60%|14M|52M|70MB/s|
+|hsync_make p1 lgz -zsync|14M|7.8MB/s|hsynz p1|16.21%|6M|21M|176MB/s|
+|hsync_make p8 lgz -zsync|95M|40.3MB/s|hsynz p8|16.21%|14M|29M|252MB/s|
+|hsync_make p8 lgz -zsync|95M|40.1MB/s|`zsync`|16.22%|14M|52M|70MB/s|
+|hsync_make p1|5M|2179.7MB/s|hsynz p1|44.57%|5M|19M|301MB/s|
+|hsync_make p8|12M|3709.2MB/s|hsynz p8|44.57%|13M|27M|478MB/s|
+|hsync_make p1 zlib|7M|17.5MB/s|hsynz p1|16.05%|6M|22M|270MB/s|
+|hsync_make p8 zlib|30M|105.0MB/s|hsynz p8|16.05%|13M|29M|407MB/s|
+|hsync_make p1 ldef|15M|8.0MB/s|hsynz p1|15.68%|6M|22M|270MB/s|
+|hsync_make p8 ldef|96M|40.6MB/s|hsynz p8|15.68%|13M|29M|405MB/s|
+|hsync_make p1 gz|7M|17.6MB/s|hsynz p1|16.12%|6M|22M|271MB/s|
+|hsync_make p8 gz|30M|104.9MB/s|hsynz p8|16.12%|13M|29M|408MB/s|
+|hsync_make p1 lgz|15M|7.9MB/s|hsynz p1|15.74%|6M|22M|270MB/s|
+|hsync_make p8 lgz|96M|40.6MB/s|hsynz p8|15.74%|13M|29M|405MB/s|
+|hsync_make p1 zstd|532M|1.8MB/s|hsynz p1|12.54%|24M|34M|263MB/s|
+|hsync_make p8 zstd|3353M|8.1MB/s|hsynz p8|12.54%|23M|34M|384MB/s|
+||
+|hsign_diff p1|4M|494.7MB/s|hpatchz|43.13%|3M|4M|2409MB/s|
+|hsign_diff p8|11M|1412.3MB/s|hpatchz|43.13%|3M|4M|2422MB/s|
+|hsign_diff p1 zlib|4M|42.9MB/s|hpatchz|14.78%|4M|4M|926MB/s|
+|hsign_diff p8 zlib|13M|246.3MB/s|hpatchz|14.79%|3M|4M|927MB/s|
+|hsign_diff p1 ldef|16M|20.1MB/s|hpatchz|14.38%|3M|4M|920MB/s|
+|hsign_diff p8 ldef|115M|104.4MB/s|hpatchz|14.38%|3M|4M|917MB/s|
+|hsign_diff p1 zstd|205M|8.3MB/s|hpatchz|11.17%|17M|21M|1369MB/s|
+|hsign_diff p8 zstd|1348M|17.2MB/s|hpatchz|11.17%|18M|21M|1316MB/s|
     
 
 ## input Apk Files for test: 
@@ -288,22 +332,44 @@ case list:
 **hsynz ...** make `-s-2k` changed to `-s-1k`   
 
 **test result average**:
-|Program|compress|make mem|speed|sync mem|max mem|speed|
-|:----|----:|----:|----:|----:|----:|----:|
-|zsync|62.80%|1M|329.8MB/s|6M|12M|76MB/s|
-|zsync -z|59.56%|1M|19.8MB/s|8M|19M|56MB/s|
-|hsynz p1|62.43%|4M|1533.5MB/s|4M|10M|236MB/s|
-|hsynz p8|62.43%|18M|2336.4MB/s|12M|18M|394MB/s|
-|hsynz p1 zlib|58.67%|5M|22.7MB/s|4M|11M|243MB/s|
-|hsynz p8 zlib|58.67%|29M|138.6MB/s|12M|19M|410MB/s|
-|hsynz p1 gzip|58.95%|5M|22.6MB/s|4M|11M|242MB/s|
-|hsynz p8 gzip|58.95%|29M|138.9MB/s|12M|19M|407MB/s|
-|hsynz p1 ldef|58.61%|14M|23.7MB/s|4M|11M|242MB/s|
-|hsynz p8 ldef|58.61%|96M|149.1MB/s|12M|19M|413MB/s|
-|hsynz p1 lgzip|58.90%|14M|23.6MB/s|4M|11M|240MB/s|
-|hsynz p8 lgzip|58.90%|96M|149.1MB/s|12M|19M|405MB/s|
-|hsynz p1 zstd|57.74%|534M|2.7MB/s|24M|28M|234MB/s|
-|hsynz p8 zstd|57.74%|3434M|13.4MB/s|24M|28M|390MB/s|
+|make|mem|speed|patch|compress|mem|max mem|speed|
+|:----|----:|----:|:----|----:|----:|----:|----:|
+|zsyncmake|1M|352.4MB/s|hsynz p1|60.20%|4M|11M|163MB/s|
+|zsyncmake|1M|352.4MB/s|hsynz p8|60.20%|12M|19M|228MB/s|
+|zsyncmake|1M|353.6MB/s|`zsync`|60.20%|6M|18M|107MB/s|
+|zsyncmake -z|1M|20.0MB/s|hsynz p1|57.16%|4M|12M|170MB/s|
+|zsyncmake -z|1M|20.0MB/s|hsynz p8|57.16%|12M|20M|240MB/s|
+|zsyncmake -z|1M|20.0MB/s|`zsync`|57.16%|9M|25M|79MB/s|
+|hsync_make p1 -zsync|4M|412.6MB/s|hsynz p1|60.25%|4M|11M|165MB/s|
+|hsync_make p8 -zsync|14M|569.4MB/s|hsynz p8|60.25%|12M|19M|231MB/s|
+|hsync_make p8 -zsync|14M|568.6MB/s|`zsync`|60.25%|6M|18M|106MB/s|
+|hsync_make p1 gz -zsync|5M|22.2MB/s|hsynz p1|57.24%|4M|12M|169MB/s|
+|hsync_make p8 gz -zsync|29M|119.3MB/s|hsynz p8|57.24%|12M|20M|240MB/s|
+|hsync_make p8 gz -zsync|29M|119.7MB/s|`zsync`|57.25%|9M|25M|79MB/s|
+|hsync_make p1 lgz -zsync|13M|23.2MB/s|hsynz p1|57.18%|4M|12M|168MB/s|
+|hsync_make p8 lgz -zsync|96M|111.5MB/s|hsynz p8|57.18%|12M|20M|235MB/s|
+|hsync_make p8 lgz -zsync|96M|111.6MB/s|`zsync`|57.19%|9M|25M|77MB/s|
+|hsync_make p1|4M|1517.4MB/s|hsynz p1|59.82%|4M|10M|229MB/s|
+|hsync_make p8|10M|2200.1MB/s|hsynz p8|59.82%|12M|18M|355MB/s|
+|hsync_make p1 zlib|5M|22.9MB/s|hsynz p1|56.17%|4M|11M|242MB/s|
+|hsync_make p8 zlib|29M|121.8MB/s|hsynz p8|56.17%|12M|19M|383MB/s|
+|hsync_make p1 ldef|14M|24.1MB/s|hsynz p1|56.11%|4M|11M|242MB/s|
+|hsync_make p8 ldef|96M|112.0MB/s|hsynz p8|56.11%|12M|19M|382MB/s|
+|hsync_make p1 gz|5M|23.1MB/s|hsynz p1|56.44%|4M|11M|242MB/s|
+|hsync_make p8 gz|29M|122.3MB/s|hsynz p8|56.44%|12M|19M|382MB/s|
+|hsync_make p1 lgz|14M|24.0MB/s|hsynz p1|56.38%|4M|11M|240MB/s|
+|hsync_make p8 lgz|96M|111.7MB/s|hsynz p8|56.38%|12M|19M|380MB/s|
+|hsync_make p1 zstd|534M|2.6MB/s|hsynz p1|55.22%|24M|28M|234MB/s|
+|hsync_make p8 zstd|3443M|10.0MB/s|hsynz p8|55.22%|24M|28M|361MB/s|
+||
+|hsign_diff p1|3M|392.8MB/s|hpatchz|58.92%|3M|4M|2134MB/s|
+|hsign_diff p8|11M|1043.7MB/s|hpatchz|58.92%|3M|4M|2152MB/s|
+|hsign_diff p1 zlib|3M|54.0MB/s|hpatchz|54.77%|4M|4M|978MB/s|
+|hsign_diff p8 zlib|11M|265.7MB/s|hpatchz|54.77%|4M|4M|972MB/s|
+|hsign_diff p1 ldef|15M|53.4MB/s|hpatchz|54.64%|4M|4M|667MB/s|
+|hsign_diff p8 ldef|119M|212.4MB/s|hpatchz|54.64%|4M|4M|661MB/s|
+|hsign_diff p1 zstd|213M|11.2MB/s|hpatchz|53.89%|20M|20M|1461MB/s|
+|hsign_diff p8 zstd|1087M|13.3MB/s|hpatchz|53.89%|20M|20M|1459MB/s|
    
 
 ---

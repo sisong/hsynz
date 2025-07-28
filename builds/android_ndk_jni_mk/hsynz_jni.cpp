@@ -59,7 +59,7 @@ extern "C" {
         inline int getNextRanges(jlong* dstRanges,int maxGetRangeLen){
             assert(sizeof(jlong)==sizeof(hpatch_StreamPos_t));
             return (int)TNeedSyncInfos_getNextRanges(needSyncInfo,(hpatch_StreamPos_t*)dstRanges,maxGetRangeLen,
-                                                     &curBlockIndex,&curPosInNewSyncData);
+                                                     &curBlockIndex,&curPosInNewSyncData,0); //now not support reload a byte for zsync
         }
     };
 
@@ -81,14 +81,17 @@ extern "C" {
     }
 
     static hpatch_BOOL TReadSyncDataListener_readSyncDataBegin(struct  IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo,
-                                                               uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData){
+                                                               uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,uint32_t isReLoadNewHalf,
+                                                               hpatch_StreamPos_t posInNeedSyncData,uint32_t isReLoadDiffHalf){
         TReadSyncDataListener* self=(TReadSyncDataListener*)listener->readSyncDataImport;
+        if ((isReLoadNewHalf|isReLoadDiffHalf)) return hpatch_FALSE; //now not support reload a byte for zsync
         self->cNeedRanges->needSyncInfo=needSyncInfo;
         self->cNeedRanges->curBlockIndex=blockIndex;
         self->cNeedRanges->curPosInNewSyncData=posInNewSyncData;
 
         const TNeedDownloadRangesIDs* needRangesIDs=getNeedDownloadRangesIDs();
-        self->jenv->SetLongField(self->needRanges,needRangesIDs->sumRangeCount,(jlong)TNeedSyncInfos_getRangeCount(needSyncInfo,blockIndex,posInNewSyncData));
+        self->jenv->SetLongField(self->needRanges,needRangesIDs->sumRangeCount,
+                                 (jlong)TNeedSyncInfos_getRangeCount(needSyncInfo,blockIndex,posInNewSyncData,0)); //now not support reload a byte for zsync
         self->jenv->SetLongField(self->needRanges,needRangesIDs->sumDataLen,   (jlong)(size_t)(needSyncInfo->needSyncSumSize-posInNeedSyncData));
         self->jenv->SetLongField(self->needRanges,needRangesIDs->cNeedRangesHandle,(jlong)(size_t)self->cNeedRanges);
         
@@ -97,9 +100,11 @@ extern "C" {
         return ret;
     }
     static hpatch_BOOL TReadSyncDataListener_readSyncData(struct IReadSyncDataListener* listener,uint32_t blockIndex,
-                                                          hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData,
+                                                          hpatch_StreamPos_t posInNewSyncData,uint32_t isReLoadNewHalf,
+                                                          hpatch_StreamPos_t posInNeedSyncData,uint32_t isReLoadDiffHalf,
                                                           unsigned char* out_syncDataBuf,uint32_t syncDataSize){
         TReadSyncDataListener* self=(TReadSyncDataListener*)listener->readSyncDataImport;
+        if ((isReLoadNewHalf|isReLoadDiffHalf)) return hpatch_FALSE; //now not support reload a byte for zsync
         const IRangeDownloaderIDs* rangeDownloaderIDs=getRangeDownloaderIDs();
         self->jenv->SetLongField(self->dstBuf,rangeDownloaderIDs->cBufHandle,(jlong)(size_t)out_syncDataBuf);
         jboolean ret=self->jenv->CallBooleanMethod(self->hsynzDownloader,rangeDownloaderIDs->readDownloadedData,
