@@ -37,6 +37,14 @@
 #ifndef _IsNeedIncludeDefaultCompressHead
 #   define _IsNeedIncludeDefaultCompressHead 1
 #endif
+#ifndef __DEF_default_maxCompressedSize
+#define __DEF_default_maxCompressedSize
+static hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
+    hpatch_StreamPos_t result=dataSize+(dataSize>>3)+256;
+    assert(result>dataSize);
+    return result;
+}
+#endif 
 #endif
 #ifdef __cplusplus
 extern "C" {
@@ -49,6 +57,23 @@ static int _dictSizeToDictBits(size_t dictSize){
         if (bits==sizeof(size_t)*8) break;
     }
     return bits;
+}
+
+static size_t _deflate_fillUncompressBlockForAlignCode(hpatch_byte* last_code,hpatch_byte lastByteHalfBits){
+    if (last_code){
+        hpatch_byte* last_code0=last_code;
+        hpatch_byte bitvalue=(*last_code)&((1<<lastByteHalfBits)-1);
+        assert((lastByteHalfBits>=1)&&(lastByteHalfBits<=7));
+		*last_code=bitvalue; //edit a byte
+        if (lastByteHalfBits>5)//need 3bit save uncompress block infos
+            *(++last_code)=0;
+        *(++last_code)=0;
+        *(++last_code)=0;
+        *(++last_code)=0xFF;
+        *(++last_code)=0xFF;
+        return last_code-last_code0; //return add bytes
+    }
+    return 5; //if (last_code==0) return max add bytes
 }
 
 #ifdef  _CompressPlugin_zlib
@@ -104,15 +129,22 @@ static int _dictSizeToDictBits(size_t dictSize){
         }
     }
     
-    static void _zlib_dictUncompress(hpatch_decompressHandle dictHandle,size_t blockIndex,size_t lastCompressedBlockIndex,
+    static void _zlib_dictUncompress(hsync_dictDecompressHandle dictHandle,size_t blockIndex,size_t lastCompressedBlockIndex,
                                      const hpatch_byte* dataBegin,const hpatch_byte* dataEnd){
         _TDictDecompressPlugin_zlib_data* self=(_TDictDecompressPlugin_zlib_data*)dictHandle;
         _CacheBlockDict_dictUncompress(&self->cache,blockIndex,lastCompressedBlockIndex,dataBegin,dataEnd);
     }
 
-    static hpatch_BOOL _zlib_dictDecompress(hpatch_decompressHandle dictHandle,size_t blockIndex,
+    static inline unsigned int __zlib_avail_in_bits(z_streamp stream){
+        unsigned long shift_v;
+        unsigned int shift_bit;
+        zlib_inflate_shift_value(stream,&shift_v,&shift_bit);
+        return shift_bit;
+    }
+
+    static hpatch_BOOL _zlib_dictDecompress(hsync_dictDecompressHandle dictHandle,size_t blockIndex,
                                             const hpatch_byte* in_code,const hpatch_byte* in_codeEnd,
-                                            hpatch_byte* out_dataBegin,hpatch_byte* out_dataEnd){
+                                            hpatch_byte* out_dataBegin,hpatch_byte* out_dataEnd,hpatch_byte skipBitsInFirstCodeByte){
         _TDictDecompressPlugin_zlib_data* self=(_TDictDecompressPlugin_zlib_data*)dictHandle;
         int z_ret;
         const size_t dataSize=out_dataEnd-out_dataBegin;
@@ -127,28 +159,34 @@ static int _dictSizeToDictBits(size_t dictSize){
             if (inflateSetDictionary(&self->stream,dict,(uInt)dictSize)!=Z_OK)
                 return hpatch_FALSE; //error
         }
+        if (skipBitsInFirstCodeByte>0){
+            if (in_code>=in_codeEnd) return hpatch_FALSE;//error
+            const unsigned short state=(*in_code++)>>skipBitsInFirstCodeByte;
+            zlib_inflate_set_shift_value(&self->stream,state,8-skipBitsInFirstCodeByte);
+        }else
+            zlib_inflate_set_shift_value(&self->stream,0,0);
+
         self->stream.next_in =(Bytef*)in_code;
         self->stream.avail_in=(uInt)(in_codeEnd-in_code);
         assert(self->stream.avail_in==(size_t)(in_codeEnd-in_code));
         self->stream.next_out =out_dataBegin;
         self->stream.avail_out=(uInt)dataSize;
         assert(self->stream.avail_out==dataSize);
-        z_ret=inflate(&self->stream,Z_PARTIAL_FLUSH);
+        z_ret=inflate(&self->stream,Z_SYNC_FLUSH);
         if (z_ret==Z_STREAM_END)
             self->dict_isInReset=hpatch_TRUE;
         else if (z_ret!=Z_OK)
             return hpatch_FALSE;//error
-        if (self->stream.avail_in!=0)
+        if (self->stream.avail_out)
             return hpatch_FALSE;//error
-        if (self->stream.total_out!=dataSize)
-            return hpatch_FALSE;//error
-        self->stream.total_out=0;
+        if ((self->stream.avail_in)||(__zlib_avail_in_bits(&self->stream)))
+            self->dict_isInReset=hpatch_TRUE;
         return hpatch_TRUE;
     }
     
     static const TDictDecompressPlugin_zlib zlibDictDecompressPlugin={
-        { _zlib_dict_is_can_open, _zlib_dictDecompressOpen,
-          _zlib_dictDecompressClose, _zlib_dictDecompress,_zlib_dictUncompress },
+        { _zlib_dict_is_can_open,_default_maxCompressedSize, _zlib_dictDecompressOpen,
+          _zlib_dictDecompressClose, _zlib_dictDecompress,_zlib_dictUncompress,_deflate_fillUncompressBlockForAlignCode },
         MAX_WBITS };
     
 #endif//_CompressPlugin_zlib
@@ -207,15 +245,15 @@ static int _dictSizeToDictBits(size_t dictSize){
         }
     }
     
-    static void _ldef_dictUncompress(hpatch_decompressHandle dictHandle,size_t blockIndex,size_t lastCompressedBlockIndex,
+    static void _ldef_dictUncompress(hsync_dictDecompressHandle dictHandle,size_t blockIndex,size_t lastCompressedBlockIndex,
                                      const hpatch_byte* dataBegin,const hpatch_byte* dataEnd){
         _TDictDecompressPlugin_ldef_data* self=(_TDictDecompressPlugin_ldef_data*)dictHandle;
         _CacheBlockDict_dictUncompress(&self->cache,blockIndex,lastCompressedBlockIndex,dataBegin,dataEnd);
     }
 
-    static hpatch_BOOL _ldef_dictDecompress(hpatch_decompressHandle dictHandle,size_t blockIndex,
+    static hpatch_BOOL _ldef_dictDecompress(hsync_dictDecompressHandle dictHandle,size_t blockIndex,
                                             const hpatch_byte* in_code,const hpatch_byte* in_codeEnd,
-                                            hpatch_byte* out_dataBegin,hpatch_byte* out_dataEnd){
+                                            hpatch_byte* out_dataBegin,hpatch_byte* out_dataEnd,hpatch_byte skipBitsInFirstCodeByte){
         _TDictDecompressPlugin_ldef_data* self=(_TDictDecompressPlugin_ldef_data*)dictHandle;
         enum libdeflate_result ret;
         const size_t dataSize=out_dataEnd-out_dataBegin;
@@ -229,12 +267,17 @@ static int _dictSizeToDictBits(size_t dictSize){
                 if (dataSize>(size_t)(self->tempDecBufEnd-dict-dictSize))
                     return hpatch_FALSE;//error
             }
-            //not need: libdeflate_deflate_decompress_block_reset(self->d);
         }
-        
+        if (skipBitsInFirstCodeByte>0){
+            if (in_code>=in_codeEnd) return hpatch_FALSE;//error
+            const unsigned short state=(*in_code++)>>skipBitsInFirstCodeByte;
+            libdeflate_deflate_decompress_set_state(self->d,(state<<3)|(8-skipBitsInFirstCodeByte));
+        }else
+            libdeflate_deflate_decompress_set_state(self->d,0);
+
         ret=libdeflate_deflate_decompress_block(self->d,in_code,in_codeEnd-in_code,
 			        isHaveDict?dict:out_dataBegin,dictSize,dataSize,0,0,
-                    LIBDEFLATE_STOP_BY_ANY_BLOCK_AND_FULL_OUTPUT_AND_IN_BYTE_ALIGN,0);
+                    LIBDEFLATE_STOP_BY_ANY_BLOCK_AND_FULL_OUTPUT,0);
         if (ret!=LIBDEFLATE_SUCCESS)
             return hpatch_FALSE;//error
         if (isHaveDict)
@@ -243,8 +286,8 @@ static int _dictSizeToDictBits(size_t dictSize){
     }
     
     static const TDictDecompressPlugin_ldef ldefDictDecompressPlugin={
-        { _ldef_dict_is_can_open, _ldef_dictDecompressOpen,
-          _ldef_dictDecompressClose, _ldef_dictDecompress,_ldef_dictUncompress },
+        { _ldef_dict_is_can_open,_default_maxCompressedSize, _ldef_dictDecompressOpen,
+          _ldef_dictDecompressClose, _ldef_dictDecompress,_ldef_dictUncompress,0 },
         MAX_WBITS };
     
 #endif//_CompressPlugin_ldef
@@ -292,7 +335,7 @@ static int _dictSizeToDictBits(size_t dictSize){
         }
     }
     
-    static void _zstd_dictUncompress(hpatch_decompressHandle dictHandle,size_t blockIndex,size_t lastCompressedBlockIndex,
+    static void _zstd_dictUncompress(hsync_dictDecompressHandle dictHandle,size_t blockIndex,size_t lastCompressedBlockIndex,
                                      const hpatch_byte* dataBegin,const hpatch_byte* dataEnd){
         _TDictDecompressPlugin_zstd_data* self=(_TDictDecompressPlugin_zstd_data*)dictHandle;
         _CacheBlockDict_dictUncompress(&self->cache,blockIndex,lastCompressedBlockIndex,dataBegin,dataEnd);
@@ -345,9 +388,9 @@ static int _dictSizeToDictBits(size_t dictSize){
 
     #define _zstd_checkDec(v)  do { if (ZSTD_isError(v)) return hpatch_FALSE; } while(0)
 
-    static hpatch_BOOL _zstd_dictDecompress(hpatch_decompressHandle dictHandle,size_t blockIndex,
+    static hpatch_BOOL _zstd_dictDecompress(hsync_dictDecompressHandle dictHandle,size_t blockIndex,
                                             const hpatch_byte* in_code,const hpatch_byte* in_codeEnd,
-                                            hpatch_byte* out_dataBegin,hpatch_byte* out_dataEnd){
+                                            hpatch_byte* out_dataBegin,hpatch_byte* out_dataEnd,hpatch_byte skipBitsInFirstCodeByte){
         _TDictDecompressPlugin_zstd_data* self=(_TDictDecompressPlugin_zstd_data*)dictHandle;
         ZSTD_DCtx* s=self->s;
         ZSTD_inBuffer       s_input;
@@ -365,6 +408,7 @@ static int _dictSizeToDictBits(size_t dictSize){
         s_output.dst=out_dataBegin;
         s_output.size=dataSize;
         s_output.pos=0;
+        if (skipBitsInFirstCodeByte){ assert(false); return hpatch_FALSE; }//unsupport skipBitsInFirstCodeByte>0
         _zstd_checkDec(ZSTD_decompressStream(s,&s_output,&s_input));
         if (s_input.pos!=s_input.size) return hpatch_FALSE;
         if (s_output.pos!=dataSize) return hpatch_FALSE;
@@ -372,7 +416,7 @@ static int _dictSizeToDictBits(size_t dictSize){
     }
     
     static const TDictDecompressPlugin_zstd zstdDictDecompressPlugin={
-        { _zstd_dict_is_can_open, _zstd_dictDecompressOpen,
+        { _zstd_dict_is_can_open,_default_maxCompressedSize, _zstd_dictDecompressOpen,
           _zstd_dictDecompressClose, _zstd_dictDecompress, _zstd_dictUncompress },
         0 };
 #endif//_CompressPlugin_zstd

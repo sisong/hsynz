@@ -242,6 +242,8 @@
     <ClCompile Include="..\..\HDiffPatch\libhsync\sync_make\match_in_new.cpp" />
     <ClCompile Include="..\..\HDiffPatch\libhsync\sync_make\sync_info_make.cpp" />
     <ClCompile Include="..\..\HDiffPatch\libhsync\sync_make\sync_make.cpp" />
+    <ClCompile Include="..\..\HDiffPatch\libhsync\zsync_make_wrapper\zsync_info_make.cpp" />
+    <ClCompile Include="..\..\HDiffPatch\libhsync\zsync_make_wrapper\zsync_make_wrapper.cpp" />
     <ClCompile Include="..\..\hsync_import_patch.cpp" />
     <ClCompile Include="..\..\hsync_make.cpp" />
   </ItemGroup>

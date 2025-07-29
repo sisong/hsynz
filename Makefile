@@ -5,6 +5,7 @@ ZLIB     := 1
 LDEF     := 1
 ZSTD     := 1
 HTTPS    := 1
+ZSYNC    := 1
 
 STATIC_CPP := 0
 STATIC_C := 0
@@ -72,6 +73,18 @@ else
     HDiffPatch/libhsync/sync_make/dir_sync_make.o
 endif
 
+ifeq ($(ZSYNC),0)
+else
+  CLIENT_OBJ += \
+    HDiffPatch/libhsync/zsync_client_wrapper/zsync_client_wrapper.o \
+    HDiffPatch/libhsync/zsync_client_wrapper/zsync_info_client.o \
+    HDiffPatch/libhsync/zsync_client_wrapper/zsync_match_in_old.o
+
+  MAKE_OBJ += \
+    HDiffPatch/libhsync/zsync_make_wrapper/zsync_make_wrapper.o \
+    HDiffPatch/libhsync/zsync_make_wrapper/zsync_info_make.o
+endif
+
 LDEF_PATH := libdeflate
 ifeq ($(LDEF),0)
 else
@@ -136,9 +149,9 @@ endif
 # https://github.com/sisong/minihttp
 HTTP_PATH := minihttp
 HTTP_OBJ := $(HTTP_PATH)/minihttp.o
+HTTPS_C:= $(HTTP_PATH)/mbedtls/library
 ifeq ($(HTTPS),0)
 else
-    HTTPS_C:= $(HTTP_PATH)/mbedtls/library
 	CLIENT_OBJ+=$(HTTPS_C)/md5.o $(HTTPS_C)/sha256.o $(HTTPS_C)/sha512.o 
     HTTP_OBJ += $(HTTPS_C)/aes.o $(HTTPS_C)/aesni.o $(HTTPS_C)/arc4.o \
 				$(HTTPS_C)/asn1parse.o $(HTTPS_C)/asn1write.o $(HTTPS_C)/base64.o \
@@ -150,13 +163,13 @@ else
 				$(HTTPS_C)/ecp.o $(HTTPS_C)/ecp_curves.o $(HTTPS_C)/entropy.o \
 				$(HTTPS_C)/entropy_poll.o $(HTTPS_C)/error.o $(HTTPS_C)/gcm.o \
 				$(HTTPS_C)/havege.o $(HTTPS_C)/hmac_drbg.o $(HTTPS_C)/md.o \
-				$(HTTPS_C)/md_wrap.o $(HTTPS_C)/md2.o $(HTTPS_C)/md4.o \
+				$(HTTPS_C)/md_wrap.o \
 				$(HTTPS_C)/memory_buffer_alloc.o $(HTTPS_C)/net_sockets.o \
 				$(HTTPS_C)/oid.o $(HTTPS_C)/padlock.o $(HTTPS_C)/pem.o \
 				$(HTTPS_C)/pk.o $(HTTPS_C)/pk_wrap.o $(HTTPS_C)/pkcs5.o \
 				$(HTTPS_C)/pkcs11.o $(HTTPS_C)/pkcs12.o $(HTTPS_C)/pkparse.o \
 				$(HTTPS_C)/pkwrite.o $(HTTPS_C)/platform.o $(HTTPS_C)/ripemd160.o \
-				$(HTTPS_C)/rsa.o $(HTTPS_C)/rsa_internal.o $(HTTPS_C)/sha1.o \
+				$(HTTPS_C)/rsa.o $(HTTPS_C)/rsa_internal.o \
 				$(HTTPS_C)/ssl_cache.o \
 				$(HTTPS_C)/ssl_ciphersuites.o $(HTTPS_C)/ssl_cli.o $(HTTPS_C)/ssl_cookie.o \
 				$(HTTPS_C)/ssl_srv.o $(HTTPS_C)/ssl_ticket.o $(HTTPS_C)/ssl_tls.o \
@@ -164,6 +177,10 @@ else
 				$(HTTPS_C)/version_features.o $(HTTPS_C)/x509.o $(HTTPS_C)/x509_create.o \
 				$(HTTPS_C)/x509_crl.o $(HTTPS_C)/x509_crt.o $(HTTPS_C)/x509_csr.o \
 				$(HTTPS_C)/x509write_crt.o $(HTTPS_C)/x509write_csr.o $(HTTPS_C)/xtea.o
+endif
+ifeq ($(ZSYNC),0)
+else
+CLIENT_OBJ+=$(HTTPS_C)/md4.o $(HTTPS_C)/sha1.o
 endif
 
 MAKE_OBJ += $(CLIENT_OBJ)
@@ -178,6 +195,12 @@ ifeq ($(DIR_DIFF),0)
 else
   DEF_FLAGS += -D_IS_NEED_DIR_DIFF_PATCH=1
 endif
+ifeq ($(ZSYNC),0)
+  DEF_FLAGS += -D_IS_NEED_ZSYNC=0
+else
+  DEF_FLAGS += -D_IS_NEED_ZSYNC=1
+endif
+  
 ifeq ($(MT),0)
   DEF_FLAGS += \
     -D_IS_USED_MULTITHREAD=0 
@@ -211,6 +234,11 @@ ifeq ($(HTTPS),0)
 else
   DEF_FLAGS += -I$(HTTP_PATH)/mbedtls/include -DMINIHTTP_USE_MBEDTLS \
       -D_ChecksumPlugin_mbedtls_md5 -D_ChecksumPlugin_mbedtls_sha256 -D_ChecksumPlugin_mbedtls_sha512
+endif
+ifeq ($(ZSYNC),0)
+else
+  DEF_FLAGS += -I$(HTTP_PATH)/mbedtls/include -DMBEDTLS_MD4_C \
+      -D_ChecksumPlugin_mbedtls_md4 -D_ChecksumPlugin_mbedtls_sha1
 endif
 
 ifeq ($(M32),0)

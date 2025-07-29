@@ -1,16 +1,19 @@
-# [hsynz](https://github.com/sisong/hsynz)
-[![release](https://img.shields.io/badge/release-v1.2.0-blue.svg)](https://github.com/sisong/hsynz/releases) 
+# [hsynz]
+[![release](https://img.shields.io/badge/release-v1.3.0-blue.svg)](https://github.com/sisong/hsynz/releases) 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/sisong/hsynz/blob/main/LICENSE) 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](https://github.com/sisong/hsynz/pulls)
 [![+issue Welcome](https://img.shields.io/github/issues-raw/sisong/hsynz?color=green&label=%2Bissue%20welcome)](https://github.com/sisong/hsynz/issues)   
-
-[![Build Status](https://github.com/sisong/hsynz/workflows/ci/badge.svg?branch=main)](https://github.com/sisong/hsynz/actions?query=workflow%3Aci+branch%3Amain)   
+[![Build Status](https://github.com/sisong/hsynz/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sisong/hsynz/actions?query=branch%3Amain)   
 
  中文版 | [english](README.md)   
 
-hsynz 是一个用使用同步算法来进行增量更新的库，类似于 [zsync](http://zsync.moria.org.uk)。   
+[hsynz] 是一个用使用同步算法来进行增量更新的库，类似于 [zsync]。   
 通过http(s)实现rsync；在客户端实现同步算法，服务器端只需要提供http(s)的CDN。支持zstd、libdeflate和zlib压缩，支持大文件和目录(文件夹)，支持多线程。   
    
+[hsynz] 定义了自己的文件格式(.hsyni 和.hsynz文件)，同时这个库也兼容了 [zsync] 的文件格式(包括使用和创建 .zsync文件 和 其.gz文件)。   
+
+[zsync]: http://zsync.moria.org.uk
+[hsynz]: https://github.com/sisong/hsynz
 
 适用的场景：旧版本数量非常多 或者 无法得到旧版本(没有保存或被修改等) 从而无法提前计算出全部的增量补丁，这时推荐使用hsynz同步分发技术。   
    
@@ -25,8 +28,11 @@ hsync_demo提供了一个测试客户端demo，用于本地文件测试。
 hsync_http提供了一个支持http(s)的下载客户端demo，支持从提供http(s)文件下载服务的服务端(比如支持HTTP/1.1的多range请求的CDN服务器)进行同步更新。   
 提示：你也可以自定义其他通讯方式用于同步。   
    
+另外，如果你本地有新版本数据而没有旧版本的数据，但可以拿到旧版本数据的hash证书文件(.hsyni)，
+那也可以创建出一个 hpatchz 格式的补丁(使用场景类似 [rsync])；见 demo 命令行程序 **hsign_diff**。   
+   
 ---
-## 特性和 [zsync](http://zsync.moria.org.uk) 对比
+## 特性和 [zsync] 对比
 * 除了支持源和目标为文件，还为文件夹(目录)提供了支持。
 * 除了支持zlib压缩发布包；还支持libdeflate和zstd压缩，提供更好的压缩率，即下载的补丁包更小。
 * 服务端make时提供了多线程并行加速的支持。
@@ -102,6 +108,15 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
         -C-sha256
         -C-crc32
             警告: crc32不够强和安全!
+  -zsync[#KeY#=...#ValuE#=...[#KeY#=...#ValuE#=...]]
+      创建 out_hsyni_file(.zsync 文件格式) 或 out_hsynz_file(.gz 文件
+         格式) 兼容于 zsync。
+      校验算法默认使用 sha1 和 md4, 不需要设置 -C
+      -s-matchBlockSize 的大小必须满足 2^N; 如果使用了 -c-gzip 或 -c-lgzip (输出
+         .gz 文件), 推荐最大设置为 4k, 大于等于 8k 时很可能因为过大而失败。
+      key-value 字符串对会被写入 out_hsyni_file 文件; 如果需要,
+         你可以设置 Filename,Z-Filename,URL,Z-URL,MTime,Recompress,...
+      zsync 项目 https://zsync.moria.org.uk
   -n-maxOpenFileNumber
       当newDataPath为文件夹时，设置最大允许同时打开的文件数;
       maxOpenFileNumber>=8, 默认为48; 合适的限制值可能不同系统下不同。
@@ -138,6 +153,9 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
     对oldPath应用diffFile补丁文件后得到outNewPath;
   -diffi#cacheTempFile
     获得的同步信息保存到一个临时缓存文件cacheTempFile，同步打补丁的时候，就可以跳过同步信息的耗时计算过程;
+  -U
+    设置 hsynz_file_url 是压缩前的原始文件, 请忽略 hsyni_file 文件中的压缩信息，
+      直接访问 hsynz 文件中的未压缩数据。
   -cdl-{0|1}        或  -cdl-{off|on}
     是否开启断点续传;
     默认 -cdl-1 开启, 需要设置 -cdl-0 或 -cdl-off 来关闭续传模式;
@@ -179,7 +197,7 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
    
 
 ---
-## hsynz 和 [zsync](http://zsync.moria.org.uk) 性能对比:
+## [hsynz] 和 [zsync] 性能对比:
 测试用例([从 OneDrive 下载](https://1drv.ms/u/s!Aj8ygMPeifoQgUIZxYac5_uflNoN)):   
 | |新版本文件 <-- 旧版本|新版本大小|旧版本大小|
 |----:|:----|----:|----:|
@@ -206,43 +224,67 @@ hsync_make: [options] newDataPath out_hsyni_file [out_hsynz_file]
    
 
 **测试PC**: Windows11, CPU R9-7945HX, SSD PCIe4.0x4 4T, DDR5 5200MHz 32Gx2   
-**参与测试的程序版本**: hsynz 1.1.1, zsync 0.6.2  (更多程序的对比测试结果见 [HDiffPatch](https://github.com/sisong/HDiffPatch))   
+**参与测试的程序版本**: hsynz 1.3.0, zsync 0.6.3   
 **程序测试参数**:   
 **zsync** 运行 make 参数 `zsyncmake -b 2048 -o {out_newi} {new}`,   
 客户端同步 diff&patch 时参数 `zsync -i {old} -o {out_new} {newi}` (所有文件都在本地)   
 **zsync -z** 运行 make 参数 `zsyncmake -b 2048 -z -u {new.gz} -o {out_newi} {new}`   
 **hsynz** 运行 make 参数 `hsync_make -s-2k {new} {out_newi} [{-c-?} {out_newz}]`,   
+make时添加`-zsync`参数表示创建兼容zsync的文件格式，   
 客户端同步 diff&patch 时参数 `hsync_demo {old} {newi} {newz} {out_new}` (所有文件都在本地)   
 **hsynz p1** 运行 make 时没有压缩器，也没有压缩文件out_newz输出, 添加了参数 `-p-1`   
 **hsynz p8** 运行 make 时没有压缩器，也没有压缩文件out_newz输出, 添加了参数 `-p-8`   
-**hsynz p1 -zlib** 运行 make 时添加 `-p-1 -c-zlib-9` (运行 `hsync_demo` 时添加 `-p-1`)   
-**hsynz p8 -zlib** 运行 make 时添加 `-p-8 -c-zlib-9` (运行 `hsync_demo` 时添加 `-p-8`)   
-**hsynz p1 -gzip** 运行 make 时添加 `-p-1 -c-gzip-9` (运行 `hsync_demo` 时添加 `-p-1`)   
-**hsynz p8 -gzip** 运行 make 时添加 `-p-8 -c-gzip-9` (运行 `hsync_demo` 时添加 `-p-8`)   
-**hsynz p1 -ldef** 运行 make 时添加 `-p-1 -c-ldef-12` (运行 `hsync_demo` 时添加 `-p-1`)   
-**hsynz p8 -ldef** 运行 make 时添加 `-p-8 -c-ldef-12` (运行 `hsync_demo` 时添加 `-p-8`)   
-**hsynz p1 -lgzip** 运行 make 时添加 `-p-1 -c-lgzip-12` (运行 `hsync_demo` 时添加 `-p-1`)   
-**hsynz p8 -lgzip** 运行 make 时添加 `-p-8 -c-lgzip-12` (运行 `hsync_demo` 时添加 `-p-8`)   
-**hsynz p1 -zstd** 运行 make 时添加 `-p-1 -c-zstd-21-24` (运行 `hsync_demo` 时添加 `-p-1`)   
-**hsynz p8 -zstd** 运行 make 时添加 `-p-8 -c-zstd-21-24` (运行 `hsync_demo` 时添加 `-p-8`)   
+**hsynz p1 zlib** 运行 make 时添加 `-p-1 -c-zlib-9` (运行 `hsync_demo` 时添加 `-p-1`)   
+**hsynz p8 zlib** 运行 make 时添加 `-p-8 -c-zlib-9` (运行 `hsync_demo` 时添加 `-p-8`)   
+**hsynz p1 gz** 运行 make 时添加 `-p-1 -c-gzip-9` (运行 `hsync_demo` 时添加 `-p-1`)   
+**hsynz p8 gz** 运行 make 时添加 `-p-8 -c-gzip-9` (运行 `hsync_demo` 时添加 `-p-8`)   
+**hsynz p1 ldef** 运行 make 时添加 `-p-1 -c-ldef-12` (运行 `hsync_demo` 时添加 `-p-1`)   
+**hsynz p8 ldef** 运行 make 时添加 `-p-8 -c-ldef-12` (运行 `hsync_demo` 时添加 `-p-8`)   
+**hsynz p1 lgz** 运行 make 时添加 `-p-1 -c-lgzip-12` (运行 `hsync_demo` 时添加 `-p-1`)   
+**hsynz p8 lgz** 运行 make 时添加 `-p-8 -c-lgzip-12` (运行 `hsync_demo` 时添加 `-p-8`)   
+**hsynz p1 zstd** 运行 make 时添加 `-p-1 -c-zstd-21-24` (运行 `hsync_demo` 时添加 `-p-1`)   
+**hsynz p8 zstd** 运行 make 时添加 `-p-8 -c-zstd-21-24` (运行 `hsync_demo` 时添加 `-p-8`)   
+附加测试了**hsign_diff**，可以只用old数据的.hsyni文件和new数据来创建兼容于hpatchz的补丁文件。   
    
 **测试平均结果**:
-|程序|压缩率|make内存|速度|sync内存|最大内存|速度|
-|:----|----:|----:|----:|----:|----:|----:|
-|zsync|52.94%|1M|353.9MB/s|7M|23M|34MB/s|
-|zsync -z|20.67%|1M|14.8MB/s|12M|37M|28MB/s|
-|hsynz p1|51.05%|5M|2039.5MB/s|5M|19M|307MB/s|
-|hsynz p8|51.05%|21M|4311.9MB/s|12M|27M|533MB/s|
-|hsynz p1 zlib|20.05%|6M|17.3MB/s|6M|22M|273MB/s|
-|hsynz p8 zlib|20.05%|30M|115.1MB/s|13M|29M|435MB/s|
-|hsynz p1 gzip|20.12%|6M|17.3MB/s|6M|22M|268MB/s|
-|hsynz p8 gzip|20.12%|30M|115.0MB/s|13M|29M|427MB/s|
-|hsynz p1 ldef|19.57%|15M|7.8MB/s|6M|22M|272MB/s|
-|hsynz p8 ldef|19.57%|96M|57.0MB/s|13M|29M|431MB/s|
-|hsynz p1 lgzip|19.64%|15M|7.9MB/s|6M|22M|267MB/s|
-|hsynz p8 lgzip|19.64%|96M|56.9MB/s|13M|29M|419MB/s|
-|hsynz p1 zstd|14.96%|532M|1.9MB/s|24M|34M|264MB/s|
-|hsynz p8 zstd|14.95%|3349M|10.1MB/s|24M|34M|410MB/s|
+|make|内存|速度|patch|压缩率|内存|最大内存|速度|
+|:----|----:|----:|:----|----:|----:|----:|----:|
+|zsyncmake|1M|381.6MB/s|hsynz p1|45.74%|6M|18M|181MB/s|
+|zsyncmake|1M|381.6MB/s|hsynz p8|45.74%|13M|27M|276MB/s|
+|zsyncmake|1M|383.4MB/s|`zsync`|45.75%|9M|38M|122MB/s|
+|zsyncmake -z|1M|14.8MB/s|hsynz p1|16.56%|6M|21M|169MB/s|
+|zsyncmake -z|1M|14.8MB/s|hsynz p8|16.56%|13M|29M|245MB/s|
+|zsyncmake -z|1M|14.9MB/s|`zsync`|16.58%|13M|52M|71MB/s|
+|hsync_make p1 -zsync|4M|430.9MB/s|hsynz p1|45.39%|6M|19M|187MB/s|
+|hsync_make p8 -zsync|14M|591.0MB/s|hsynz p8|45.39%|13M|27M|275MB/s|
+|hsync_make p8 -zsync|14M|590.9MB/s|`zsync`|45.39%|9M|37M|119MB/s|
+|hsync_make p1 gz -zsync|6M|16.9MB/s|hsynz p1|16.59%|6M|21M|174MB/s|
+|hsync_make p8 gz -zsync|29M|101.8MB/s|hsynz p8|16.59%|13M|29M|252MB/s|
+|hsync_make p8 gz -zsync|29M|101.8MB/s|`zsync`|16.60%|14M|52M|70MB/s|
+|hsync_make p1 lgz -zsync|14M|7.8MB/s|hsynz p1|16.21%|6M|21M|176MB/s|
+|hsync_make p8 lgz -zsync|95M|40.3MB/s|hsynz p8|16.21%|14M|29M|252MB/s|
+|hsync_make p8 lgz -zsync|95M|40.1MB/s|`zsync`|16.22%|14M|52M|70MB/s|
+|hsync_make p1|5M|2179.7MB/s|hsynz p1|44.57%|5M|19M|301MB/s|
+|hsync_make p8|12M|3709.2MB/s|hsynz p8|44.57%|13M|27M|478MB/s|
+|hsync_make p1 zlib|7M|17.5MB/s|hsynz p1|16.05%|6M|22M|270MB/s|
+|hsync_make p8 zlib|30M|105.0MB/s|hsynz p8|16.05%|13M|29M|407MB/s|
+|hsync_make p1 ldef|15M|8.0MB/s|hsynz p1|15.68%|6M|22M|270MB/s|
+|hsync_make p8 ldef|96M|40.6MB/s|hsynz p8|15.68%|13M|29M|405MB/s|
+|hsync_make p1 gz|7M|17.6MB/s|hsynz p1|16.12%|6M|22M|271MB/s|
+|hsync_make p8 gz|30M|104.9MB/s|hsynz p8|16.12%|13M|29M|408MB/s|
+|hsync_make p1 lgz|15M|7.9MB/s|hsynz p1|15.74%|6M|22M|270MB/s|
+|hsync_make p8 lgz|96M|40.6MB/s|hsynz p8|15.74%|13M|29M|405MB/s|
+|hsync_make p1 zstd|532M|1.8MB/s|hsynz p1|12.54%|24M|34M|263MB/s|
+|hsync_make p8 zstd|3353M|8.1MB/s|hsynz p8|12.54%|23M|34M|384MB/s|
+||
+|hsign_diff p1|4M|494.7MB/s|hpatchz|43.13%|3M|4M|2409MB/s|
+|hsign_diff p8|11M|1412.3MB/s|hpatchz|43.13%|3M|4M|2422MB/s|
+|hsign_diff p1 zlib|4M|42.9MB/s|hpatchz|14.78%|4M|4M|926MB/s|
+|hsign_diff p8 zlib|13M|246.3MB/s|hpatchz|14.79%|3M|4M|927MB/s|
+|hsign_diff p1 ldef|16M|20.1MB/s|hpatchz|14.38%|3M|4M|920MB/s|
+|hsign_diff p8 ldef|115M|104.4MB/s|hpatchz|14.38%|3M|4M|917MB/s|
+|hsign_diff p1 zstd|205M|8.3MB/s|hpatchz|11.17%|17M|21M|1369MB/s|
+|hsign_diff p8 zstd|1348M|17.2MB/s|hpatchz|11.17%|18M|21M|1316MB/s|
     
 
 ## 输入Apk文件进行测试: 
@@ -288,22 +330,44 @@ case list:
 **hsynz ...** make 参数 `-s-2k` 修改为 `-s-1k`   
 
 **测试平均结果**:
-|程序|压缩率|make内存|速度|sync内存|最大内存|速度|
-|:----|----:|----:|----:|----:|----:|----:|
-|zsync|62.80%|1M|329.8MB/s|6M|12M|76MB/s|
-|zsync -z|59.56%|1M|19.8MB/s|8M|19M|56MB/s|
-|hsynz p1|62.43%|4M|1533.5MB/s|4M|10M|236MB/s|
-|hsynz p8|62.43%|18M|2336.4MB/s|12M|18M|394MB/s|
-|hsynz p1 zlib|58.67%|5M|22.7MB/s|4M|11M|243MB/s|
-|hsynz p8 zlib|58.67%|29M|138.6MB/s|12M|19M|410MB/s|
-|hsynz p1 gzip|58.95%|5M|22.6MB/s|4M|11M|242MB/s|
-|hsynz p8 gzip|58.95%|29M|138.9MB/s|12M|19M|407MB/s|
-|hsynz p1 ldef|58.61%|14M|23.7MB/s|4M|11M|242MB/s|
-|hsynz p8 ldef|58.61%|96M|149.1MB/s|12M|19M|413MB/s|
-|hsynz p1 lgzip|58.90%|14M|23.6MB/s|4M|11M|240MB/s|
-|hsynz p8 lgzip|58.90%|96M|149.1MB/s|12M|19M|405MB/s|
-|hsynz p1 zstd|57.74%|534M|2.7MB/s|24M|28M|234MB/s|
-|hsynz p8 zstd|57.74%|3434M|13.4MB/s|24M|28M|390MB/s|
+|make|内存|速度|patch|压缩率|内存|最大内存|速度|
+|:----|----:|----:|:----|----:|----:|----:|----:|
+|zsyncmake|1M|352.4MB/s|hsynz p1|60.20%|4M|11M|163MB/s|
+|zsyncmake|1M|352.4MB/s|hsynz p8|60.20%|12M|19M|228MB/s|
+|zsyncmake|1M|353.6MB/s|`zsync`|60.20%|6M|18M|107MB/s|
+|zsyncmake -z|1M|20.0MB/s|hsynz p1|57.16%|4M|12M|170MB/s|
+|zsyncmake -z|1M|20.0MB/s|hsynz p8|57.16%|12M|20M|240MB/s|
+|zsyncmake -z|1M|20.0MB/s|`zsync`|57.16%|9M|25M|79MB/s|
+|hsync_make p1 -zsync|4M|412.6MB/s|hsynz p1|60.25%|4M|11M|165MB/s|
+|hsync_make p8 -zsync|14M|569.4MB/s|hsynz p8|60.25%|12M|19M|231MB/s|
+|hsync_make p8 -zsync|14M|568.6MB/s|`zsync`|60.25%|6M|18M|106MB/s|
+|hsync_make p1 gz -zsync|5M|22.2MB/s|hsynz p1|57.24%|4M|12M|169MB/s|
+|hsync_make p8 gz -zsync|29M|119.3MB/s|hsynz p8|57.24%|12M|20M|240MB/s|
+|hsync_make p8 gz -zsync|29M|119.7MB/s|`zsync`|57.25%|9M|25M|79MB/s|
+|hsync_make p1 lgz -zsync|13M|23.2MB/s|hsynz p1|57.18%|4M|12M|168MB/s|
+|hsync_make p8 lgz -zsync|96M|111.5MB/s|hsynz p8|57.18%|12M|20M|235MB/s|
+|hsync_make p8 lgz -zsync|96M|111.6MB/s|`zsync`|57.19%|9M|25M|77MB/s|
+|hsync_make p1|4M|1517.4MB/s|hsynz p1|59.82%|4M|10M|229MB/s|
+|hsync_make p8|10M|2200.1MB/s|hsynz p8|59.82%|12M|18M|355MB/s|
+|hsync_make p1 zlib|5M|22.9MB/s|hsynz p1|56.17%|4M|11M|242MB/s|
+|hsync_make p8 zlib|29M|121.8MB/s|hsynz p8|56.17%|12M|19M|383MB/s|
+|hsync_make p1 ldef|14M|24.1MB/s|hsynz p1|56.11%|4M|11M|242MB/s|
+|hsync_make p8 ldef|96M|112.0MB/s|hsynz p8|56.11%|12M|19M|382MB/s|
+|hsync_make p1 gz|5M|23.1MB/s|hsynz p1|56.44%|4M|11M|242MB/s|
+|hsync_make p8 gz|29M|122.3MB/s|hsynz p8|56.44%|12M|19M|382MB/s|
+|hsync_make p1 lgz|14M|24.0MB/s|hsynz p1|56.38%|4M|11M|240MB/s|
+|hsync_make p8 lgz|96M|111.7MB/s|hsynz p8|56.38%|12M|19M|380MB/s|
+|hsync_make p1 zstd|534M|2.6MB/s|hsynz p1|55.22%|24M|28M|234MB/s|
+|hsync_make p8 zstd|3443M|10.0MB/s|hsynz p8|55.22%|24M|28M|361MB/s|
+||
+|hsign_diff p1|3M|392.8MB/s|hpatchz|58.92%|3M|4M|2134MB/s|
+|hsign_diff p8|11M|1043.7MB/s|hpatchz|58.92%|3M|4M|2152MB/s|
+|hsign_diff p1 zlib|3M|54.0MB/s|hpatchz|54.77%|4M|4M|978MB/s|
+|hsign_diff p8 zlib|11M|265.7MB/s|hpatchz|54.77%|4M|4M|972MB/s|
+|hsign_diff p1 ldef|15M|53.4MB/s|hpatchz|54.64%|4M|4M|667MB/s|
+|hsign_diff p8 ldef|119M|212.4MB/s|hpatchz|54.64%|4M|4M|661MB/s|
+|hsign_diff p1 zstd|213M|11.2MB/s|hpatchz|53.89%|20M|20M|1461MB/s|
+|hsign_diff p8 zstd|1087M|13.3MB/s|hpatchz|53.89%|20M|20M|1459MB/s|
    
 
 ---

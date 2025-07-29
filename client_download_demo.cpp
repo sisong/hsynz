@@ -35,11 +35,13 @@ struct TDownloadEmulation {
 };
 
 static hpatch_BOOL _readSyncData(IReadSyncDataListener* listener,uint32_t blockIndex,
-                                 hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData,
+                                 hpatch_StreamPos_t posInNewSyncData,uint32_t isReLoadNewHalf,
+                                 hpatch_StreamPos_t posInNeedSyncData,uint32_t isReLoadDiffHalf,
                                  unsigned char* out_syncDataBuf,uint32_t syncDataSize){
 //warning: Read newSyncData from emulation data;
 //         In the actual project, these data need downloaded from server.
     TDownloadEmulation* self=(TDownloadEmulation*)listener->readSyncDataImport;
+    posInNewSyncData-=isReLoadNewHalf;
     return self->emulation_newSyncData->read(self->emulation_newSyncData,posInNewSyncData,out_syncDataBuf,
                                              out_syncDataBuf+syncDataSize);
 }

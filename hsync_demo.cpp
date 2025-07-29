@@ -28,6 +28,7 @@
  OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <vector>
+#include <math.h> //for floor
 #include "HDiffPatch/_clock_for_demo.h"
 #include "HDiffPatch/_atosize.h"
 #include "HDiffPatch/libParallel/parallel_import.h"
@@ -41,7 +42,13 @@
 #   define _IS_NEED_tempDirPatchListener 0
 #   include "HDiffPatch/hpatch_dir_listener.h"
 #endif
-#   include "hsync_import_patch.h"
+#ifndef _IS_NEED_ZSYNC
+#   define _IS_NEED_ZSYNC   1
+#endif
+#if (_IS_NEED_ZSYNC)
+#   include "HDiffPatch/libhsync/zsync_client_wrapper/zsync_client_wrapper.h"
+#endif
+#include "hsync_import_patch.h"
 #ifndef _IS_NEED_MAIN
 #   define  _IS_NEED_MAIN 1
 #endif
@@ -61,6 +68,7 @@
 #   define  printf(...)
 #   define  _log_info_utf8(...) do{}while(0)
 #endif
+
 
 typedef struct TSyncDownloadPlugin{
     //download range of file
@@ -112,6 +120,10 @@ hpatch_BOOL getSyncDownloadPlugin(TSyncDownloadPlugin* out_downloadPlugin);
 #   define _ChecksumPlugin_mbedtls_sha512
 #   define _ChecksumPlugin_mbedtls_sha256
 #   define _ChecksumPlugin_crc32
+#  if (_IS_NEED_ZSYNC)
+#   define _ChecksumPlugin_mbedtls_md4
+#   define _ChecksumPlugin_mbedtls_sha1
+#  endif
 #endif
 #include "HDiffPatch/checksum_plugin_demo.h"
 
@@ -147,6 +159,10 @@ static void printUsage(){
            "    saving diffInfo to cache file for optimize speed when continue sync patch;\n"
            "  -patch#diffFile\n"
            "    local patch(oldPath+diffFile) to outNewPath;\n"
+           "  -U\n"
+           "    set hsynz_file_" _NOTE_TEXT_URL " is the original file before compress, please ignore the\n"
+           "      compress info in hsyni_file and directly access the data of hsynz file\n"
+           "      without decompress.\n"
            "  -cdl-{0|1}        or  -cdl-{off|on}\n"
            "    continue download data from breakpoint;\n"
            "    DEFAULT -cdl-1 opened, need set -cdl-0 or -cdl-off to close continue mode;\n"
@@ -212,20 +228,20 @@ int sync_client_cmd_line(int argc, const char * argv[]);
 TSyncClient_resultType
     hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                       const std::vector<std::string>& ignoreOldPathList,
-                      const char* hsyni_file,IReadSyncDataListener* syncDataListener,
+                      const char* hsyni_file,hpatch_BOOL isIgnoreCompressInfo,IReadSyncDataListener* syncDataListener,
                       const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
-                      size_t kMaxOpenFileNumber,int threadNum);
+                      size_t kMaxOpenFileNumber,hpatch_BOOL isZsyncType,int threadNum);
 TSyncClient_resultType 
     hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                       const std::vector<std::string>& ignoreOldPathList,
-                      const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
+                      const char* hsyni_file,hpatch_BOOL isIgnoreCompressInfo,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                       const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
-                      size_t kStepRangeNumber,size_t kMaxOpenFileNumber,int threadNum);
+                      size_t kStepRangeNumber,size_t kMaxOpenFileNumber,hpatch_BOOL isZsyncType,int threadNum);
 #if (_IS_NEED_DIR_DIFF_PATCH)
 TSyncClient_resultType
     hsync_patch_2dir(const char* outNewDir,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
+                     const char* hsyni_file,hpatch_BOOL isIgnoreCompressInfo,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
                      size_t kStepRangeNumber,size_t kMaxOpenFileNumber,int threadNum);
 #endif
@@ -298,6 +314,10 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,md5ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&md5ChecksumPlugin;
 #endif
+#ifdef  _ChecksumPlugin_mbedtls_md4
+    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,md4ChecksumPlugin.checksumType())))
+        strongChecksumPlugin=&md4ChecksumPlugin;
+#endif
 #ifdef  _ChecksumPlugin_mbedtls_sha512
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,sha512ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&sha512ChecksumPlugin;
@@ -305,6 +325,10 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
 #ifdef  _ChecksumPlugin_mbedtls_sha256
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,sha256ChecksumPlugin.checksumType())))
         strongChecksumPlugin=&sha256ChecksumPlugin;
+#endif
+#ifdef  _ChecksumPlugin_mbedtls_sha1
+    if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,sha1ChecksumPlugin.checksumType())))
+        strongChecksumPlugin=&sha1ChecksumPlugin;
 #endif
 #ifdef  _ChecksumPlugin_crc32
     if ((!strongChecksumPlugin)&&(0==strcmp(strongChecksumType,crc32ChecksumPlugin.checksumType())))
@@ -319,31 +343,54 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
     }
 }
 
+    static inline double _to100r(hpatch_StreamPos_t haveSize,hpatch_StreamPos_t allSize){
+        return 100.0*haveSize/allSize;
+    }
+    static inline double _to100f(hpatch_StreamPos_t haveSize,hpatch_StreamPos_t allSize){
+        return floor(1000.0*haveSize/allSize)*0.1;
+    }
     static void printMatchResult(const TNeedSyncInfos* nsi) {
         const uint32_t kBlockCount=nsi->blockCount;
         const hpatch_StreamPos_t localDataSize=nsi->newDataSize-(nsi->kSyncBlockSize*(hpatch_StreamPos_t)nsi->needSyncBlockCount);
-        printf("  syncBlockCount: %d, /%d=%.1f%%\n  localDataSize : %" PRIu64 "\n  syncDataSize  : %" PRIu64 "\n",
-               nsi->needSyncBlockCount,kBlockCount,100.0*nsi->needSyncBlockCount/kBlockCount,
-               localDataSize,nsi->needSyncSumSize);
+        printf("  newDataSize   : %" PRIu64 "\n",nsi->newDataSize);
+        printf("  syncBlockSize : %d\n  syncBlockCount: %d, /%d=%.1f%%\n"
+               "  localDataSize : %" PRIu64 "\n  syncDataSize  : %" PRIu64 "\n",
+               nsi->kSyncBlockSize,nsi->needSyncBlockCount,kBlockCount,
+               _to100r(nsi->needSyncBlockCount,kBlockCount),localDataSize,nsi->needSyncSumSize);
         hpatch_StreamPos_t downloadSize=nsi->newSyncInfoSize+nsi->needSyncSumSize;
         printf("  downloadSize  : %" PRIu64 "+%" PRIu64 "= %" PRIu64 ", /%" PRIu64 "=%.1f%%",
                nsi->newSyncInfoSize,nsi->needSyncSumSize,downloadSize,
-               nsi->newDataSize,100.0*downloadSize/nsi->newDataSize);
+               nsi->newDataSize,_to100r(downloadSize,nsi->newDataSize));
         if ((nsi->newSyncDataSize>0)&&(nsi->newSyncDataSize<nsi->newDataSize)){
             hpatch_StreamPos_t maxDownloadSize=nsi->newSyncInfoSize+nsi->newSyncDataSize;
-            printf(" (/%" PRIu64 "=%.1f%%)",maxDownloadSize,100.0*downloadSize/maxDownloadSize);
+            printf(" (/%" PRIu64 "=%.1f%%)",maxDownloadSize,_to100r(downloadSize,maxDownloadSize));
         }
         printf("\n");
+        bool isLB=false;
         if (nsi->localDiffDataSize>0){
-            printf("\n  localDiffDataSize    : %" PRIu64 "\n",nsi->localDiffDataSize);
-            hpatch_StreamPos_t cdlSize=(nsi->needSyncSumSize>nsi->localDiffDataSize)?(nsi->needSyncSumSize-nsi->localDiffDataSize):0;
-            printf(  "  continue downloadSize: %" PRIu64 ", /%" PRIu64 "=%.1f%%\n",
-                   cdlSize,downloadSize,100.0*cdlSize/downloadSize);
+            if (!isLB) { isLB=true; printf("\n");}
+            hpatch_StreamPos_t haveSize=(nsi->localDiffDataSize<nsi->needSyncSumSize)?nsi->localDiffDataSize:nsi->needSyncSumSize;
+            haveSize+=nsi->newSyncInfoSize;
+            printf("  downloaded data size: %" PRIu64 ", /%" PRIu64 "=%.1f%%\n",
+                            haveSize,downloadSize,_to100f(haveSize,downloadSize));
+        }
+        if ((nsi->localNewDataSize>0)&&(nsi->newDataSize>0)){
+            if (!isLB) { isLB=true; printf("\n");}
+            hpatch_StreamPos_t haveSize=(nsi->localNewDataSize<nsi->newDataSize)?nsi->localNewDataSize:nsi->newDataSize;
+            printf("  download continue at new file pos: %" PRIu64 ", /%" PRIu64 "=%.1f%%\n",
+                            haveSize,nsi->newDataSize,_to100f(haveSize,nsi->newDataSize));
         }
     }
 //ISyncInfoListener::needSyncInfo
 static void _onNeedSyncInfo(ISyncInfoListener* listener,const TNeedSyncInfos* needSyncInfo){
     printMatchResult(needSyncInfo);
+}
+
+static void _onLoadedNewSyncInfo(ISyncInfoListener* listener,TNewDataSyncInfo* newSyncInfo){
+    if (newSyncInfo->fileChecksumPlugin==0){
+        printf("\nWANING: no file checksum info was found in sync infos,"
+               " and the created new's data can't be checksum for correctness!\n\n");
+    }
 }
 
 
@@ -409,12 +456,14 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     hpatch_BOOL isOutputVersion=_kNULL_VALUE;
     hpatch_BOOL isOldPathInputEmpty=_kNULL_VALUE;
     hpatch_BOOL isUsedDownloadContinue=_kNULL_VALUE;
+    hpatch_BOOL isIgnoreCompressInfo=_kNULL_VALUE;
     size_t      kStepRangeNumber=_kNULL_SIZE;
     size_t      kRetryDownloadNumber=_kNULL_SIZE;
     TSyncDiffType diffType=_kNULL_diffType;
     const char* hsyni_file_url=0;
     const char* diff_to_diff_file=0;
     const char* patch_by_diff_file=0;
+    hpatch_BOOL isZsyncType=hpatch_FALSE;
 //_IS_NEED_DIR_DIFF_PATCH
     size_t                      kMaxOpenFileNumber=_kNULL_SIZE; //only used in oldPath is dir
     std::vector<std::string>    ignoreOldPathList;
@@ -511,6 +560,10 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
                     _options_check(false,"-dl#? or -diff?");
                 }
             } break;
+            case 'U':{
+                _options_check((isIgnoreCompressInfo==_kNULL_VALUE)&&(op[2]=='\0'),"-U");
+                isIgnoreCompressInfo=hpatch_TRUE;
+            } break;
 #if (_IS_NEED_DIR_DIFF_PATCH)
             case 'n':{
                 const char* pnum=op+3;
@@ -551,6 +604,8 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
         isOutputVersion=hpatch_FALSE;
     if (isForceOverwrite==_kNULL_VALUE)
         isForceOverwrite=hpatch_FALSE;
+    if (isIgnoreCompressInfo==_kNULL_VALUE)
+        isIgnoreCompressInfo=hpatch_FALSE;
     if (kStepRangeNumber==_kNULL_SIZE)
         kStepRangeNumber=kStepRangeNumber_default;
     else if (kStepRangeNumber<1)
@@ -706,6 +761,18 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
     TSyncClient_resultType result=kSyncClient_ok;
     hpatch_BOOL newIsDir=hpatch_FALSE;
     result=checkNewSyncInfoType_by_file(hsyni_file,&newIsDir);
+#if (_IS_NEED_ZSYNC)
+    if (result==kSyncClient_newSyncInfoTypeError){//try check hsyni_file as zsync file
+        newIsDir=hpatch_FALSE;
+        TSyncClient_resultType ret=checkNewZsyncInfoType_by_file(hsyni_file);
+        if (ret==kSyncClient_ok){
+            result=kSyncClient_ok;
+            isZsyncType=hpatch_TRUE;
+            _check3(!oldIsDir,kSyncClient_pathTypeError,
+                    "now zsync patch unsupport oldPath \"",oldPath,"\" is dir, type");
+        }
+    }
+#endif
     _check3(result==kSyncClient_ok,result,
             "check hsyni_file \"",hsyni_file,"\" type");
     if (outNewPath&&(!newIsDir))
@@ -716,15 +783,15 @@ int sync_client_cmd_line(int argc, const char * argv[]) {
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (newIsDir)
         result=hsync_patch_2dir(outNewPath,oldPath,oldIsDir,ignoreOldPathList,
-                                hsyni_file,&downloadPlugin,hsynz_file_url,
+                                hsyni_file,isIgnoreCompressInfo,&downloadPlugin,hsynz_file_url,
                                 localDiffFile,diffType,isUsedDownloadContinue,
                                 kStepRangeNumber,kMaxOpenFileNumber,(int)threadNum);
     else
 #endif
         result=hsync_patch_2file(outNewPath,oldPath,oldIsDir,ignoreOldPathList,
-                                 hsyni_file,&downloadPlugin,hsynz_file_url,
+                                 hsyni_file,isIgnoreCompressInfo,&downloadPlugin,hsynz_file_url,
                                  localDiffFile,diffType,isUsedDownloadContinue,
-                                 kStepRangeNumber,kMaxOpenFileNumber,(int)threadNum);
+                                 kStepRangeNumber,kMaxOpenFileNumber,isZsyncType,(int)threadNum);
     _RETRY_DOWNLOAD_WHILE((result==kSyncClient_syncDataDownloadError)
                         ||(result==kSyncClient_readSyncDataBeginError)
                         ||(result==kSyncClient_readSyncDataError));
@@ -773,9 +840,9 @@ bool getFileSize(const char *path_utf8,hpatch_StreamPos_t* out_fileSize){
 static bool printFileInfo(const char *path_utf8,const char *tag,bool isOutSize=true){
 #if (_IS_NEED_PRINT_LOG)
     hpatch_StreamPos_t fileSize=0;
-    if (!getFileSize(path_utf8,&fileSize)) return false;
+    isOutSize=isOutSize&&getFileSize(path_utf8,&fileSize);
     if (isOutSize)
-        printf("%s: %" PRIu64 "   \"",tag,fileSize);
+        printf("%s: %" PRIu64 "  \"",tag,fileSize);
     else
         printf("%s: \"",tag);
     _log_info_utf8(path_utf8); printf("\"\n");
@@ -788,9 +855,9 @@ static const char* _kEmptyStr="";
 TSyncClient_resultType
    hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,IReadSyncDataListener* syncDataListener,
+                     const char* hsyni_file,hpatch_BOOL isIgnoreCompressInfo,IReadSyncDataListener* syncDataListener,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
-                     size_t kMaxOpenFileNumber,int threadNum){
+                     size_t kMaxOpenFileNumber,hpatch_BOOL isZsyncType,int threadNum){
     if (oldPath==0) oldPath=_kEmptyStr;
 #if (_IS_NEED_DIR_DIFF_PATCH)
     std::string _oldPath(oldPath); if (oldIsDir) assignDirTag(_oldPath); oldPath=_oldPath.c_str();
@@ -804,42 +871,62 @@ TSyncClient_resultType
     }
 #endif
     printFileInfo(hsyni_file,                                          "info .hsyni ");
+  #if (_IS_NEED_ZSYNC)
+    if (isZsyncType) printf("  hsync patch used .zsync file as .hsyni\n");
+  #endif
     if (localDiffFile){
-        if      (diffType==kSyncDiff_info) printFileInfo(localDiffFile,"diff  info  ",false);
-        else if (diffType==kSyncDiff_data) printFileInfo(localDiffFile,"diff  data  ",false);
+        if      (diffType==kSyncDiff_info) printFileInfo(localDiffFile,"diff  info  ");
+        else if (diffType==kSyncDiff_data) printFileInfo(localDiffFile,"diff  data  ");
         else                               printFileInfo(localDiffFile,"diff  file  ");
     }
-    if (outNewFile) printFileInfo(outNewFile,                          "out new file",false);
+    if (outNewFile) printFileInfo(outNewFile,                          "out new file",isUsedDownloadContinue);
 
     ISyncInfoListener listener; memset(&listener,0,sizeof(listener));
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.onNeedSyncInfo=_onNeedSyncInfo;
+    listener.onLoadedNewSyncInfo=_onLoadedNewSyncInfo;
     TSyncClient_resultType result=kSyncClient_ok;
 #if (_IS_NEED_DIR_DIFF_PATCH)
     if (oldIsDir){
+        assert(!isZsyncType);
         if ((localDiffFile==0)||(diffType==kSyncDiff_info))
-            result=sync_patch_2file(&listener,syncDataListener,oldManifest,hsyni_file,outNewFile,
+            result=sync_patch_2file(&listener,syncDataListener,oldManifest,hsyni_file,isIgnoreCompressInfo,outNewFile,
                                     isUsedDownloadContinue,localDiffFile,kMaxOpenFileNumber,threadNum);
         else if (outNewFile==0) //local diff
-            result=sync_local_diff_2file(&listener,syncDataListener,oldManifest,hsyni_file,localDiffFile,
+            result=sync_local_diff_2file(&listener,syncDataListener,oldManifest,hsyni_file,isIgnoreCompressInfo,localDiffFile,
                                          diffType,isUsedDownloadContinue,kMaxOpenFileNumber,threadNum);
         else //local patch
-            result=sync_local_patch_2file(&listener,localDiffFile,oldManifest,hsyni_file,outNewFile,
+            result=sync_local_patch_2file(&listener,localDiffFile,oldManifest,hsyni_file,isIgnoreCompressInfo,outNewFile,
                                           kMaxOpenFileNumber,threadNum);
     }else
 #endif
     {
         assert(!oldIsDir);
-        if ((localDiffFile==0)||(diffType==kSyncDiff_info))
-            result=sync_patch_file2file(&listener,syncDataListener,oldPath,hsyni_file,outNewFile,
-                                        isUsedDownloadContinue,localDiffFile,threadNum);
-        else if (outNewFile==0) //local diff
-            result=sync_local_diff_file2file(&listener,syncDataListener,oldPath,hsyni_file,
-                                             localDiffFile,diffType,isUsedDownloadContinue,threadNum);
-        else //local patch
-            result=sync_local_patch_file2file(&listener,localDiffFile,oldPath,hsyni_file,
-                                              outNewFile,isUsedDownloadContinue,threadNum);
+    #if (_IS_NEED_ZSYNC)
+        if (isZsyncType){
+            if ((localDiffFile==0)||(diffType==kSyncDiff_info))
+                result=zsync_patch_file2file(&listener,syncDataListener,oldPath,hsyni_file,isIgnoreCompressInfo,outNewFile,
+                                             isUsedDownloadContinue,localDiffFile,threadNum);
+            else if (outNewFile==0) //local diff
+                result=zsync_local_diff_file2file(&listener,syncDataListener,oldPath,hsyni_file,isIgnoreCompressInfo,
+                                                 localDiffFile,diffType,isUsedDownloadContinue,threadNum);
+            else //local patch
+                result=zsync_local_patch_file2file(&listener,localDiffFile,oldPath,hsyni_file,isIgnoreCompressInfo,
+                                                   outNewFile,isUsedDownloadContinue,threadNum);
+        }else
+    #endif //_IS_NEED_ZSYNC
+        {
+            if ((localDiffFile==0)||(diffType==kSyncDiff_info))
+                result=sync_patch_file2file(&listener,syncDataListener,oldPath,hsyni_file,isIgnoreCompressInfo,outNewFile,
+                                            isUsedDownloadContinue,localDiffFile,threadNum);
+            else if (outNewFile==0) //local diff
+                result=sync_local_diff_file2file(&listener,syncDataListener,oldPath,hsyni_file,isIgnoreCompressInfo,
+                                                 localDiffFile,diffType,isUsedDownloadContinue,threadNum);
+            else //local patch
+                result=sync_local_patch_file2file(&listener,localDiffFile,oldPath,hsyni_file,isIgnoreCompressInfo,
+                                                  outNewFile,isUsedDownloadContinue,threadNum);
+        }
     }
     if ((result==kSyncClient_ok)&&localDiffFile&&(diffType!=kSyncDiff_info)&&(outNewFile==0))
         printFileInfo(localDiffFile,"\nout  diff   ");
@@ -851,9 +938,9 @@ TSyncClient_resultType
 TSyncClient_resultType
    hsync_patch_2file(const char* outNewFile,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
+                     const char* hsyni_file,hpatch_BOOL isIgnoreCompressInfo,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
-                     size_t kStepRangeNumber,size_t kMaxOpenFileNumber,int threadNum){
+                     size_t kStepRangeNumber,size_t kMaxOpenFileNumber,hpatch_BOOL isZsyncType,int threadNum){
     if (hsynz_file_url) printFileInfo(hsynz_file_url,                  "sync  url   ",_IS_SYNC_PATCH_DEMO);
 
     IReadSyncDataListener syncDataListener; memset(&syncDataListener,0,sizeof(syncDataListener));
@@ -861,9 +948,9 @@ TSyncClient_resultType
         _check3(downloadPlugin->download_range_open(&syncDataListener,hsynz_file_url,kStepRangeNumber),
                 kSyncClient_syncDataDownloadError,"download open sync file \"",hsynz_file_url,"\"");
     TSyncClient_resultType result=hsync_patch_2file(outNewFile,oldPath,oldIsDir,ignoreOldPathList,
-                                                    hsyni_file,&syncDataListener,
+                                                    hsyni_file,isIgnoreCompressInfo,&syncDataListener,
                                                     localDiffFile,diffType,isUsedDownloadContinue,
-                                                    kMaxOpenFileNumber,threadNum);
+                                                    kMaxOpenFileNumber,isZsyncType,threadNum);
     if (hsynz_file_url)
         _check3(downloadPlugin->download_range_close(&syncDataListener),
                 (result!=kSyncClient_ok)?result:kSyncClient_syncDataCloseError,
@@ -919,7 +1006,7 @@ static hpatch_BOOL _dirSyncPatchFinish(IDirSyncPatchListener* listener,hpatch_BO
 TSyncClient_resultType
     hsync_patch_2dir(const char* outNewDir,const char* oldPath,bool oldIsDir,
                      const std::vector<std::string>& ignoreOldPathList,
-                     const char* hsyni_file,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
+                     const char* hsyni_file,hpatch_BOOL isIgnoreCompressInfo,const TSyncDownloadPlugin* downloadPlugin,const char* hsynz_file_url,
                      const char* localDiffFile,TSyncDiffType diffType,hpatch_BOOL isUsedDownloadContinue,
                      size_t kStepRangeNumber,size_t kMaxOpenFileNumber,int threadNum){
     if (oldPath==0) oldPath=_kEmptyStr;
@@ -935,10 +1022,10 @@ TSyncClient_resultType
     }
     
     printFileInfo(hsyni_file,                                          "info .hsyni");
-    if (hsynz_file_url) printFileInfo(hsynz_file_url,                  "sync  url  ",false);
+    if (hsynz_file_url) printFileInfo(hsynz_file_url,                  "sync  url  ",_IS_SYNC_PATCH_DEMO);
     if (localDiffFile){
-        if      (diffType==kSyncDiff_info) printFileInfo(localDiffFile,"diff  info ",false);
-        else if (diffType==kSyncDiff_data) printFileInfo(localDiffFile,"diff  data ",false);
+        if      (diffType==kSyncDiff_info) printFileInfo(localDiffFile,"diff  info ");
+        else if (diffType==kSyncDiff_data) printFileInfo(localDiffFile,"diff  data ");
         else                               printFileInfo(localDiffFile,"diff  file ");
     }
     if (outNewDir) printFileInfo(outNewDir,                            "out new dir",false);
@@ -949,6 +1036,7 @@ TSyncClient_resultType
     listener.findChecksumPlugin=_findChecksumPlugin;
     listener.findDecompressPlugin=_findDecompressPlugin;
     listener.onNeedSyncInfo=_onNeedSyncInfo;
+    listener.onLoadedNewSyncInfo=_onLoadedNewSyncInfo;
     
     listener.patchImport=&listener;
     listener.newDirRoot=outNewDir?&_outNewDir:0;
@@ -965,14 +1053,14 @@ TSyncClient_resultType
                    " you can add downloaded files to old data, same as download continue;"
                    " or use sync_local_diff_2dir() to support download continue.\n");
         result=sync_patch_2dir(&defaultPatchDirlistener,&listener,&syncDataListener,
-                               oldManifest,hsyni_file,outNewDir,localDiffFile,kMaxOpenFileNumber,threadNum);
+                               oldManifest,hsyni_file,isIgnoreCompressInfo,outNewDir,localDiffFile,kMaxOpenFileNumber,threadNum);
     }else if (outNewDir==0){ //local diff
         result=sync_local_diff_2dir(&defaultPatchDirlistener,&listener,&syncDataListener,
-                                    oldManifest,hsyni_file,localDiffFile,diffType,
+                                    oldManifest,hsyni_file,isIgnoreCompressInfo,localDiffFile,diffType,
                                     isUsedDownloadContinue,kMaxOpenFileNumber,threadNum);
     }else{ //local patch
         result=sync_local_patch_2dir(&defaultPatchDirlistener,&listener,localDiffFile,
-                                     oldManifest,hsyni_file,outNewDir,kMaxOpenFileNumber,threadNum);
+                                     oldManifest,hsyni_file,isIgnoreCompressInfo,outNewDir,kMaxOpenFileNumber,threadNum);
     }
     if (hsynz_file_url)
         _check3(downloadPlugin->download_range_close(&syncDataListener),

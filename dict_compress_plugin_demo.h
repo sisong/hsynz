@@ -49,13 +49,15 @@ static const char*  _fun_name(void){            \
     return kCompressType;                       \
 }
 
-hpatch_inline static
-hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
-    hpatch_StreamPos_t result=dataSize+(dataSize>>3)+64;
+#ifndef __DEF_default_maxCompressedSize
+#define __DEF_default_maxCompressedSize
+static hpatch_StreamPos_t _default_maxCompressedSize(hpatch_StreamPos_t dataSize){
+    hpatch_StreamPos_t result=dataSize+(dataSize>>3)+256;
     assert(result>dataSize);
     return result;
 }
 #endif
+#endif //HDiff_compress_plugin_demo_h
 
 #ifndef IS_REUSE_compress_handle
 #   define IS_REUSE_compress_handle 0

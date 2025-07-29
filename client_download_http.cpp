@@ -171,7 +171,8 @@ struct THttpRangeDownload:public THttpDownload{
     }
     virtual ~THttpRangeDownload(){ _closeAll();  }
     static hpatch_BOOL readSyncDataBegin(IReadSyncDataListener* listener,const TNeedSyncInfos* needSyncInfo,
-                                         uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData){
+                                         uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,uint32_t isReLoadNewHalf,
+                                         hpatch_StreamPos_t posInNeedSyncData,uint32_t isReLoadDiffHalf){
         THttpRangeDownload* self=(THttpRangeDownload*)listener->readSyncDataImport;
         self->nsi=needSyncInfo;
         try{
@@ -179,9 +180,9 @@ struct THttpRangeDownload:public THttpDownload{
             self->_cache.realloc(cacheSize);
             self->_writePos=0;
             self->_readPos=0;
-            //if (!self->_sendDownloads_all(blockIndex,posInNewSyncData))
+            //if (!self->_sendDownloads_all(blockIndex,posInNewSyncData,isReLoadNewHalf))
             //    return hpatch_FALSE;
-            if (!self->_sendDownloads_init(blockIndex,posInNewSyncData)) //step by step send
+            if (!self->_sendDownloads_init(blockIndex,posInNewSyncData,isReLoadNewHalf)) //step by step send
                 return hpatch_FALSE;
         }catch(...){
             return hpatch_FALSE;
@@ -195,11 +196,13 @@ struct THttpRangeDownload:public THttpDownload{
     }
     
     static hpatch_BOOL readSyncData(IReadSyncDataListener* listener,uint32_t blockIndex,
-                                    hpatch_StreamPos_t posInNewSyncData,hpatch_StreamPos_t posInNeedSyncData,
+                                    hpatch_StreamPos_t posInNewSyncData,uint32_t isReLoadNewHalf,
+                                    hpatch_StreamPos_t posInNeedSyncData,uint32_t isReLoadDiffHalf,
                                     unsigned char* out_syncDataBuf,uint32_t syncDataSize){
         THttpRangeDownload* self=(THttpRangeDownload*)listener->readSyncDataImport;
         try{
-            return self->readSyncData(blockIndex,posInNewSyncData,posInNeedSyncData,out_syncDataBuf,syncDataSize);
+            return self->readSyncData(blockIndex,posInNewSyncData,isReLoadNewHalf,
+                                      posInNeedSyncData,isReLoadDiffHalf,out_syncDataBuf,syncDataSize);
         }catch(...){
             return hpatch_FALSE;
         }
@@ -213,19 +216,19 @@ protected:
     size_t            kStepRangeNumber;
     const TNeedSyncInfos* nsi;
     void makeRanges(std::vector<TRange>& out_ranges,uint32_t& blockIndex,
-                    hpatch_StreamPos_t& posInNewSyncData){
+                    hpatch_StreamPos_t& posInNewSyncData,uint32_t isReLoadNewHalf){
         out_ranges.resize(kStepRangeNumber);
         size_t gotRangeCount=TNeedSyncInfos_getNextRanges(nsi,(hpatch_StreamPos_t*)out_ranges.data(),
-                                                          kStepRangeNumber,&blockIndex,&posInNewSyncData);
+                                                          kStepRangeNumber,&blockIndex,&posInNewSyncData,isReLoadNewHalf);
         out_ranges.resize(gotRangeCount);
     }
     inline void _closeAll(){
         _hd.close();
     }
 
-    inline hpatch_BOOL readSyncData(uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,
-                                    hpatch_StreamPos_t posInNeedSyncData,
-                                    unsigned char* out_syncDataBuf,uint32_t syncDataSize){
+    inline hpatch_BOOL readSyncData(uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,uint32_t isReLoadNewHalf,
+                                    hpatch_StreamPos_t posInNeedSyncData,uint32_t isReLoadDiffHalf,
+                                    unsigned char* out_syncDataBuf,uint32_t syncDataSize){              
         while (syncDataSize>0){
             size_t savedSize=_savedSize();
             if (savedSize>0){
@@ -267,17 +270,18 @@ protected:
 
     uint32_t            curBlockIndex;
     hpatch_StreamPos_t  curPosInNewSyncData;
-    bool _sendDownloads_init(uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData){
+    bool _sendDownloads_init(uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,uint32_t isReLoadNewHalf){
         assert(nsi!=0);
         printf("\nhttp download from block index %d/%d\n",blockIndex,nsi->blockCount);
         curBlockIndex=blockIndex;
         curPosInNewSyncData=posInNewSyncData;
-        return _sendDownloads_step();
+        return _sendDownloads_step(isReLoadNewHalf);
     }
-    bool _sendDownloads_step(){
+    bool _sendDownloads_step(uint32_t isReLoadNewHalf=-1){
         try{
             while (curBlockIndex<nsi->blockCount){
-                makeRanges(_hd.Ranges(),curBlockIndex,curPosInNewSyncData);
+                makeRanges(_hd.Ranges(),curBlockIndex,curPosInNewSyncData,isReLoadNewHalf);
+                isReLoadNewHalf=-1; //only first block actual effect
                 if (!_hd.Ranges().empty())
                     return _hd.doDownload(_file_url);
             }
@@ -295,8 +299,8 @@ protected:
                 is_write_error=true;
         }
     }
-    bool _sendDownloads_all(uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData){
-        if (!_sendDownloads_init(blockIndex,posInNewSyncData))
+    bool _sendDownloads_all(uint32_t blockIndex,hpatch_StreamPos_t posInNewSyncData,uint32_t isReLoadNewHalf){
+        if (!_sendDownloads_init(blockIndex,posInNewSyncData,isReLoadNewHalf))
             return false;
         while (curBlockIndex<nsi->blockCount){
             if (!_sendDownloads_step())
