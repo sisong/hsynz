@@ -371,10 +371,8 @@ static hpatch_TChecksum* _findChecksumPlugin(ISyncInfoListener* listener,const c
             if (!isLB) { isLB=true; printf("\n");}
             hpatch_StreamPos_t haveSize=(nsi->localDiffDataSize<nsi->needSyncSumSize)?nsi->localDiffDataSize:nsi->needSyncSumSize;
             haveSize+=nsi->newSyncInfoSize;
-            printf("  downloaded data size: %" PRIu64 "\n",haveSize);
-            hpatch_StreamPos_t cdlSize=downloadSize-haveSize;
-            printf("  need continue download size: %" PRIu64 ", /%" PRIu64 "=%.1f%%\n",
-                            cdlSize,downloadSize,_to100f(cdlSize,downloadSize));
+            printf("  downloaded data size: %" PRIu64 ", /%" PRIu64 "=%.1f%%\n",
+                            haveSize,downloadSize,_to100f(haveSize,downloadSize));
         }
         if ((nsi->localNewDataSize>0)&&(nsi->newDataSize>0)){
             if (!isLB) { isLB=true; printf("\n");}
